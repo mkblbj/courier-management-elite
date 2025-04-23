@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "TAV2": {
+      "url": "https://mcp.x-yue.top/TAV2"
+    },
+    "memory": {
+      "url": "https://mcp.x-yue.top/memory"
+    }
+  }
+}

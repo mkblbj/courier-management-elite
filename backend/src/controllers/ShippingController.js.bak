@@ -1,7 +1,6 @@
 const ShippingRecord = require('../models/ShippingRecord');
 const Courier = require('../models/Courier');
 const { body, validationResult } = require('express-validator');
-const dateUtils = require('../utils/dateUtils');
 
 /**
  * 验证发货记录数据
@@ -49,11 +48,6 @@ class ShippingController {
       const maxQuantity = req.query.max_quantity ? parseInt(req.query.max_quantity) : null;
       const notesSearch = req.query.notes_search || null;
       
-      console.log('接收到查询请求:', { 
-        url: req.originalUrl,
-        date
-      });
-      
       // 获取多个快递公司ID筛选
       let courierIds = null;
       if (req.query.courier_ids) {
@@ -79,7 +73,6 @@ class ShippingController {
         options.courier_ids = courierIds;
       }
       
-console.log("SQL查询选项:", JSON.stringify(options));
       // 获取记录总数
       const totalRecords = await ShippingRecord.count(options);
       
@@ -156,28 +149,43 @@ console.log("SQL查询选项:", JSON.stringify(options));
       }
       
       // 验证日期格式
-      if (!dateUtils.isValidDateString(req.body.date)) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(req.body.date)) {
         return res.status(400).json({
           success: false,
           errors: {
-            date: '日期格式不正确或无效，应为YYYY-MM-DD'
+            date: '日期格式不正确，应为YYYY-MM-DD'
+          }
+        });
+      }
+      
+      // 验证日期是否合法
+      const date = new Date(req.body.date);
+      if (isNaN(date.getTime())) {
+        return res.status(400).json({
+          success: false,
+          errors: {
+            date: '日期无效'
           }
         });
       }
       
       // 验证日期范围
-      const currentDate = dateUtils.getCurrentDateString();
-      const tomorrowDate = dateUtils.getOffsetDateString(1);
-      const monthAgoDate = dateUtils.getOffsetDateString(-30);
+      const now = new Date();
+      const maxDate = new Date(now);
+      maxDate.setDate(now.getDate() + 1); // 允许设置明天的记录
       
-      if (dateUtils.compareDateStrings(req.body.date, tomorrowDate) > 0) {
+      const minDate = new Date(now);
+      minDate.setMonth(now.getMonth() - 1); // 不早于一个月前
+      
+      if (date > maxDate) {
         return res.status(400).json({
           success: false,
           errors: {
             date: '日期不能超过当前日期后一天'
           }
         });
-      } else if (dateUtils.compareDateStrings(req.body.date, monthAgoDate) < 0) {
+      } else if (date < minDate) {
         return res.status(400).json({
           success: false,
           errors: {
@@ -261,28 +269,41 @@ console.log("SQL查询选项:", JSON.stringify(options));
       
       // 如果更新日期，验证日期格式和范围
       if (req.body.date) {
-        if (!dateUtils.isValidDateString(req.body.date)) {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(req.body.date)) {
           return res.status(400).json({
             success: false,
             errors: {
-              date: '日期格式不正确或无效，应为YYYY-MM-DD'
+              date: '日期格式不正确，应为YYYY-MM-DD'
             }
           });
         }
         
-        // 验证日期范围
-        const currentDate = dateUtils.getCurrentDateString();
-        const tomorrowDate = dateUtils.getOffsetDateString(1);
-        const monthAgoDate = dateUtils.getOffsetDateString(-30);
+        const date = new Date(req.body.date);
+        if (isNaN(date.getTime())) {
+          return res.status(400).json({
+            success: false,
+            errors: {
+              date: '日期无效'
+            }
+          });
+        }
         
-        if (dateUtils.compareDateStrings(req.body.date, tomorrowDate) > 0) {
+        const now = new Date();
+        const maxDate = new Date(now);
+        maxDate.setDate(now.getDate() + 1);
+        
+        const minDate = new Date(now);
+        minDate.setMonth(now.getMonth() - 1);
+        
+        if (date > maxDate) {
           return res.status(400).json({
             success: false,
             errors: {
               date: '日期不能超过当前日期后一天'
             }
           });
-        } else if (dateUtils.compareDateStrings(req.body.date, monthAgoDate) < 0) {
+        } else if (date < minDate) {
           return res.status(400).json({
             success: false,
             errors: {
@@ -395,29 +416,42 @@ console.log("SQL查询选项:", JSON.stringify(options));
         });
       }
       
-      // 验证日期格式
-      if (!dateUtils.isValidDateString(req.body.date)) {
+      // 验证日期格式和范围
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(req.body.date)) {
         return res.status(400).json({
           success: false,
           errors: {
-            date: '日期格式不正确或无效，应为YYYY-MM-DD'
+            date: '日期格式不正确，应为YYYY-MM-DD'
           }
         });
       }
       
-      // 验证日期范围
-      const currentDate = dateUtils.getCurrentDateString();
-      const tomorrowDate = dateUtils.getOffsetDateString(1);
-      const monthAgoDate = dateUtils.getOffsetDateString(-30);
+      const date = new Date(req.body.date);
+      if (isNaN(date.getTime())) {
+        return res.status(400).json({
+          success: false,
+          errors: {
+            date: '日期无效'
+          }
+        });
+      }
       
-      if (dateUtils.compareDateStrings(req.body.date, tomorrowDate) > 0) {
+      const now = new Date();
+      const maxDate = new Date(now);
+      maxDate.setDate(now.getDate() + 1);
+      
+      const minDate = new Date(now);
+      minDate.setMonth(now.getMonth() - 1);
+      
+      if (date > maxDate) {
         return res.status(400).json({
           success: false,
           errors: {
             date: '日期不能超过当前日期后一天'
           }
         });
-      } else if (dateUtils.compareDateStrings(req.body.date, monthAgoDate) < 0) {
+      } else if (date < minDate) {
         return res.status(400).json({
           success: false,
           errors: {
