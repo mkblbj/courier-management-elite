@@ -243,6 +243,17 @@ console.log("SQL查询选项:", JSON.stringify(options));
         });
       }
       
+      // 检查该日期是否已存在发货记录
+      const existingRecords = await ShippingRecord.getByDate(req.body.date);
+      if (existingRecords && existingRecords.length > 0) {
+        return res.status(400).json({
+          success: false,
+          errors: {
+            date: `${req.body.date}日期已存在发货记录，请使用更新接口修改`
+          }
+        });
+      }
+      
       // 验证快递公司是否存在且处于活跃状态
       const courier = await Courier.getById(req.body.courier_id);
       if (!courier) {
@@ -479,6 +490,17 @@ console.log("SQL查询选项:", JSON.stringify(options));
           success: false,
           errors: {
             date: '日期不能早于一个月前'
+          }
+        });
+      }
+      
+      // 检查该日期是否已存在发货记录
+      const existingRecords = await ShippingRecord.getByDate(req.body.date);
+      if (existingRecords && existingRecords.length > 0) {
+        return res.status(400).json({
+          success: false,
+          errors: {
+            date: `${req.body.date}日期已存在发货记录，请使用更新接口修改`
           }
         });
       }

@@ -318,4 +318,192 @@ API在发生错误时会返回适当的HTTP状态码和错误信息：
 1. 所有请求和响应均采用JSON格式
 2. 请求头需要包含 `Content-Type: application/json`
 3. 批量添加记录时，所有记录必须有相同的日期
-4. 所有API都支持跨域请求 
+4. 所有API都支持跨域请求
+
+## 统计API
+
+### 1. 获取统计数据汇总
+
+- **URL**: `/api/shipping/stats/summary`
+- **方法**: GET
+- **描述**: 获取发货记录的统计数据汇总，包括总计数据、按快递公司统计和按日期统计
+- **查询参数**:
+  - `date`  - 按特定日期筛选，格式为YYYY-MM-DD
+  - `date_from`  - 按日期范围筛选起始日期，格式为YYYY-MM-DD
+  - `date_to`  - 按日期范围筛选截止日期，格式为YYYY-MM-DD
+  - `week`  - 按周筛选，值为一年中的周数(1-53)
+  - `month`  - 按月筛选，值为月份(1-12)
+  - `quarter`  - 按季度筛选，值为季度(1-4)
+  - `year`  - 按年筛选，值为年份
+  - `courier_id`  - 按快递公司ID筛选
+- **成功响应** (200 OK):
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": {
+      "total": 120,
+      "days_count": 5,
+      "record_count": 15
+    },
+    "by_courier": [
+      {
+        "courier_id": 1,
+        "courier_name": "顺丰速运",
+        "total": 45,
+        "record_count": 5
+      },
+      {
+        "courier_id": 2,
+        "courier_name": "中通快递",
+        "total": 35,
+        "record_count": 5
+      }
+      // 更多快递公司...
+    ],
+    "by_date": [
+      {
+        "date": "2023-06-10",
+        "total": 30,
+        "record_count": 3
+      },
+      {
+        "date": "2023-06-11",
+        "total": 40,
+        "record_count": 4
+      }
+      // 更多日期...
+    ]
+  }
+}
+```
+
+### 2. 获取详细统计数据
+
+- **URL**: `/api/shipping/stats/details`
+- **方法**: GET
+- **描述**: 获取按日期和快递公司分组的详细统计数据
+- **查询参数**:
+  - `date`  - 按特定日期筛选，格式为YYYY-MM-DD
+  - `date_from`  - 按日期范围筛选起始日期，格式为YYYY-MM-DD
+  - `date_to`  - 按日期范围筛选截止日期，格式为YYYY-MM-DD
+  - `week`  - 按周筛选，值为一年中的周数(1-53)
+  - `month`  - 按月筛选，值为月份(1-12)
+  - `quarter`  - 按季度筛选，值为季度(1-4)
+  - `year`  - 按年筛选，值为年份
+  - `courier_id`  - 按快递公司ID筛选
+- **成功响应** (200 OK):
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": {
+      "total": 120,
+      "days_count": 5,
+      "record_count": 15
+    },
+    "details": [
+      {
+        "date": "2023-06-10",
+        "courier_id": 1,
+        "courier_name": "顺丰速运",
+        "total": 15
+      },
+      {
+        "date": "2023-06-10",
+        "courier_id": 2,
+        "courier_name": "中通快递",
+        "total": 12
+      },
+      {
+        "date": "2023-06-11",
+        "courier_id": 1,
+        "courier_name": "顺丰速运",
+        "total": 18
+      }
+      // 更多详细记录...
+    ]
+  }
+}
+```
+
+### 3. 获取图表数据
+
+- **URL**: `/api/shipping/stats/charts`
+- **方法**: GET
+- **描述**: 获取用于图表展示的统计数据，支持折线图和饼图
+- **查询参数**:
+  - `date_from`  - 按日期范围筛选起始日期，格式为YYYY-MM-DD
+  - `date_to`  - 按日期范围筛选截止日期，格式为YYYY-MM-DD
+  - `week`  - 按周筛选，值为一年中的周数(1-53)
+  - `month`  - 按月筛选，值为月份(1-12)
+  - `quarter`  - 按季度筛选，值为季度(1-4)
+  - `year`  - 按年筛选，值为年份
+  - `type`  - 图表类型，可选值: line（折线图）, pie（饼图），默认为line
+- **成功响应** (200 OK):
+
+折线图响应示例:
+```json
+{
+  "success": true,
+  "data": {
+    "labels": ["2023-06-10", "2023-06-11", "2023-06-12"],
+    "datasets": [
+      {
+        "label": "发货总数",
+        "data": [30, 40, 25]
+      }
+    ]
+  }
+}
+```
+
+饼图响应示例:
+```json
+{
+  "success": true,
+  "data": {
+    "labels": ["顺丰速运", "中通快递", "京东物流"],
+    "datasets": [
+      {
+        "data": [45, 35, 25]
+      }
+    ]
+  }
+}
+```
+
+## 使用说明
+
+### 发货记录输入限制
+
+每个日期只能输入一次发货记录。如果尝试为同一日期创建多条记录，系统将返回错误。已存在的记录需要通过更新接口（PUT）进行修改。
+
+### 统计功能使用示例
+
+1. **获取某月的所有快递统计数据**
+   ```
+   GET /api/shipping/stats/summary?year=2023&month=6
+   ```
+
+2. **获取上周的发货总数**
+   ```
+   GET /api/shipping/stats/summary?week=25&year=2023
+   ```
+
+3. **获取特定快递公司在某季度的统计数据**
+   ```
+   GET /api/shipping/stats/summary?quarter=2&year=2023&courier_id=1
+   ```
+
+4. **获取某年每天的发货数据（用于折线图）**
+   ```
+   GET /api/shipping/stats/charts?year=2023&type=line
+   ```
+
+5. **获取当月快递类型占比（用于饼图）**
+   ```
+   GET /api/shipping/stats/charts?month=6&year=2023&type=pie
+   ``` 

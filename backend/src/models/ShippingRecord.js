@@ -188,6 +188,221 @@ class ShippingRecord {
   }
 
   /**
+   * 根据日期获取发货记录
+   * @param {string} date 日期，格式为YYYY-MM-DD
+   * @returns {Promise<Array>} 发货记录数组
+   */
+  async getByDate(date) {
+    const sql = `SELECT sr.*, c.name as courier_name 
+                FROM ${this.table} sr
+                LEFT JOIN couriers c ON sr.courier_id = c.id
+                WHERE DATE(sr.date) = DATE(?)`;
+    const results = await db.query(sql, [date]);
+    return results;
+  }
+
+  /**
+   * 获取按快递公司分组的统计数据
+   * @param {Object} options 查询选项，支持时间筛选
+   * @returns {Promise<Array>} 统计数据数组
+   */
+  async getStatsByCourier(options = {}) {
+    let sql = `SELECT c.id as courier_id, c.name as courier_name, 
+               SUM(sr.quantity) as total, 
+               COUNT(sr.id) as record_count 
+               FROM ${this.table} sr
+               LEFT JOIN couriers c ON sr.courier_id = c.id`;
+    
+    const params = [];
+    const whereClauses = [];
+    
+    // 添加时间筛选条件
+    if (options.date) {
+      whereClauses.push("DATE(sr.date) = DATE(?)");
+      params.push(options.date);
+    }
+    
+    if (options.date_from) {
+      whereClauses.push("DATE(sr.date) >= DATE(?)");
+      params.push(options.date_from);
+    }
+    
+    if (options.date_to) {
+      whereClauses.push("DATE(sr.date) <= DATE(?)");
+      params.push(options.date_to);
+    }
+    
+    // 按快递公司ID筛选
+    if (options.courier_id) {
+      whereClauses.push("sr.courier_id = ?");
+      params.push(parseInt(options.courier_id, 10));
+    }
+    
+    // 组合WHERE子句
+    if (whereClauses.length > 0) {
+      sql += " WHERE " + whereClauses.join(" AND ");
+    }
+    
+    // 按快递公司分组
+    sql += " GROUP BY sr.courier_id";
+    
+    // 按总数排序
+    sql += " ORDER BY total DESC";
+    
+    const results = await db.query(sql, params);
+    return results;
+  }
+
+  /**
+   * 获取按日期分组的统计数据
+   * @param {Object} options 查询选项，支持时间筛选和快递公司筛选
+   * @returns {Promise<Array>} 统计数据数组
+   */
+  async getStatsByDate(options = {}) {
+    let sql = `SELECT DATE(sr.date) as date, 
+               SUM(sr.quantity) as total, 
+               COUNT(sr.id) as record_count 
+               FROM ${this.table} sr`;
+    
+    const params = [];
+    const whereClauses = [];
+    
+    // 添加时间筛选条件
+    if (options.date) {
+      whereClauses.push("DATE(sr.date) = DATE(?)");
+      params.push(options.date);
+    }
+    
+    if (options.date_from) {
+      whereClauses.push("DATE(sr.date) >= DATE(?)");
+      params.push(options.date_from);
+    }
+    
+    if (options.date_to) {
+      whereClauses.push("DATE(sr.date) <= DATE(?)");
+      params.push(options.date_to);
+    }
+    
+    // 按快递公司ID筛选
+    if (options.courier_id) {
+      whereClauses.push("sr.courier_id = ?");
+      params.push(parseInt(options.courier_id, 10));
+    }
+    
+    // 组合WHERE子句
+    if (whereClauses.length > 0) {
+      sql += " WHERE " + whereClauses.join(" AND ");
+    }
+    
+    // 按日期分组
+    sql += " GROUP BY DATE(sr.date)";
+    
+    // 按日期排序
+    sql += " ORDER BY date ASC";
+    
+    const results = await db.query(sql, params);
+    return results;
+  }
+
+  /**
+   * 获取按日期和快递公司分组的统计数据
+   * @param {Object} options 查询选项，支持时间筛选
+   * @returns {Promise<Array>} 统计数据数组
+   */
+  async getStatsByDateAndCourier(options = {}) {
+    let sql = `SELECT DATE(sr.date) as date, 
+               sr.courier_id, 
+               c.name as courier_name,
+               SUM(sr.quantity) as total 
+               FROM ${this.table} sr
+               LEFT JOIN couriers c ON sr.courier_id = c.id`;
+    
+    const params = [];
+    const whereClauses = [];
+    
+    // 添加时间筛选条件
+    if (options.date) {
+      whereClauses.push("DATE(sr.date) = DATE(?)");
+      params.push(options.date);
+    }
+    
+    if (options.date_from) {
+      whereClauses.push("DATE(sr.date) >= DATE(?)");
+      params.push(options.date_from);
+    }
+    
+    if (options.date_to) {
+      whereClauses.push("DATE(sr.date) <= DATE(?)");
+      params.push(options.date_to);
+    }
+    
+    // 按快递公司ID筛选
+    if (options.courier_id) {
+      whereClauses.push("sr.courier_id = ?");
+      params.push(parseInt(options.courier_id, 10));
+    }
+    
+    // 组合WHERE子句
+    if (whereClauses.length > 0) {
+      sql += " WHERE " + whereClauses.join(" AND ");
+    }
+    
+    // 按日期和快递公司分组
+    sql += " GROUP BY DATE(sr.date), sr.courier_id";
+    
+    // 按日期和总数排序
+    sql += " ORDER BY date ASC, total DESC";
+    
+    const results = await db.query(sql, params);
+    return results;
+  }
+
+  /**
+   * 获取总计统计数据
+   * @param {Object} options 查询选项，支持时间筛选和快递公司筛选
+   * @returns {Promise<Object>} 统计数据对象
+   */
+  async getStatsTotal(options = {}) {
+    let sql = `SELECT SUM(sr.quantity) as total, 
+               COUNT(DISTINCT DATE(sr.date)) as days_count, 
+               COUNT(sr.id) as record_count 
+               FROM ${this.table} sr`;
+    
+    const params = [];
+    const whereClauses = [];
+    
+    // 添加时间筛选条件
+    if (options.date) {
+      whereClauses.push("DATE(sr.date) = DATE(?)");
+      params.push(options.date);
+    }
+    
+    if (options.date_from) {
+      whereClauses.push("DATE(sr.date) >= DATE(?)");
+      params.push(options.date_from);
+    }
+    
+    if (options.date_to) {
+      whereClauses.push("DATE(sr.date) <= DATE(?)");
+      params.push(options.date_to);
+    }
+    
+    // 按快递公司ID筛选
+    if (options.courier_id) {
+      whereClauses.push("sr.courier_id = ?");
+      params.push(parseInt(options.courier_id, 10));
+    }
+    
+    // 组合WHERE子句
+    if (whereClauses.length > 0) {
+      sql += " WHERE " + whereClauses.join(" AND ");
+    }
+    
+    const results = await db.query(sql, params);
+    return results[0] || { total: 0, days_count: 0, record_count: 0 };
+  }
+
+  /**
    * 添加发货记录
    * @param {Object} data 发货记录数据
    * @returns {Promise<number>} 新创建的记录ID
