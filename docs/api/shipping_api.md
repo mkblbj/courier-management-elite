@@ -26,18 +26,22 @@
 - **方法**: GET
 - **描述**: 获取系统中所有发货记录的列表，支持分页和筛选
 - **查询参数**:
-  - `page` (可选) - 页码，默认为1
-  - `perPage` (可选) - 每页记录数，默认为10
-  - `sortBy` (可选) - 排序字段，默认为"date"，支持的字段有：id, date, courier_id, quantity, created_at, updated_at
-  - `sortOrder` (可选) - 排序方向，默认为"DESC"，可选值："ASC", "DESC"
-  - `date` (可选) - 按特定日期筛选，格式为YYYY-MM-DD
-  - `date_from` (可选) - 按日期范围筛选起始日期，格式为YYYY-MM-DD
-  - `date_to` (可选) - 按日期范围筛选截止日期，格式为YYYY-MM-DD
-  - `courier_id` (可选) - 按单个快递公司ID筛选
-  - `courier_ids` (可选) - 按多个快递公司ID筛选，格式为逗号分隔的ID列表，如"1,2,3"
-  - `min_quantity` (可选) - 按最小数量筛选
-  - `max_quantity` (可选) - 按最大数量筛选
-  - `notes_search` (可选) - 按备注关键词搜索
+  - `page`  - 页码，默认为1
+  - `perPage`  - 每页记录数，默认为10
+  - `sortBy`  - 排序字段，默认为"date"，支持的字段有：id, date, courier_id, quantity, created_at, updated_at
+  - `sortOrder`  - 排序方向，默认为"DESC"，可选值："ASC", "DESC"
+  - `date`  - 按特定日期筛选，格式为YYYY-MM-DD
+  - `date_from`  - 按日期范围筛选起始日期，格式为YYYY-MM-DD
+  - `date_to`  - 按日期范围筛选截止日期，格式为YYYY-MM-DD
+  - `week`  - 按周筛选，值为一年中的周数(1-53)，例如 week=25
+  - `month`  - 按月筛选，值为月份(1-12)，例如 month=6
+  - `quarter`  - 按季度筛选，值为季度(1-4)，例如 quarter=2
+  - `year`  - 按年筛选，值为年份，例如 year=2023
+  - `courier_id`  - 按单个快递公司ID筛选
+  - `courier_ids`  - 按多个快递公司ID筛选，格式为逗号分隔的ID列表，如"1,2,3"
+  - `min_quantity`  - 按最小数量筛选
+  - `max_quantity`  - 按最大数量筛选
+  - `notes_search`  - 按备注关键词搜索
 - **成功响应** (200 OK):
 
 ```json

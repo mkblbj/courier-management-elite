@@ -49,6 +49,12 @@ class ShippingController {
       const maxQuantity = req.query.max_quantity ? parseInt(req.query.max_quantity) : null;
       const notesSearch = req.query.notes_search || null;
       
+      // 新增时间筛选参数
+      const week = req.query.week ? parseInt(req.query.week) : null;
+      const month = req.query.month ? parseInt(req.query.month) : null;
+      const quarter = req.query.quarter ? parseInt(req.query.quarter) : null;
+      const year = req.query.year ? parseInt(req.query.year) : null;
+      
       console.log('接收到查询请求:', { 
         url: req.originalUrl,
         date
@@ -60,14 +66,65 @@ class ShippingController {
         courierIds = req.query.courier_ids.split(',').map(id => parseInt(id));
       }
       
+      // 处理按年、月、季度、周筛选，转换为date_from和date_to
+      let calculatedDateFrom = null;
+      let calculatedDateTo = null;
+      
+      // 使用dateUtils工具函数获取日期范围
+      const currentYear = new Date().getFullYear();
+      
+      // 根据参数组合确定日期范围
+      if (year) {
+        if (month) {
+          // 年+月
+          const dateRange = dateUtils.getMonthDateRange(year, month);
+          calculatedDateFrom = dateRange.start;
+          calculatedDateTo = dateRange.end;
+        } else if (quarter) {
+          // 年+季度
+          const dateRange = dateUtils.getQuarterDateRange(year, quarter);
+          calculatedDateFrom = dateRange.start;
+          calculatedDateTo = dateRange.end;
+        } else if (week) {
+          // 年+周
+          const dateRange = dateUtils.getWeekDateRange(year, week);
+          calculatedDateFrom = dateRange.start;
+          calculatedDateTo = dateRange.end;
+        } else {
+          // 仅年份
+          const dateRange = dateUtils.getYearDateRange(year);
+          calculatedDateFrom = dateRange.start;
+          calculatedDateTo = dateRange.end;
+        }
+      } else if (month) {
+        // 仅月份，使用当前年
+        const dateRange = dateUtils.getMonthDateRange(currentYear, month);
+        calculatedDateFrom = dateRange.start;
+        calculatedDateTo = dateRange.end;
+      } else if (quarter) {
+        // 仅季度，使用当前年
+        const dateRange = dateUtils.getQuarterDateRange(currentYear, quarter);
+        calculatedDateFrom = dateRange.start;
+        calculatedDateTo = dateRange.end;
+      } else if (week) {
+        // 仅周数，使用当前年
+        const dateRange = dateUtils.getWeekDateRange(currentYear, week);
+        calculatedDateFrom = dateRange.start;
+        calculatedDateTo = dateRange.end;
+      }
+      
+      // 原有日期筛选优先级高于计算的日期范围
+      const finalDateFrom = dateFrom || calculatedDateFrom;
+      const finalDateTo = dateTo || calculatedDateTo;
+      
       const options = {
         page,
         per_page: perPage,
         sort_by: sortBy,
         sort_order: sortOrder,
         date,
-        date_from: dateFrom,
-        date_to: dateTo,
+        date_from: finalDateFrom,
+        date_to: finalDateTo,
         courier_id: courierId,
         min_quantity: minQuantity,
         max_quantity: maxQuantity,
