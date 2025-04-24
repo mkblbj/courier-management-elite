@@ -16,6 +16,25 @@ function errorHandler(err, req, res, next) {
   
   // 检查是否是数据库错误
   if (err.code === 'ER_DUP_ENTRY') {
+    // 尝试解析错误信息，判断是否是日期和快递类型组合重复
+    if (err.message && err.message.includes('shipping_records')) {
+      // 尝试从错误信息中提取日期和快递类型ID
+      const dateMatch = err.message.match(/'([^']*-[^']*-[^']*)'/);
+      const date = dateMatch ? dateMatch[1] : '当前日期';
+      
+      // 尝试提取快递类型ID
+      const courierIdMatch = err.message.match(/courier_id_(.+)/);
+      const courierId = courierIdMatch ? courierIdMatch[1] : '指定快递类型';
+      
+      return res.status(400).json({
+        success: false,
+        message: `${date}日期的${courierId}快递记录已存在，如需修改请使用更新功能`,
+        errors: {
+          courier_id: `${date}日期的快递记录已存在，如需修改请使用更新功能`
+        }
+      });
+    }
+    
     return res.status(400).json({
       success: false,
       message: '数据已存在'

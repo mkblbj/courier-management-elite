@@ -202,6 +202,21 @@ class ShippingRecord {
   }
 
   /**
+   * 根据日期和快递类型ID检查记录是否存在
+   * @param {string} date 日期，格式为YYYY-MM-DD
+   * @param {number} courierId 快递类型ID
+   * @returns {Promise<Object|null>} 存在返回记录对象，不存在返回null
+   */
+  async getByDateAndCourierId(date, courierId) {
+    const sql = `SELECT sr.*, c.name as courier_name 
+                FROM ${this.table} sr
+                LEFT JOIN couriers c ON sr.courier_id = c.id
+                WHERE DATE(sr.date) = DATE(?) AND sr.courier_id = ?`;
+    const results = await db.query(sql, [date, courierId]);
+    return results.length > 0 ? results[0] : null;
+  }
+
+  /**
    * 获取按快递公司分组的统计数据
    * @param {Object} options 查询选项，支持时间筛选
    * @returns {Promise<Array>} 统计数据数组

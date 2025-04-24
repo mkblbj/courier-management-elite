@@ -243,13 +243,13 @@ console.log("SQL查询选项:", JSON.stringify(options));
         });
       }
       
-      // 检查该日期是否已存在发货记录
-      const existingRecords = await ShippingRecord.getByDate(req.body.date);
-      if (existingRecords && existingRecords.length > 0) {
+      // 检查该日期和快递类型组合是否已存在发货记录
+      const existingRecord = await ShippingRecord.getByDateAndCourierId(req.body.date, req.body.courier_id);
+      if (existingRecord) {
         return res.status(400).json({
           success: false,
           errors: {
-            date: `${req.body.date}日期已存在发货记录，请使用更新接口修改`
+            courier_id: `${req.body.date}日期的${existingRecord.courier_name}记录已存在，如需修改请使用更新功能`
           }
         });
       }
@@ -494,14 +494,33 @@ console.log("SQL查询选项:", JSON.stringify(options));
         });
       }
       
-      // 检查该日期是否已存在发货记录
-      const existingRecords = await ShippingRecord.getByDate(req.body.date);
-      if (existingRecords && existingRecords.length > 0) {
+      // 检查批量记录中每个快递类型在该日期是否已存在记录
+      const existingRecordsPromises = req.body.records.map(record => 
+        ShippingRecord.getByDateAndCourierId(req.body.date, record.courier_id)
+      );
+      const existingRecords = await Promise.all(existingRecordsPromises);
+      
+      // 找出已存在的记录
+      const duplicates = existingRecords.reduce((acc, record, index) => {
+        if (record) {
+          acc.push({
+            index,
+            courier_id: req.body.records[index].courier_id,
+            courier_name: record.courier_name
+          });
+        }
+        return acc;
+      }, []);
+      
+      if (duplicates.length > 0) {
+        const errors = {};
+        duplicates.forEach(duplicate => {
+          errors[`records.${duplicate.index}.courier_id`] = `${req.body.date}日期的${duplicate.courier_name}记录已存在，如需修改请使用更新功能`;
+        });
+        
         return res.status(400).json({
           success: false,
-          errors: {
-            date: `${req.body.date}日期已存在发货记录，请使用更新接口修改`
-          }
+          errors
         });
       }
       
