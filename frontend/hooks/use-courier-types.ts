@@ -1,0 +1,277 @@
+"use client"
+
+import { useState, useEffect, useMemo } from "react"
+import { api, type CourierType, type FilterParams } from "@/services/api"
+import { useToast } from "@/components/ui/use-toast"
+
+export function useCourierTypes() {
+  const { toast } = useToast()
+  const [courierTypes, setCourierTypes] = useState<CourierType[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
+  const [debugInfo, setDebugInfo] = useState<any>(null)
+
+  // 加载数据的函数
+  const fetchCourierTypes = async (params?: FilterParams) => {
+    setIsLoading(true)
+    setError(null)
+    setDebugInfo(null)
+
+    try {
+      console.log("🔍 获取快递类型列表，参数:", params)
+
+      // 根据状态筛选转换为API参数
+      const apiParams: FilterParams = {}
+      if (statusFilter === "active") {
+        apiParams.active_only = true
+      }
+
+      const startTime = performance.now()
+      const data = await api.getCourierTypes(apiParams)
+      const endTime = performance.now()
+
+      console.log(`⏱️ API请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      console.log("📦 获取到的数据:", data)
+
+      // 设置数据
+      setCourierTypes(data)
+
+      // 设置调试信息
+      setDebugInfo({
+        requestTime: new Date().toISOString(),
+        responseTime: `${(endTime - startTime).toFixed(2)}ms`,
+        dataCount: data.length,
+        params: apiParams,
+      })
+
+      // 移除加载成功的toast通知
+      // toast({
+      //   title: "加载成功",
+      //   variant: "success",
+      // })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "获取数据失败"
+      setError(errorMessage)
+      console.error("❌ 获取快递类型数据失败:", err)
+
+      // 设置错误调试信息
+      setDebugInfo({
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      })
+
+      toast({
+        title: "加载失败",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 初始加载数据
+  useEffect(() => {
+    fetchCourierTypes()
+  }, [])
+
+  // 当筛选条件变化时重新加载数据
+  useEffect(() => {
+    fetchCourierTypes()
+  }, [statusFilter])
+
+  // 过滤和排序数据
+  const filteredCourierTypes = useMemo(() => {
+    // 本地搜索过滤
+    return courierTypes
+      .filter((ct) => {
+        // 状态筛选
+        if (statusFilter === "active") {
+          if (!ct.is_active) return false
+        } else if (statusFilter === "inactive") {
+          if (ct.is_active) return false
+        }
+
+        // 搜索过滤
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase()
+          return ct.name.toLowerCase().includes(query) || ct.code.toLowerCase().includes(query)
+        }
+        return true
+      })
+      .sort((a, b) => a.sort_order - b.sort_order)
+  }, [courierTypes, searchQuery, statusFilter])
+
+  // CRUD操作
+  const addCourierType = async (courierType: {
+    name: string
+    code: string
+    remark?: string
+    is_active: boolean
+  }) => {
+    try {
+      setIsLoading(true)
+      console.log("➕ 添加快递类型:", courierType)
+
+      const startTime = performance.now()
+      const newCourierType = await api.createCourierType(courierType)
+      const endTime = performance.now()
+
+      console.log(`⏱️ 添加请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      console.log("✅ 添加成功:", newCourierType)
+
+      // 重新获取列表以确保数据同步
+      await fetchCourierTypes()
+      return newCourierType
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "添加快递类型失败"
+      setError(errorMessage)
+      console.error("❌ 添加快递类型失败:", err)
+
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updateCourierType = async (updatedCourierType: CourierType) => {
+    try {
+      setIsLoading(true)
+      console.log("✏️ 更新快递类型:", updatedCourierType)
+
+      const { id, ...data } = updatedCourierType
+
+      const startTime = performance.now()
+      const result = await api.updateCourierType(id, {
+        name: data.name,
+        code: data.code,
+        remark: data.remark,
+        is_active: Boolean(data.is_active),
+      })
+      const endTime = performance.now()
+
+      console.log(`⏱️ 更新请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      console.log("✅ 更新成功:", result)
+
+      // 重新获取列表以确保数据同步
+      await fetchCourierTypes()
+      return result
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "更新快递类型失败"
+      setError(errorMessage)
+      console.error("❌ 更新快递类型失败:", err)
+
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const deleteCourierType = async (id: number | string) => {
+    try {
+      setIsLoading(true)
+      console.log("🗑️ 删除快递类型:", id)
+
+      const startTime = performance.now()
+      await api.deleteCourierType(id)
+      const endTime = performance.now()
+
+      console.log(`⏱️ 删除请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      console.log("✅ 删除成功")
+
+      // 重新获取列表以确保数据同步
+      await fetchCourierTypes()
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "删除快递类型失败"
+      setError(errorMessage)
+      console.error("❌ 删除快递类型失败:", err)
+
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const toggleCourierTypeStatus = async (id: number | string) => {
+    try {
+      setIsLoading(true)
+      console.log("🔄 切换快递类型状态:", id)
+
+      const startTime = performance.now()
+      const result = await api.toggleCourierTypeStatus(id)
+      const endTime = performance.now()
+
+      console.log(`⏱️ 状态切换请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      console.log("✅ 状态切换成功:", result)
+
+      // 重新获取列表以确保数据同步
+      await fetchCourierTypes()
+      return result
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "切换快递类型状态失败"
+      setError(errorMessage)
+      console.error("❌ 切换快递类型状态失败:", err)
+
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const reorderCourierTypes = async (reorderedTypes: CourierType[]) => {
+    try {
+      setIsLoading(true)
+      console.log("🔃 更新快递类型排序")
+
+      // 准备排序数据
+      const items = reorderedTypes.map((item, index) => ({
+        id: item.id,
+        sort_order: index + 1,
+      }))
+
+      console.log("📊 排序数据:", items)
+
+      const startTime = performance.now()
+      await api.updateCourierTypesOrder(items)
+      const endTime = performance.now()
+
+      console.log(`⏱️ 排序请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      console.log("✅ 排序更新成功")
+
+      // 更新本地状态，避免重新请求
+      setCourierTypes(
+        reorderedTypes.map((item, index) => ({
+          ...item,
+          sort_order: index + 1,
+        })),
+      )
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "更新排序失败"
+      setError(errorMessage)
+      console.error("❌ 更新排序失败:", err)
+
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return {
+    courierTypes,
+    filteredCourierTypes,
+    isLoading,
+    error,
+    searchQuery,
+    statusFilter,
+    debugInfo,
+    setSearchQuery,
+    setStatusFilter,
+    addCourierType,
+    updateCourierType,
+    deleteCourierType,
+    toggleCourierTypeStatus,
+    reorderCourierTypes,
+    refetch: fetchCourierTypes,
+  }
+}
