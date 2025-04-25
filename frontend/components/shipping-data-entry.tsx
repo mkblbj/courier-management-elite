@@ -42,6 +42,14 @@ export function ShippingDataEntry() {
     return () => clearTimeout(timer)
   }, [])
 
+  const handleSingleSubmit = async (data: Parameters<typeof addEntry>[0]) => {
+    await addEntry(data);
+  }
+
+  const handleBatchSubmit = async (data: Parameters<typeof addBatchEntries>[0]) => {
+    await addBatchEntries(data);
+  }
+
   return (
     <div className="space-y-6">
       <Alert
@@ -73,10 +81,10 @@ export function ShippingDataEntry() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="single" className="animate-fade-in">
-            <SingleEntryForm onSubmit={addEntry} isLoading={isLoading} />
+            <SingleEntryForm onSubmit={handleSingleSubmit} isLoading={isLoading} />
           </TabsContent>
           <TabsContent value="batch" className="animate-fade-in">
-            <BatchEntryForm onSubmit={addBatchEntries} isLoading={isLoading} />
+            <BatchEntryForm onSubmit={handleBatchSubmit} isLoading={isLoading} />
           </TabsContent>
         </Tabs>
       </Card>
