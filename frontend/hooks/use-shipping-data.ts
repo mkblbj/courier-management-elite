@@ -51,6 +51,7 @@ export function useShippingData() {
     month?: number
     quarter?: number
     year?: number
+    courierTypeId?: string | number
   }>({
     type: "date",
     date: today,
@@ -92,6 +93,11 @@ export function useShippingData() {
           params.quarter = filter.quarter
         } else if (filter.type === "year" && filter.year) {
           params.year = filter.year
+        }
+        
+        // 添加快递类型ID筛选
+        if (filter.courierTypeId) {
+          params.courier_id = filter.courierTypeId
         }
       }
 
@@ -325,16 +331,16 @@ export function useShippingData() {
     fetchShippingData(1, pageSize, filter) // 更改筛选条件时重置到第一页
   }
 
-  // 添加一个函数来清除筛选条件
+  // 清除所有筛选器
   const clearFilters = () => {
-    // 重置为今天的日期
     const today = format(new Date(), "yyyy-MM-dd")
-    const todayFilter = {
-      type: "date" as const,
+    setDateFilter({
+      type: "date",
       date: today,
-    }
-    setDateFilter(todayFilter)
-    fetchShippingData(1, pageSize, todayFilter)
+      courierTypeId: undefined // 确保快递类型筛选也被清除
+    })
+    changePage(1) // 重置到第一页
+    fetchShippingData(1, pageSize, { type: "date", date: today })
   }
 
   // 更新返回值以包含新函数

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
-import { Edit2, Trash2, RefreshCw, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Edit2, Trash2, RefreshCw, ChevronLeft, ChevronRight, X, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -25,6 +25,9 @@ import type { ShippingEntry } from "@/hooks/use-shipping-data"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { toast } from "@/components/ui/use-toast"
+import { CourierTypeSelector } from "@/components/courier-type-selector"
+import { Separator } from "@/components/ui/separator"
+import { api } from "@/services/api"
 
 interface RecentEntriesProps {
   entries: ShippingEntry[]
@@ -63,6 +66,10 @@ export function RecentEntries({
   const [editingEntry, setEditingEntry] = useState<ShippingEntry | null>(null)
   const [isVisible, setIsVisible] = useState(false)
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
+  const [courierTypeId, setCourierTypeId] = useState<string | number | undefined>(
+    dateFilter?.courierTypeId
+  )
+  const [courierTypes, setCourierTypes] = useState<Record<string, string>>({}) // 缓存快递类型 id -> name
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -70,6 +77,25 @@ export function RecentEntries({
     }, 100)
 
     return () => clearTimeout(timer)
+  }, [])
+
+  // 加载快递类型数据
+  useEffect(() => {
+    const fetchCourierTypes = async () => {
+      try {
+        const types = await api.getCourierTypes({ active_only: true })
+        // 创建id -> name的映射对象
+        const typesMap: Record<string, string> = {}
+        types.forEach((type) => {
+          typesMap[type.id.toString()] = type.name
+        })
+        setCourierTypes(typesMap)
+      } catch (err) {
+        console.error("获取快递类型失败:", err)
+      }
+    }
+
+    fetchCourierTypes()
   }, [])
 
   // 当日期筛选变化时，更新日期范围状态
@@ -82,6 +108,9 @@ export function RecentEntries({
     } else {
       setDateRange(undefined)
     }
+    
+    // 同步快递类型ID
+    setCourierTypeId(dateFilter?.courierTypeId)
   }, [dateFilter])
 
   const handleDelete = async () => {
@@ -130,57 +159,88 @@ export function RecentEntries({
         type: "range",
         dateFrom: format(range.from, "yyyy-MM-dd"),
         dateTo: format(range.to, "yyyy-MM-dd"),
+        courierTypeId,
       })
     }
   }
 
+  const handleCourierTypeChange = (value: string | number | undefined) => {
+    setCourierTypeId(value)
+    
+    // 创建新的筛选条件对象，保留当前的日期筛选设置
+    const newFilter = { ...dateFilter, courierTypeId: value };
+    onFilterChange(newFilter);
+  }
+
   const handleResetFilters = () => {
     setDateRange(undefined)
+    setCourierTypeId(undefined)
     onClearFilters()
   }
 
   const getFilterDescription = () => {
-    if (!dateFilter) return null
+    const descriptions: string[] = [];
 
+    if (!dateFilter) return null;
+
+    // 添加日期筛选描述
     if (dateFilter.type === "date" && dateFilter.date) {
-      return `日期: ${dateFilter.date}`
+      descriptions.push(`日期: ${dateFilter.date}`);
     } else if (dateFilter.type === "range" && dateFilter.dateFrom && dateFilter.dateTo) {
-      return `日期范围: ${dateFilter.dateFrom} 至 ${dateFilter.dateTo}`
+      descriptions.push(`日期范围: ${dateFilter.dateFrom} 至 ${dateFilter.dateTo}`);
     } else if (dateFilter.type === "week" && dateFilter.week) {
-      return `第 ${dateFilter.week} 周`
+      descriptions.push(`第 ${dateFilter.week} 周`);
     } else if (dateFilter.type === "month" && dateFilter.month) {
-      return `${dateFilter.month} 月`
+      descriptions.push(`${dateFilter.month} 月`);
     } else if (dateFilter.type === "quarter" && dateFilter.quarter) {
-      return `第 ${dateFilter.quarter} 季度`
+      descriptions.push(`第 ${dateFilter.quarter} 季度`);
     } else if (dateFilter.type === "year" && dateFilter.year) {
-      return `${dateFilter.year} 年`
+      descriptions.push(`${dateFilter.year} 年`);
     }
-
-    return null
+    
+    // 添加快递类型筛选描述
+    if (dateFilter.courierTypeId && courierTypes[dateFilter.courierTypeId.toString()]) {
+      descriptions.push(`快递类型: ${courierTypes[dateFilter.courierTypeId.toString()]}`);
+    }
+    
+    // 如果有多个描述，用逗号连接
+    return descriptions.join(", ");
   }
 
   return (
     <TooltipProvider>
       <Card className="border">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <CardTitle className="text-lg font-medium whitespace-nowrap">最近录入记录</CardTitle>
-
+              
+              {/* 日期范围选择器和快递类型选择器 */}
+              <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
+              
               <div className="flex items-center gap-2">
-                {dateFilter && (
-                  <div className="flex items-center gap-2 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-sm">
-                    <span>{getFilterDescription()}</span>
-                    <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full" onClick={onClearFilters}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-                <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
+                <Package className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                <CourierTypeSelector 
+                  value={courierTypeId} 
+                  onChange={handleCourierTypeChange} 
+                  placeholder="选择快递类型"
+                  className="w-[150px] sm:w-[180px]"
+                />
               </div>
+              
+              {/* 显示当前筛选条件 */}
+              {(dateFilter || courierTypeId) && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-sm flex-shrink-0">
+                  <span className="truncate max-w-[250px]">{getFilterDescription()}</span>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full flex-shrink-0" onClick={onClearFilters}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
             </div>
-
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleRefresh} disabled={isLoading}>
+            
+            {/* 刷新按钮 */}
+            <Button variant="outline" size="icon" className="h-8 w-8 ml-auto" onClick={handleRefresh} disabled={isLoading}>
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </Button>
           </div>
