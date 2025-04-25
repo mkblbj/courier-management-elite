@@ -46,11 +46,7 @@ export function useCourierTypes() {
         params: apiParams,
       })
 
-      // 移除加载成功的toast通知
-      // toast({
-      //   title: "加载成功",
-      //   variant: "success",
-      // })
+      // 不显示加载成功通知 - 简化UI交互
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "获取数据失败"
       setError(errorMessage)

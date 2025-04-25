@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import {
   shippingApi,
   type ShippingRecord,
@@ -102,6 +102,8 @@ export function useShippingData() {
       setTotalRecords(response.pagination.total)
       setCurrentPage(response.pagination.currentPage)
       setTotalPages(response.pagination.lastPage)
+      
+      // 不显示加载成功通知 - 简化UI交互
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "获取发货数据失败"
       setError(errorMessage)

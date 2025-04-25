@@ -1,3 +1,6 @@
+// 这个文件已不再使用，请使用 @/components/ui/use-toast 代替
+// 文件保留但功能已合并到组件库中
+
 "use client"
 
 // Inspired by react-hot-toast library

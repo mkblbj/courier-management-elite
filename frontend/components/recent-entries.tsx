@@ -97,23 +97,23 @@ export function RecentEntries({
   }
 
   const handleRefresh = () => {
-    // 先显示刷新中的提示
-    toast({
-      title: "刷新中",
-      duration: 1000, // 较短的刷新提示时间
-    })
-
-    // 执行刷新操作
-    onRefresh();
-    
-    // 使用setTimeout确保"刷新中"和"刷新成功"两个提示不会同时出现
-    setTimeout(() => {
+    // 显示刷新中和结果通知
+    try {
+      onRefresh();
+      // 刷新成功提示
       toast({
         title: "刷新成功",
         description: "数据已更新",
-        duration: 3000,
+        variant: "default",
       });
-    }, 1200); // 稍微延迟，确保在"刷新中"提示后显示
+    } catch (error) {
+      // 刷新失败提示
+      toast({
+        title: "刷新失败",
+        description: error instanceof Error ? error.message : "获取数据失败",
+        variant: "destructive",
+      });
+    }
   }
 
   const handlePageChange = (page: number) => {

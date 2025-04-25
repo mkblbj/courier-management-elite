@@ -139,30 +139,25 @@ export function CourierTypeManagement() {
     }
   }
 
-  // 修改handleRefresh函数，添加刷新成功的通知
+  // 修改handleRefresh函数，简化通知
   const handleRefresh = () => {
-    toast({
-      title: "刷新中",
-      duration: 1000,
-    })
-    
-    refetch()
-      .then(() => {
-        // 延迟显示成功通知，确保通知不会被刷新过程覆盖
-        setTimeout(() => {
-          toast({
-            title: "刷新成功",
-            variant: "default",
-            duration: 3000,
-          })
-        }, 1200)
-      })
-      .catch((err) => {
-        toast({
-          title: "刷新失败",
-          variant: "destructive",
-        })
-      })
+    // 显示刷新中和结果通知
+    try {
+      refetch();
+      // 刷新成功提示
+      toast({
+        title: "刷新成功",
+        description: "数据已更新",
+        variant: "default",
+      });
+    } catch (error) {
+      // 刷新失败提示
+      toast({
+        title: "刷新失败",
+        description: error instanceof Error ? error.message : "获取数据失败",
+        variant: "destructive",
+      });
+    }
   }
 
   // 修改testToast函数

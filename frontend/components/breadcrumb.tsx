@@ -17,9 +17,10 @@ interface BreadcrumbItem {
 
 interface BreadcrumbProps {
   items: BreadcrumbItem[]
+  action?: React.ReactNode
 }
 
-export function Breadcrumb({ items }: BreadcrumbProps) {
+export function Breadcrumb({ items, action }: BreadcrumbProps) {
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -33,44 +34,58 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
   return (
     <nav
       className={cn(
-        "flex items-center text-sm mb-6 bg-white px-4 py-3 rounded-lg border transition-all duration-300",
+        "flex items-center justify-between text-sm mb-6 bg-white px-4 py-3 rounded-lg border transition-all duration-300",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
       )}
     >
-      <Link
-        href="/"
-        className={cn(
-          "flex items-center text-gray-600 hover:text-blue-600 transition-colors transition-all duration-300 delay-100",
-          isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4",
-        )}
-      >
-        <Home className="h-4 w-4 mr-1" />
-        <span>首页</span>
-      </Link>
-
-      {items.map((item, index) => (
-        <div
-          key={item.href}
+      <div className="flex items-center">
+        <Link
+          href="/"
           className={cn(
-            "flex items-center transition-all duration-300",
-            isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4",
+            "flex items-center text-gray-600 hover:text-blue-600 transition-colors transition-all duration-300 delay-100",
+            isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4",
           )}
-          style={{ transitionDelay: `${(index + 1) * 100}ms` }}
         >
-          <ChevronRight className="h-4 w-4 mx-2 text-gray-400" />
-          {item.active ? (
-            <span className="font-medium text-blue-600 flex items-center">
-              {item.icon && <span className="mr-1.5">{item.icon}</span>}
-              {item.label}
-            </span>
-          ) : (
-            <Link href={item.href} className="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
-              {item.icon && <span className="mr-1.5">{item.icon}</span>}
-              {item.label}
-            </Link>
+          <Home className="h-4 w-4 mr-1" />
+          <span>首页</span>
+        </Link>
+
+        {items.map((item, index) => (
+          <div
+            key={item.href}
+            className={cn(
+              "flex items-center transition-all duration-300",
+              isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4",
+            )}
+            style={{ transitionDelay: `${(index + 1) * 100}ms` }}
+          >
+            <ChevronRight className="h-4 w-4 mx-2 text-gray-400" />
+            {item.active ? (
+              <span className="font-medium text-blue-600 flex items-center">
+                {item.icon && <span className="mr-1.5">{item.icon}</span>}
+                {item.label}
+              </span>
+            ) : (
+              <Link href={item.href} className="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                {item.icon && <span className="mr-1.5">{item.icon}</span>}
+                {item.label}
+              </Link>
+            )}
+          </div>
+        ))}
+      </div>
+      
+      {action && (
+        <div 
+          className={cn(
+            "transition-all duration-300",
+            isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
           )}
+          style={{ transitionDelay: "200ms" }}
+        >
+          {action}
         </div>
-      ))}
+      )}
     </nav>
   )
 }

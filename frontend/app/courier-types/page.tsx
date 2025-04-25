@@ -30,11 +30,6 @@ export default function CourierTypesPage() {
         items={[
           { label: "快递类型管理", href: "/courier-types", active: true, icon: <FileInput className="h-3.5 w-3.5" /> },
         ]}
-      />
-      <PageHeader
-        title="快递类型管理"
-        description="管理系统中可用的快递类型及其属性"
-        className="max-w-5xl mx-auto"
         action={
           <Link href="/shipping-data">
             <Button className="bg-blue-600 hover:bg-blue-700 transition-all duration-300">
@@ -43,6 +38,11 @@ export default function CourierTypesPage() {
             </Button>
           </Link>
         }
+      />
+      <PageHeader
+        title="快递类型管理"
+        description="管理系统中可用的快递类型及其属性"
+        className="max-w-5xl mx-auto"
       />
       <div
         className={cn(

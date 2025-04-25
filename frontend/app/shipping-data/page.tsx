@@ -29,11 +29,6 @@ export default function ShippingDataPage() {
         items={[
           { label: "发货数据录入", href: "/shipping-data", active: true, icon: <Edit className="h-3.5 w-3.5" /> },
         ]}
-      />
-      <PageHeader
-        title="发货数据录入"
-        description="记录每日各快递类型的发货数量"
-        className="w-full"
         action={
           <Link href="/courier-types">
             <Button className="bg-blue-600 hover:bg-blue-700 transition-all duration-300">
@@ -42,6 +37,11 @@ export default function ShippingDataPage() {
             </Button>
           </Link>
         }
+      />
+      <PageHeader
+        title="发货数据录入"
+        description="记录每日各快递类型的发货数量"
+        className="w-full"
       />
       <div
         className={cn(
