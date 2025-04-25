@@ -1,0 +1,54 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 项目开发与编辑规则
+
+## Critical Rules
+
+- 前端开发使用的技术栈和相关文件都位于 frontend 目录下
+- 后端开发使用的技术栈和相关文件都位于 backend 目录下
+- 创建新文件时，根据文件类型选择正确的目录和文件名规范
+- 编辑现有文件时，确保不破坏项目的目录结构和命名约定
+- 当讨论代码架构时，区分前端架构和后端架构，并参考各自目录下的现有结构
+- 运行命令时，确保在正确的目录上下文中执行（如npm命令在前端目录，node命令在后端目录）
+- 提供的代码示例应当符合项目中相应部分已有的代码风格和约定
+
+## Examples
+
+<example>
+用户: "我需要添加一个新的前端组件"
+助手: *应当确保在frontend目录下创建文件，并遵循前端的命名约定*
+```
+edit_file(target_file="frontend/src/components/NewComponent.jsx", instructions="创建新组件", code_edit="...")
+```
+
+用户: "后端需要一个新的API路由"
+助手: *应当确保在backend目录下创建文件，并遵循后端的路由命名约定*
+```
+edit_file(target_file="backend/src/routes/newRoute.js", instructions="创建新路由", code_edit="...")
+```
+
+用户: "我想运行前端开发服务器"
+助手: *应当确保命令在前端目录下执行*
+```
+run_terminal_cmd(command="cd frontend && npm run dev", explanation="在前端目录下启动开发服务器")
+```
+</example>
+
+<example type="invalid">
+用户: "添加新前端组件"
+助手: *执行*
+```
+edit_file(target_file="src/components/NewComponent.jsx", instructions="创建新组件", code_edit="...")
+```
+*错误：应当使用frontend/src/components路径*
+
+用户: "运行前端开发服务器"
+助手: *执行*
+```
+run_terminal_cmd(command="npm run dev", explanation="启动开发服务器")
+```
+*错误：没有先切换到frontend目录*
+</example>

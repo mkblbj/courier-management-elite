@@ -53,3 +53,5 @@ temp/
 out/
 .nuxt/
 .serverless/ 
+# Private individual user cursor rules
+.cursor/rules/_*.mdc

@@ -1,0 +1,109 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 数据模型与结构规则
+
+## Critical Rules
+
+- 后端数据库表名应使用复数形式（如couriers而非courier）
+- 表字段名应使用snake_case命名法
+- 每个表应有自增的id主键
+- 软删除应使用is_deleted字段（默认为0）
+- 所有表应包含created_at和updated_at时间戳字段
+- 布尔值在数据库中应使用tinyint(1)存储（0=false, 1=true）
+- 前端TypeScript类型定义应位于types目录或各文件顶部
+- 数据模型应在models目录下定义，每个表对应一个模型文件
+- API返回的数据结构应与前端类型定义一致
+- 敏感字段不应直接返回给前端
+
+## Examples
+
+<example>
+// 后端数据库模型定义 (models/courierModel.js)
+const db = require('../db');
+
+const CourierModel = {
+  // 获取所有快递公司
+  async getAll(activeOnly = false) {
+    let query = `
+      SELECT id, name, code, remark, is_active, sort_order, created_at, updated_at
+      FROM courier
+      WHERE is_deleted = 0
+    `;
+    
+    if (activeOnly) {
+      query += ` AND is_active = 1`;
+    }
+    
+    query += ` ORDER BY sort_order ASC, id ASC`;
+    
+    const [rows] = await db.query(query);
+    return rows;
+  },
+  
+  // 创建快递公司
+  async create(courierData) {
+    const { name, code, remark, is_active } = courierData;
+    
+    // 获取当前最大排序值
+    const [rows] = await db.query(
+      `SELECT MAX(sort_order) as max_sort FROM courier WHERE is_deleted = 0`
+    );
+    const sortOrder = (rows[0].max_sort || 0) + 10;
+    
+    const [result] = await db.query(
+      `INSERT INTO courier (name, code, remark, is_active, sort_order) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, code, remark, is_active, sortOrder]
+    );
+    
+    return { id: result.insertId, name, code, remark, is_active, sort_order: sortOrder };
+  }
+};
+
+module.exports = CourierModel;
+
+// 前端TypeScript类型定义 (types/index.ts)
+export interface CourierType {
+  id: number | string;
+  name: string;
+  code: string;
+  remark?: string;
+  is_active: number | boolean;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+</example>
+
+<example type="invalid">
+// 不符合规范的数据库操作
+const db = require('../db');
+
+// 使用复数表名
+function getCouriers() {
+  return db.query('SELECT * FROM couriers');
+}
+
+// 不使用参数化查询，存在SQL注入风险
+function getCourierById(id) {
+  return db.query(`SELECT * FROM courier WHERE id = ${id}`);
+}
+
+// 不符合规范的前端类型定义
+// 使用any类型
+const processCourierData = (data: any) => {
+  // 处理数据
+};
+
+// 类型与数据库不一致
+interface Courier {
+  // 与数据库字段命名不一致
+  ID: number;
+  courierName: string;
+  courierCode: string;
+  isActive: boolean; // 数据库中实际是number
+}
+</example>
