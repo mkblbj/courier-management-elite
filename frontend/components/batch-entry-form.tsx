@@ -177,7 +177,12 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
-                            disabled={(date) => date > new Date() || date < new Date("2000-01-01")}
+                            disabled={(date) => {
+                              const today = new Date();
+                              const twoDaysLater = new Date();
+                              twoDaysLater.setDate(today.getDate() + 2);
+                              return date > twoDaysLater || date < new Date("2000-01-01");
+                            }}
                             initialFocus
                           />
                         </PopoverContent>

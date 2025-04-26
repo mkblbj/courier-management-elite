@@ -132,6 +132,17 @@ export default function DashboardPage() {
       })
       setTodayStats(todayStatsResponse || { total: { total: 0 }, by_courier: [] }) // 添加默认值
 
+      // 获取明日总数数据
+      const tomorrow = format(new Date(new Date().setDate(new Date().getDate() + 1)), "yyyy-MM-dd")
+      const tomorrowStatsResponse = await shippingApi.getShippingStats({
+        date: tomorrow,
+      })
+      
+      // 更新shippingData中的明日数据
+      if (shippingData.fetchTomorrowData) {
+        await shippingData.fetchTomorrowData()
+      }
+
       const monthlyStatsResponse = await shippingApi.getShippingStats({
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
@@ -293,10 +304,20 @@ export default function DashboardPage() {
                     <div className="col-span-3 text-center text-gray-500 py-2">暂无活跃快递类型</div>
                   )}
                 </div>
-                <div className="mt-6 pt-4 border-t border-gray-200 flex flex-col items-center">
-                  <div className="text-sm text-gray-500 mb-1">今日总数</div>
-                  <div className="text-4xl font-bold" style={{ color: '#16803C' }}>
-                    {todayStats.total && todayStats.total.total ? todayStats.total.total : 0}
+                <div className="mt-6 pt-4 border-t border-gray-200 flex flex-col">
+                  <div className="flex w-full">
+                    <div className="w-4/5 flex flex-col items-center">
+                      <div className="text-sm text-gray-500 mb-1">今日总数</div>
+                      <div className="text-4xl font-bold" style={{ color: '#16803C' }}>
+                        {todayStats.total && todayStats.total.total ? todayStats.total.total : 0}
+                      </div>
+                    </div>
+                    <div className="w-1/5 flex flex-col items-center border-l border-gray-200">
+                      <div className="text-sm text-gray-500 mb-1">预计明日总数</div>
+                      <div className="text-4xl font-bold text-blue-600">
+                        {shippingData.tomorrowTotal || 0}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -341,12 +362,27 @@ export default function DashboardPage() {
                 </div>
                 
                 <div className="grid grid-cols-7 gap-1 mt-auto">
-                  {dailyData.map((day, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div className="text-sm font-medium">{day.total || 0}</div>
-                      <div className="text-xs text-gray-500">{format(new Date(day.date), 'dd')}</div>
-                    </div>
-                  ))}
+                  {dailyData.map((day, index) => {
+                    const dayDate = new Date(day.date);
+                    const isToday = format(dayDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                    return (
+                      <div key={index} className="flex flex-col items-center p-2">
+                        <div className={cn(
+                          "text-sm font-medium mb-1",
+                          isToday ? "text-blue-600 font-bold" : ""
+                        )}>
+                          {day.total || 0}
+                        </div>
+                        <div className="text-xs text-gray-900">{format(dayDate, 'MM-dd')}</div>
+                        <div className={cn(
+                          "text-xs",
+                          isToday ? "text-blue-600 font-semibold" : "text-gray-500"
+                        )}>
+                          {format(dayDate, 'EEE')}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : (

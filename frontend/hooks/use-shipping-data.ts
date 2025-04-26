@@ -43,6 +43,7 @@ export function useShippingData() {
   const { toast } = useToast()
   // 默认设置为今天的日期筛选
   const today = format(new Date(), "yyyy-MM-dd")
+  const tomorrow = format(new Date(new Date().setDate(new Date().getDate() + 1)), "yyyy-MM-dd")
   const [dateFilter, setDateFilter] = useState<{
     type?: "date" | "range" | "week" | "month" | "quarter" | "year"
     date?: string
@@ -65,6 +66,25 @@ export function useShippingData() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [tomorrowTotal, setTomorrowTotal] = useState(0)
+
+  // 获取明日总数
+  const fetchTomorrowData = async () => {
+    try {
+      const response = await shippingApi.getShippingStats({
+        date: tomorrow,
+      })
+      setTomorrowTotal(response?.total?.total || 0)
+    } catch (err) {
+      console.error("获取明日数据失败:", err)
+      setTomorrowTotal(0)
+    }
+  }
+
+  // 初始加载明日数据
+  useEffect(() => {
+    fetchTomorrowData()
+  }, [tomorrow])
 
   // 修改 fetchShippingData 函数以支持筛选
   const fetchShippingData = async (page = currentPage, perPage = pageSize, filter = dateFilter) => {
@@ -351,17 +371,19 @@ export function useShippingData() {
     currentPage,
     totalPages,
     pageSize,
-    dateFilter,
+    isLoading,
+    error,
     addEntry,
     addBatchEntries,
     updateEntry,
     deleteEntry,
-    isLoading,
-    error,
     refetch: fetchShippingData,
     changePage,
     changePageSize,
+    dateFilter,
     setFilter,
     clearFilters,
+    tomorrowTotal,
+    fetchTomorrowData,
   }
 }
