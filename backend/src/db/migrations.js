@@ -31,7 +31,7 @@ async function runMigrations() {
 /**
  * 创建快递公司表
  */
-async function createCouriersTable() {
+async function createCouriersTable(connection) {
   const sql = `
     CREATE TABLE IF NOT EXISTS couriers (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -45,14 +45,18 @@ async function createCouriersTable() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `;
   
-  await db.query(sql);
+  if (connection) {
+    await connection.query(sql);
+  } else {
+    await db.query(sql);
+  }
   console.log('couriers表创建成功');
 }
 
 /**
  * 创建发货记录表
  */
-async function createShippingRecordsTable() {
+async function createShippingRecordsTable(connection) {
   const sql = `
     CREATE TABLE IF NOT EXISTS shipping_records (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -66,14 +70,18 @@ async function createShippingRecordsTable() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `;
   
-  await db.query(sql);
+  if (connection) {
+    await connection.query(sql);
+  } else {
+    await db.query(sql);
+  }
   console.log('shipping_records表创建成功');
 }
 
 /**
  * 为shipping_records表添加唯一约束
  */
-async function addShippingRecordsConstraints() {
+async function addShippingRecordsConstraints(connection) {
   try {
     // 检查唯一约束是否已存在
     const checkConstraintSql = `
@@ -82,7 +90,14 @@ async function addShippingRecordsConstraints() {
       AND TABLE_NAME = 'shipping_records' 
       AND CONSTRAINT_NAME = 'unique_date_courier'
     `;
-    const [constraintResults] = await db.pool.execute(checkConstraintSql);
+    
+    let constraintResults;
+    
+    if (connection) {
+      [constraintResults] = await connection.query(checkConstraintSql);
+    } else {
+      [constraintResults] = await db.pool.execute(checkConstraintSql);
+    }
     
     // 如果约束不存在，添加它
     if (constraintResults[0].count === 0) {
@@ -91,7 +106,12 @@ async function addShippingRecordsConstraints() {
         ALTER TABLE shipping_records
         ADD CONSTRAINT unique_date_courier UNIQUE (date, courier_id)
       `;
-      await db.query(addUniqueConstraintSql);
+      
+      if (connection) {
+        await connection.query(addUniqueConstraintSql);
+      } else {
+        await db.query(addUniqueConstraintSql);
+      }
       console.log('唯一约束 unique_date_courier 添加成功');
     } else {
       console.log('唯一约束 unique_date_courier 已存在，跳过添加');
@@ -107,9 +127,16 @@ async function addShippingRecordsConstraints() {
 /**
  * 添加测试数据
  */
-async function seedData() {
+async function seedData(connection) {
   // 检查是否已经有数据
-  const [rows] = await db.pool.execute('SELECT COUNT(*) as count FROM couriers');
+  let rows;
+  
+  if (connection) {
+    [rows] = await connection.query('SELECT COUNT(*) as count FROM couriers');
+  } else {
+    [rows] = await db.pool.execute('SELECT COUNT(*) as count FROM couriers');
+  }
+  
   if (rows[0].count > 0) {
     console.log('已存在数据，跳过测试数据创建');
     return;
@@ -125,7 +152,11 @@ async function seedData() {
     ('ゆうパック', 'upk', '全国性快递企业，服务范围广', 1, 5)
   `;
   
-  await db.query(couriersSql);
+  if (connection) {
+    await connection.query(couriersSql);
+  } else {
+    await db.query(couriersSql);
+  }
   console.log('测试快递公司数据添加成功');
   
   // 添加测试发货记录
@@ -141,9 +172,24 @@ async function seedData() {
     (?, 1, 4, '前天测试数据')
   `;
   
-  await db.query(recordsSql, [today, today, yesterday, twoDaysAgo]);
+  if (connection) {
+    await connection.query(recordsSql, [today, today, yesterday, twoDaysAgo]);
+  } else {
+    await db.query(recordsSql, [today, today, yesterday, twoDaysAgo]);
+  }
   console.log('测试发货记录数据添加成功');
 }
 
-// 执行迁移
-runMigrations(); 
+// 如果直接执行这个文件，则运行迁移
+if (require.main === module) {
+  runMigrations();
+}
+
+// 导出供其他模块使用
+module.exports = {
+  runMigrations,
+  createCouriersTable,
+  createShippingRecordsTable,
+  addShippingRecordsConstraints,
+  seedData
+}; 

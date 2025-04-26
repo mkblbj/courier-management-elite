@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: courier-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_USER: ${DB_USER:-courier_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-courier_password}
+      # 注意：数据库会在应用启动时由应用自动创建
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - courier-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: courier-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DB_HOST: mysql
+      DB_USER: ${DB_USER:-courier_user}
+      DB_PASSWORD: ${DB_PASSWORD:-courier_password}
+      DB_NAME: ${DB_NAME:-courier_db}
+      DB_PORT: 3306
+    ports:
+      - "3000:3000"
+    networks:
+      - courier-network
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: courier-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3000}
+    ports:
+      - "80:3000"
+    networks:
+      - courier-network
+
+networks:
+  courier-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local 
