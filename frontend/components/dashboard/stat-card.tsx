@@ -13,12 +13,25 @@ interface StatCardProps {
   isLoading: boolean
   isVisible: boolean
   delay?: number
+  className?: string
 }
 
-export function StatCard({ title, icon, children, isLoading, isVisible, delay = 0 }: StatCardProps) {
+export function StatCard({ 
+  title, 
+  icon, 
+  children, 
+  isLoading, 
+  isVisible, 
+  delay = 0,
+  className 
+}: StatCardProps) {
   return (
     <Card
-      className={cn("transition-all duration-500", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
+      className={cn(
+        "transition-all duration-500", 
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+        className
+      )}
       style={{ transitionDelay: `${delay}ms` }}
     >
       <CardHeader className="pb-2">

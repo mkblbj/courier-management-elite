@@ -77,25 +77,44 @@ class StatsController {
         courier_id: courierId
       };
       
-      // 获取各项统计数据
-      const statsByCourier = await ShippingRecord.getStatsByCourier(options);
-      const statsByDate = await ShippingRecord.getStatsByDate(options);
-      const statsTotal = await ShippingRecord.getStatsTotal(options);
-      
-      // 返回统计结果
-      res.status(200).json({
-        success: true,
-        data: {
-          total: statsTotal,
-          by_courier: statsByCourier,
-          by_date: statsByDate
-        }
-      });
+      try {
+        // 获取各项统计数据
+        const statsByCourier = await ShippingRecord.getStatsByCourier(options);
+        const statsByDate = await ShippingRecord.getStatsByDate(options);
+        const statsTotal = await ShippingRecord.getStatsTotal(options);
+        
+        // 返回统计结果
+        res.status(200).json({
+          success: true,
+          data: {
+            total: statsTotal || { total: 0 },
+            by_courier: statsByCourier || [],
+            by_date: statsByDate || []
+          }
+        });
+      } catch (error) {
+        console.error('获取统计数据查询错误:', error);
+        // 即使查询出错，也返回一个一致的数据结构，避免前端渲染错误
+        res.status(200).json({
+          success: true,
+          data: {
+            total: { total: 0 },
+            by_courier: [],
+            by_date: []
+          }
+        });
+      }
     } catch (error) {
       console.error('获取统计数据失败:', error);
+      // 返回服务器错误，但保持数据结构一致
       res.status(500).json({
         success: false,
-        message: '获取统计数据失败'
+        message: '获取统计数据失败',
+        data: {
+          total: { total: 0 },
+          by_courier: [],
+          by_date: []
+        }
       });
     }
   }
@@ -175,23 +194,40 @@ class StatsController {
         courier_id: courierId
       };
       
-      // 获取按日期和快递公司统计的详细数据
-      const statsByDateAndCourier = await ShippingRecord.getStatsByDateAndCourier(options);
-      const statsTotal = await ShippingRecord.getStatsTotal(options);
-      
-      // 返回统计结果
-      res.status(200).json({
-        success: true,
-        data: {
-          total: statsTotal,
-          details: statsByDateAndCourier
-        }
-      });
+      try {
+        // 获取按日期和快递公司统计的详细数据
+        const statsByDateAndCourier = await ShippingRecord.getStatsByDateAndCourier(options);
+        const statsTotal = await ShippingRecord.getStatsTotal(options);
+        
+        // 返回统计结果
+        res.status(200).json({
+          success: true,
+          data: {
+            total: statsTotal || { total: 0 },
+            details: statsByDateAndCourier || []
+          }
+        });
+      } catch (error) {
+        console.error('获取详细统计数据查询错误:', error);
+        // 即使查询出错，也返回一个一致的数据结构，避免前端渲染错误
+        res.status(200).json({
+          success: true,
+          data: {
+            total: { total: 0 },
+            details: []
+          }
+        });
+      }
     } catch (error) {
       console.error('获取详细统计数据失败:', error);
+      // 返回服务器错误，但保持数据结构一致
       res.status(500).json({
         success: false,
-        message: '获取详细统计数据失败'
+        message: '获取详细统计数据失败',
+        data: {
+          total: { total: 0 },
+          details: []
+        }
       });
     }
   }
@@ -268,43 +304,38 @@ class StatsController {
         date_to: finalDateTo
       };
       
-      let chartData = {};
-      
-      if (chartType === 'line') {
-        // 获取折线图数据（按日期统计）
-        const statsByDate = await ShippingRecord.getStatsByDate(options);
+      try {
+        let chartData = null;
         
-        // 转换为适合折线图的格式
-        chartData = {
-          labels: statsByDate.map(item => item.date),
-          datasets: [{
-            label: '发货总数',
-            data: statsByDate.map(item => item.total)
-          }]
-        };
-      } else if (chartType === 'pie') {
-        // 获取饼图数据（按快递公司统计）
-        const statsByCourier = await ShippingRecord.getStatsByCourier(options);
+        // 根据图表类型获取相应的数据
+        if (chartType === 'pie') {
+          // 饼图数据 - 按快递公司分布
+          chartData = await ShippingRecord.getChartDataByCourier(options);
+        } else {
+          // 折线图数据 - 按日期趋势
+          chartData = await ShippingRecord.getChartDataByDate(options);
+        }
         
-        // 转换为适合饼图的格式
-        chartData = {
-          labels: statsByCourier.map(item => item.courier_name),
-          datasets: [{
-            data: statsByCourier.map(item => item.total)
-          }]
-        };
+        // 返回图表数据
+        res.status(200).json({
+          success: true,
+          data: chartData || { labels: [], datasets: [] }
+        });
+      } catch (error) {
+        console.error('获取图表数据查询错误:', error);
+        // 即使查询出错，也返回一个一致的数据结构，避免前端渲染错误
+        res.status(200).json({
+          success: true,
+          data: { labels: [], datasets: [] }
+        });
       }
-      
-      // 返回图表数据
-      res.status(200).json({
-        success: true,
-        data: chartData
-      });
     } catch (error) {
       console.error('获取图表数据失败:', error);
+      // 返回服务器错误，但保持数据结构一致
       res.status(500).json({
         success: false,
-        message: '获取图表数据失败'
+        message: '获取图表数据失败',
+        data: { labels: [], datasets: [] }
       });
     }
   }

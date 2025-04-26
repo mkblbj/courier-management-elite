@@ -557,6 +557,66 @@ class ShippingRecord {
     const result = await db.query(sql, [id]);
     return result.affectedRows > 0;
   }
+
+  /**
+   * 获取按日期统计的图表数据
+   * @param {Object} options 查询选项
+   * @returns {Promise<Object>} 适合折线图的数据格式
+   */
+  async getChartDataByDate(options = {}) {
+    try {
+      // 获取按日期统计的数据
+      const statsByDate = await this.getStatsByDate(options);
+      
+      // 转换为适合折线图的格式
+      return {
+        labels: statsByDate.map(item => item.date),
+        datasets: [{
+          label: '发货总数',
+          data: statsByDate.map(item => item.total)
+        }]
+      };
+    } catch (error) {
+      console.error('获取按日期统计的图表数据失败:', error);
+      // 返回默认空图表数据
+      return {
+        labels: [],
+        datasets: [{
+          label: '发货总数',
+          data: []
+        }]
+      };
+    }
+  }
+
+  /**
+   * 获取按快递公司统计的图表数据
+   * @param {Object} options 查询选项
+   * @returns {Promise<Object>} 适合饼图的数据格式
+   */
+  async getChartDataByCourier(options = {}) {
+    try {
+      // 获取按快递公司统计的数据
+      const statsByCourier = await this.getStatsByCourier(options);
+      
+      // 转换为适合饼图的格式
+      return {
+        labels: statsByCourier.map(item => item.courier_name),
+        datasets: [{
+          data: statsByCourier.map(item => item.total)
+        }]
+      };
+    } catch (error) {
+      console.error('获取按快递公司统计的图表数据失败:', error);
+      // 返回默认空图表数据
+      return {
+        labels: [],
+        datasets: [{
+          data: []
+        }]
+      };
+    }
+  }
 }
 
 module.exports = new ShippingRecord(); 

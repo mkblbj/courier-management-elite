@@ -1,0 +1,140 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# API数据显示问题排查流程
+
+## Critical Rules
+
+- 检查问题描述，确定哪些组件无法正确显示数据，并找到相关代码
+- 分析前端组件的渲染条件，找出触发"无数据"显示的条件判断
+- 检查API调用和响应处理逻辑，特别关注`.data`字段的访问方式
+- 确认API响应格式是否与前端代码的预期匹配
+- 在前端添加数据默认值和错误处理机制，增强代码健壯性
+- 修改API服务确保处理不同格式的响应，并提供一致的数据结构
+- 必要时更新后端控制器，确保API响应格式一致
+- 对于必需的新功能，添加相应的后端方法支持前端需求
+- 全面测试修改，确保所有相关组件正确显示数据
+
+## 系统性排查步骤
+
+### 1. 分析前端数据显示问题
+
+- 检查组件的条件渲染逻辑 (如 `data && data.items ? ... : "暂无数据"`)
+- 找出组件期望的数据结构和格式
+- 使用调试工具查看组件实际接收到的数据
+
+### 2. 检查API调用和响应处理
+
+- 跟踪API调用返回的原始响应
+- 确认解构赋值或数据访问方式是否正确 (如 `response.data` vs `response`)
+- 查找可能的类型错误或空值引用
+
+### 3. 增强前端代码健壯性
+
+- 添加默认值防止空引用 (如 `data || { items: [] }`)
+- 增加错误处理机制捕获API异常
+- 提供回退数据确保UI正常渲染
+
+### 4. 修改API服务适应不同响应格式
+
+- 使API服务兼容各种可能的响应格式
+- 提供一致的数据结构返回给前端组件
+- 添加显式错误处理并返回有意义的默认值
+
+### 5. 更新后端控制器提供一致格式
+
+- 确保API响应格式一致，即使在出错情况下
+- 在成功和失败情况下保持相同的数据结构
+- 添加错误处理并记录详细日志便于调试
+
+### 6. 完整测试确认问题解决
+
+- 测试所有修改过的前端组件
+- 验证各种情况下数据显示正常
+- 确认错误处理机制有效工作
+
+## Examples
+
+<example>
+// 问题：仪表盘统计卡片无数据显示
+
+// 1. 分析前端渲染条件
+{todayStats && todayStats.by_courier ? (
+  <div>正常显示数据</div>
+) : (
+  <div>暂无数据</div>
+)}
+
+// 2. 改进前端代码，添加默认值和健壯性处理
+const todayStatsResponse = await shippingApi.getShippingStats({
+  date: today,
+});
+setTodayStats(todayStatsResponse || { total: { total: 0 }, by_courier: [] });
+
+// 3. 修改API服务处理不同响应格式
+try {
+  const response = await fetchWithErrorHandling<any>(`${STATS_ENDPOINT}${queryString}`);
+  
+  if (response && typeof response === 'object') {
+    if (response.data) {
+      return response.data;
+    } else if (response.total || response.by_courier) {
+      return response;
+    } else {
+      return { total: { total: 0 }, by_courier: [], by_date: [] };
+    }
+  }
+  
+  return { total: { total: 0 }, by_courier: [], by_date: [] };
+} catch (error) {
+  console.error("获取统计数据失败:", error);
+  return { total: { total: 0 }, by_courier: [], by_date: [] };
+}
+
+// 4. 更新后端控制器确保响应格式一致
+try {
+  // 获取各项统计数据
+  const statsByCourier = await ShippingRecord.getStatsByCourier(options);
+  const statsByDate = await ShippingRecord.getStatsByDate(options);
+  const statsTotal = await ShippingRecord.getStatsTotal(options);
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      total: statsTotal || { total: 0 },
+      by_courier: statsByCourier || [],
+      by_date: statsByDate || []
+    }
+  });
+} catch (error) {
+  // 即使出错，也返回一致的数据结构
+  res.status(200).json({
+    success: true,
+    data: {
+      total: { total: 0 },
+      by_courier: [],
+      by_date: []
+    }
+  });
+}
+</example>
+
+<example type="invalid">
+// 错误做法：前端直接引用可能不存在的数据，不进行错误处理
+const data = await api.getData();
+setStats(data.items); // 如果data为null或没有items属性将报错
+
+// 错误做法：API服务不处理响应格式变化
+return fetchWithErrorHandling<any>(`${ENDPOINT}${queryString}`);
+
+// 错误做法：后端控制器在错误时不返回一致的数据结构
+} catch (error) {
+  res.status(500).json({
+    success: false,
+    message: '获取数据失败'
+    // 缺少data字段，前端无法处理一致的响应格式
+  });
+}
+</example>

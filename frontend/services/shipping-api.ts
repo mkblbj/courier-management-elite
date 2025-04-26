@@ -254,31 +254,108 @@ export const shippingApi = {
 
     // 构建查询参数
     const queryParams = new URLSearchParams()
+
+    if (params?.date) queryParams.append("date", params.date)
     if (params?.date_from) queryParams.append("date_from", params.date_from)
     if (params?.date_to) queryParams.append("date_to", params.date_to)
     if (params?.courier_id) queryParams.append("courier_id", params.courier_id.toString())
-    if (params?.courier_ids) queryParams.append("courier_ids", params.courier_ids)
+    if (params?.week) queryParams.append("week", params.week.toString())
+    if (params?.month) queryParams.append("month", params.month.toString())
+    if (params?.quarter) queryParams.append("quarter", params.quarter.toString())
+    if (params?.year) queryParams.append("year", params.year.toString())
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
-    return fetchWithErrorHandling<any>(`${STATS_ENDPOINT}${queryString}`)
+    
+    try {
+      const response = await fetchWithErrorHandling<any>(`${STATS_ENDPOINT}${queryString}`)
+      
+      // 处理响应数据格式，适应不同的API返回格式
+      // 如果response已经是目标数据格式（有total、by_courier等属性），则直接返回
+      // 如果response包含.data属性，则返回.data
+      if (response && typeof response === 'object') {
+        if (response.data) {
+          return response.data
+        } else if (response.total || response.by_courier || response.by_date) {
+          return response
+        } else {
+          // 返回默认格式
+          return { 
+            total: { total: 0 }, 
+            by_courier: [], 
+            by_date: [] 
+          }
+        }
+      }
+      
+      // 返回默认数据格式
+      return { 
+        total: { total: 0 }, 
+        by_courier: [], 
+        by_date: [] 
+      }
+    } catch (error) {
+      console.error("获取统计数据失败:", error)
+      // 出错时返回默认数据格式
+      return { 
+        total: { total: 0 }, 
+        by_courier: [], 
+        by_date: [] 
+      }
+    }
   },
 
-  // 获取发货统计数据详情
+  // 获取发货统计详细数据
   async getShippingStatsDetails(params?: ShippingFilterParams): Promise<any> {
     // 获取当前环境配置
     const envConfig = useEnvStore.getState()
     const API_BASE_URL = envConfig.apiBaseUrl
-    const STATS_DETAILS_ENDPOINT = `${API_BASE_URL}/api/shipping/stats/details`
+    const STATS_ENDPOINT = `${API_BASE_URL}/api/shipping/stats/details`
 
     // 构建查询参数
     const queryParams = new URLSearchParams()
+
+    if (params?.date) queryParams.append("date", params.date)
     if (params?.date_from) queryParams.append("date_from", params.date_from)
     if (params?.date_to) queryParams.append("date_to", params.date_to)
     if (params?.courier_id) queryParams.append("courier_id", params.courier_id.toString())
-    if (params?.courier_ids) queryParams.append("courier_ids", params.courier_ids)
+    if (params?.week) queryParams.append("week", params.week.toString())
+    if (params?.month) queryParams.append("month", params.month.toString())
+    if (params?.quarter) queryParams.append("quarter", params.quarter.toString())
+    if (params?.year) queryParams.append("year", params.year.toString())
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
-    return fetchWithErrorHandling<any>(`${STATS_DETAILS_ENDPOINT}${queryString}`)
+    
+    try {
+      const response = await fetchWithErrorHandling<any>(`${STATS_ENDPOINT}${queryString}`)
+      
+      // 处理响应数据格式，适应不同的API返回格式
+      if (response && typeof response === 'object') {
+        if (response.data) {
+          return response.data
+        } else if (response.total || response.details) {
+          return response
+        } else {
+          // 返回默认格式
+          return { 
+            total: { total: 0 }, 
+            details: [] 
+          }
+        }
+      }
+      
+      // 返回默认数据格式
+      return { 
+        total: { total: 0 }, 
+        details: [] 
+      }
+    } catch (error) {
+      console.error("获取统计详情数据失败:", error)
+      // 出错时返回默认数据格式
+      return { 
+        total: { total: 0 }, 
+        details: [] 
+      }
+    }
   },
 
   // 导出数据
@@ -303,14 +380,47 @@ export const shippingApi = {
 
     // 构建查询参数
     const queryParams = new URLSearchParams()
+
     if (params?.date_from) queryParams.append("date_from", params.date_from)
     if (params?.date_to) queryParams.append("date_to", params.date_to)
-    if (params?.courier_id) queryParams.append("courier_id", params.courier_id.toString())
-    if (params?.courier_ids) queryParams.append("courier_ids", params.courier_ids)
     if (params?.type) queryParams.append("type", params.type)
+    if (params?.week) queryParams.append("week", params.week.toString())
+    if (params?.month) queryParams.append("month", params.month.toString())
+    if (params?.quarter) queryParams.append("quarter", params.quarter.toString())
+    if (params?.year) queryParams.append("year", params.year.toString())
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
     
-    return fetchWithErrorHandling<any>(`${CHART_ENDPOINT}${queryString}`)
+    try {
+      const response = await fetchWithErrorHandling<any>(`${CHART_ENDPOINT}${queryString}`)
+      
+      // 处理响应数据格式
+      if (response && typeof response === 'object') {
+        if (response.data) {
+          return response.data
+        } else if (response.labels || response.datasets) {
+          return response
+        } else {
+          // 返回默认格式
+          return { 
+            labels: [], 
+            datasets: [{ data: [] }] 
+          }
+        }
+      }
+      
+      // 返回默认数据格式
+      return { 
+        labels: [], 
+        datasets: [{ data: [] }] 
+      }
+    } catch (error) {
+      console.error("获取图表数据失败:", error)
+      // 出错时返回默认数据格式
+      return { 
+        labels: [], 
+        datasets: [{ data: [] }] 
+      }
+    }
   }
 }
