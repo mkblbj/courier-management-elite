@@ -8,7 +8,7 @@ const StatsController = require('../controllers/StatsController');
 
 const router = express.Router();
 
-// 获取统计数据
+// 获取统计数据 - 摘要
 router.get('/stats/summary', StatsController.getStats);
 
 // 添加兼容路由处理前端/api/shipping/stats的请求
@@ -17,7 +17,7 @@ router.get('/stats', StatsController.getStats);
 // 获取详细统计数据
 router.get('/stats/details', StatsController.getDetailedStats);
 
-// 获取图表数据
+// 获取图表数据 - 添加一个指向StatsController.getChartData的路由
 router.get('/stats/charts', StatsController.getChartData);
 
 // 添加兼容路由处理前端/api/shipping/chart的请求

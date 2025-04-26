@@ -222,50 +222,85 @@ class ShippingRecord {
    * @returns {Promise<Array>} 统计数据数组
    */
   async getStatsByCourier(options = {}) {
-    let sql = `SELECT c.id as courier_id, c.name as courier_name, 
-               SUM(sr.quantity) as total, 
-               COUNT(sr.id) as record_count 
-               FROM ${this.table} sr
-               LEFT JOIN couriers c ON sr.courier_id = c.id`;
+    console.log('执行getStatsByCourier查询，参数:', JSON.stringify(options));
     
-    const params = [];
-    const whereClauses = [];
-    
-    // 添加时间筛选条件
-    if (options.date) {
-      whereClauses.push("DATE(sr.date) = DATE(?)");
-      params.push(options.date);
+    try {
+      // 首先获取所有激活状态的快递公司，确保即使没有数据也能返回所有快递类型
+      const allCouriersQuery = `SELECT id, name FROM couriers WHERE is_active = 1 ORDER BY sort_order ASC, name ASC`;
+      const allCouriers = await db.query(allCouriersQuery);
+      
+      console.log(`找到 ${allCouriers.length} 个激活的快递类型`);
+      
+      // 构建按快递公司分组的统计查询
+      let sql = `SELECT c.id as courier_id, c.name as courier_name, 
+                 SUM(sr.quantity) as total, 
+                 COUNT(sr.id) as record_count 
+                 FROM ${this.table} sr
+                 LEFT JOIN couriers c ON sr.courier_id = c.id`;
+      
+      const params = [];
+      const whereClauses = [];
+      
+      // 添加时间筛选条件
+      if (options.date) {
+        whereClauses.push("DATE(sr.date) = DATE(?)");
+        params.push(options.date);
+      }
+      
+      if (options.date_from) {
+        whereClauses.push("DATE(sr.date) >= DATE(?)");
+        params.push(options.date_from);
+      }
+      
+      if (options.date_to) {
+        whereClauses.push("DATE(sr.date) <= DATE(?)");
+        params.push(options.date_to);
+      }
+      
+      // 按快递公司ID筛选
+      if (options.courier_id) {
+        whereClauses.push("sr.courier_id = ?");
+        params.push(parseInt(options.courier_id, 10));
+      }
+      
+      // 组合WHERE子句
+      if (whereClauses.length > 0) {
+        sql += " WHERE " + whereClauses.join(" AND ");
+      }
+      
+      // 按快递公司分组
+      sql += " GROUP BY sr.courier_id";
+      
+      // 按总数排序
+      sql += " ORDER BY total DESC";
+      
+      console.log('执行快递公司统计SQL:', sql);
+      const statsResults = await db.query(sql, params);
+      console.log(`查询结果: ${statsResults.length} 个快递公司有数据`);
+      
+      // 将结果转换为键值对，以便于合并
+      const courierStatsMap = {};
+      statsResults.forEach(stat => {
+        courierStatsMap[stat.courier_id] = stat;
+      });
+      
+      // 合并所有快递公司信息，为没有数据的快递公司添加零值
+      const finalResults = allCouriers.map(courier => {
+        return courierStatsMap[courier.id] || {
+          courier_id: courier.id,
+          courier_name: courier.name,
+          total: 0,
+          record_count: 0
+        };
+      });
+      
+      console.log(`最终结果: ${finalResults.length} 个快递公司统计数据`);
+      
+      return finalResults;
+    } catch (error) {
+      console.error('获取快递公司统计数据失败:', error);
+      return []; // 返回空数组作为默认值
     }
-    
-    if (options.date_from) {
-      whereClauses.push("DATE(sr.date) >= DATE(?)");
-      params.push(options.date_from);
-    }
-    
-    if (options.date_to) {
-      whereClauses.push("DATE(sr.date) <= DATE(?)");
-      params.push(options.date_to);
-    }
-    
-    // 按快递公司ID筛选
-    if (options.courier_id) {
-      whereClauses.push("sr.courier_id = ?");
-      params.push(parseInt(options.courier_id, 10));
-    }
-    
-    // 组合WHERE子句
-    if (whereClauses.length > 0) {
-      sql += " WHERE " + whereClauses.join(" AND ");
-    }
-    
-    // 按快递公司分组
-    sql += " GROUP BY sr.courier_id";
-    
-    // 按总数排序
-    sql += " ORDER BY total DESC";
-    
-    const results = await db.query(sql, params);
-    return results;
   }
 
   /**
@@ -596,16 +631,49 @@ class ShippingRecord {
    */
   async getChartDataByCourier(options = {}) {
     try {
+      console.log('正在获取按快递公司统计的饼图数据，参数:', options);
+      
       // 获取按快递公司统计的数据
       const statsByCourier = await this.getStatsByCourier(options);
       
+      // 记录统计数据
+      console.log('获取到的原始统计数据:', JSON.stringify(statsByCourier));
+      
+      // 数据为空时处理
+      if (!statsByCourier || !statsByCourier.length) {
+        console.log('没有找到快递公司统计数据，返回空数据');
+        return {
+          labels: [],
+          datasets: [{
+            data: []
+          }]
+        };
+      }
+      
+      // 过滤掉数量为0的记录以避免饼图显示问题
+      const validStats = statsByCourier.filter(item => item.total > 0);
+      
+      // 所有记录都是0的情况
+      if (!validStats.length) {
+        console.log('所有快递数量均为0，返回空数据');
+        return {
+          labels: [],
+          datasets: [{
+            data: []
+          }]
+        };
+      }
+      
       // 转换为适合饼图的格式
-      return {
-        labels: statsByCourier.map(item => item.courier_name),
+      const chartData = {
+        labels: validStats.map(item => item.courier_name),
         datasets: [{
-          data: statsByCourier.map(item => item.total)
+          data: validStats.map(item => Number(item.total) || 0)
         }]
       };
+      
+      console.log('处理后的饼图数据:', JSON.stringify(chartData));
+      return chartData;
     } catch (error) {
       console.error('获取按快递公司统计的图表数据失败:', error);
       // 返回默认空图表数据

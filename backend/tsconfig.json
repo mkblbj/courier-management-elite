@@ -11,8 +11,10 @@
       "@/*": ["*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["node"]
+    "types": [],
+    "allowJs": true,
+    "checkJs": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.js"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 } 

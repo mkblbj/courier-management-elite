@@ -392,21 +392,46 @@ export const shippingApi = {
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
     
     try {
+      console.log(`正在请求图表数据: ${CHART_ENDPOINT}${queryString}`)
       const response = await fetchWithErrorHandling<any>(`${CHART_ENDPOINT}${queryString}`)
+      console.log("图表API返回原始数据:", response)
       
       // 处理响应数据格式
       if (response && typeof response === 'object') {
-        if (response.data) {
-          return response.data
-        } else if (response.labels || response.datasets) {
-          return response
-        } else {
-          // 返回默认格式
-          return { 
-            labels: [], 
-            datasets: [{ data: [] }] 
+        // 首先尝试从标准API响应结构中提取数据
+        if (response.success === true && response.data) {
+          console.log("从标准API响应中提取data字段")
+          const extractedData = response.data
+          
+          // 检查提取的数据是否有效
+          if (extractedData.labels && Array.isArray(extractedData.labels) && 
+              extractedData.datasets && Array.isArray(extractedData.datasets)) {
+            console.log("提取的数据有效，返回")
+            return extractedData
           }
         }
+        
+        // 检查是否直接是图表数据格式
+        if (response.labels && Array.isArray(response.labels) && 
+            response.datasets && Array.isArray(response.datasets)) {
+          console.log("响应已经是图表数据格式，直接返回")
+          return response
+        }
+        
+        // 尝试其他可能的数据结构
+        if (response.by_courier && Array.isArray(response.by_courier) && response.by_courier.length > 0) {
+          console.log("从by_courier字段构建饼图数据")
+          return {
+            labels: response.by_courier.map((item: any) => item.courier_name || '未知'),
+            datasets: [{
+              data: response.by_courier.map((item: any) => item.total || 0)
+            }]
+          }
+        }
+        
+        console.warn("无法识别的数据格式，返回默认结构", response)
+      } else {
+        console.warn("API响应无效或为空", response)
       }
       
       // 返回默认数据格式

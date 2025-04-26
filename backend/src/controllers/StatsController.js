@@ -239,6 +239,8 @@ class StatsController {
    */
   async getChartData(req, res) {
     try {
+      console.log('收到图表数据请求，参数:', req.query);
+      
       // 解析请求参数
       const dateFrom = req.query.date_from || null;
       const dateTo = req.query.date_to || null;
@@ -247,6 +249,8 @@ class StatsController {
       const month = req.query.month ? parseInt(req.query.month) : null;
       const quarter = req.query.quarter ? parseInt(req.query.quarter) : null;
       const year = req.query.year ? parseInt(req.query.year) : null;
+      
+      console.log(`请求的图表类型: ${chartType}`);
       
       // 处理按年、月、季度、周筛选，转换为date_from和date_to
       let calculatedDateFrom = null;
@@ -299,6 +303,8 @@ class StatsController {
       const finalDateFrom = dateFrom || calculatedDateFrom;
       const finalDateTo = dateTo || calculatedDateTo;
       
+      console.log(`最终确定的日期范围: ${finalDateFrom} 至 ${finalDateTo}`);
+      
       const options = {
         date_from: finalDateFrom,
         date_to: finalDateTo
@@ -310,23 +316,37 @@ class StatsController {
         // 根据图表类型获取相应的数据
         if (chartType === 'pie') {
           // 饼图数据 - 按快递公司分布
+          console.log('获取饼图数据 - 按快递公司分布');
           chartData = await ShippingRecord.getChartDataByCourier(options);
         } else {
           // 折线图数据 - 按日期趋势
+          console.log('获取折线图数据 - 按日期趋势');
           chartData = await ShippingRecord.getChartDataByDate(options);
+        }
+        
+        // 检查返回的图表数据
+        if (!chartData || 
+            !chartData.labels || 
+            !Array.isArray(chartData.labels) || 
+            !chartData.datasets || 
+            !Array.isArray(chartData.datasets)) {
+          console.log('图表数据格式无效，返回默认结构');
+          chartData = { labels: [], datasets: [{ data: [] }] };
+        } else {
+          console.log(`图表数据获取成功: ${chartData.labels.length} 个标签, ${chartData.datasets[0]?.data?.length || 0} 个数据点`);
         }
         
         // 返回图表数据
         res.status(200).json({
           success: true,
-          data: chartData || { labels: [], datasets: [] }
+          data: chartData
         });
       } catch (error) {
         console.error('获取图表数据查询错误:', error);
         // 即使查询出错，也返回一个一致的数据结构，避免前端渲染错误
         res.status(200).json({
           success: true,
-          data: { labels: [], datasets: [] }
+          data: { labels: [], datasets: [{ data: [] }] }
         });
       }
     } catch (error) {
@@ -335,7 +355,7 @@ class StatsController {
       res.status(500).json({
         success: false,
         message: '获取图表数据失败',
-        data: { labels: [], datasets: [] }
+        data: { labels: [], datasets: [{ data: [] }] }
       });
     }
   }

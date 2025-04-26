@@ -564,7 +564,7 @@ export default function DashboardPage() {
                   title="查看本月统计"
                   description="查看本月的发货统计数据"
                   icon={<BarChart2 className="h-5 w-5" />}
-                  href="/shipping-data"
+                  href="/stats"
                 />
                 <QuickActionCard
                   title="导出报表"

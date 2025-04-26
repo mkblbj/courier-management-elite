@@ -63,7 +63,7 @@ export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsC
   // 准备饼图数据
   const pieData = data.byCourier.map((item) => ({
     name: item.courierName,
-    value: item.total,
+    value: Number(item.total) || 0,
   }))
 
   // 准备柱状图数据

@@ -72,15 +72,15 @@ export function useStatisticsData() {
       // 处理数据格式
       const formattedData: StatisticsData = {
         summary: {
-          total: summaryResponse.total.total || 0,
-          recordCount: summaryResponse.total.record_count || 0,
-          daysCount: summaryResponse.total.days_count || 0,
+          total: Number(summaryResponse.total.total) || 0,
+          recordCount: Number(summaryResponse.total.record_count) || 0,
+          daysCount: Number(summaryResponse.total.days_count) || 0,
         },
         byCourier: summaryResponse.by_courier.map((item: any) => ({
           courierId: item.courier_id,
           courierName: item.courier_name,
-          total: item.total,
-          recordCount: item.record_count,
+          total: Number(item.total) || 0,
+          recordCount: Number(item.record_count) || 0,
         })),
         byDate: [],
       }
@@ -100,12 +100,12 @@ export function useStatisticsData() {
         }
 
         const dateData = dateMap.get(item.date)
-        dateData.total += item.total
+        dateData.total += Number(item.total) || 0
         dateData.recordCount += 1
         dateData.details.push({
           courierId: item.courier_id,
           courierName: item.courier_name,
-          total: item.total,
+          total: Number(item.total) || 0,
         })
       })
 
