@@ -3,9 +3,10 @@
 import { Button } from "@/components/ui/button"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { CourierTypeSelector } from "@/components/courier-type-selector"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { DateRange } from "react-day-picker"
+import { subDays } from "date-fns"
 
 interface StatisticsFilterProps {
   timeRange: DateRange
@@ -13,6 +14,7 @@ interface StatisticsFilterProps {
   onTimeRangeChange: (range: DateRange) => void
   onCourierTypeFilterChange: (types: string[]) => void
   onRefresh: () => void
+  onReset?: () => void
   isLoading: boolean
 }
 
@@ -22,6 +24,7 @@ export function StatisticsFilter({
   onTimeRangeChange,
   onCourierTypeFilterChange,
   onRefresh,
+  onReset,
   isLoading,
 }: StatisticsFilterProps) {
   // 处理快递类型选择变化
@@ -34,6 +37,26 @@ export function StatisticsFilter({
       onCourierTypeFilterChange([value.toString()])
     }
   }
+
+  // 处理重置功能
+  const handleReset = () => {
+    const today = new Date();
+    const sevenDaysAgo = subDays(today, 6);
+    
+    // 重置日期范围为默认的最近7天
+    onTimeRangeChange({
+      from: sevenDaysAgo,
+      to: today,
+    });
+    
+    // 重置快递类型为"全部"
+    onCourierTypeFilterChange([]);
+    
+    // 调用外部的重置函数（如果有的话）
+    if (onReset) {
+      onReset();
+    }
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -48,6 +71,11 @@ export function StatisticsFilter({
 
       <Button variant="outline" size="icon" onClick={onRefresh} disabled={isLoading} className="h-10 w-10">
         <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+      </Button>
+      
+      <Button variant="ghost" size="sm" onClick={handleReset} className="h-10 px-3">
+        <RotateCcw className="h-4 w-4 mr-1" />
+        重置
       </Button>
     </div>
   )

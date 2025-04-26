@@ -62,7 +62,7 @@ export function useStatisticsData() {
 
       // 如果选择了特定快递类型
       if (courierTypeFilter.length > 0) {
-        params.courier_ids = courierTypeFilter.join(",")
+        params.courier_id = courierTypeFilter[0]
       }
 
       // 获取统计数据
@@ -76,12 +76,12 @@ export function useStatisticsData() {
           recordCount: Number(summaryResponse.total.record_count) || 0,
           daysCount: Number(summaryResponse.total.days_count) || 0,
         },
-        byCourier: summaryResponse.by_courier.map((item: any) => ({
+        byCourier: summaryResponse.by_courier ? summaryResponse.by_courier.map((item: any) => ({
           courierId: item.courier_id,
           courierName: item.courier_name,
           total: Number(item.total) || 0,
           recordCount: Number(item.record_count) || 0,
-        })),
+        })) : [],
         byDate: [],
       }
 
@@ -89,25 +89,27 @@ export function useStatisticsData() {
       const dateMap = new Map<string, any>()
 
       // 先按日期分组
-      detailsResponse.details.forEach((item: any) => {
-        if (!dateMap.has(item.date)) {
-          dateMap.set(item.date, {
-            date: item.date,
-            total: 0,
-            recordCount: 0,
-            details: [],
-          })
-        }
+      if (detailsResponse && detailsResponse.details && Array.isArray(detailsResponse.details)) {
+        detailsResponse.details.forEach((item: any) => {
+          if (!dateMap.has(item.date)) {
+            dateMap.set(item.date, {
+              date: item.date,
+              total: 0,
+              recordCount: 0,
+              details: [],
+            })
+          }
 
-        const dateData = dateMap.get(item.date)
-        dateData.total += Number(item.total) || 0
-        dateData.recordCount += 1
-        dateData.details.push({
-          courierId: item.courier_id,
-          courierName: item.courier_name,
-          total: Number(item.total) || 0,
+          const dateData = dateMap.get(item.date)
+          dateData.total += Number(item.total) || 0
+          dateData.recordCount += 1
+          dateData.details.push({
+            courierId: item.courier_id,
+            courierName: item.courier_name,
+            total: Number(item.total) || 0,
+          })
         })
-      })
+      }
 
       // 转换为数组并排序
       formattedData.byDate = Array.from(dateMap.values()).sort(

@@ -109,14 +109,14 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
       // 构建导出参数
       const exportParams = {
         format: fileFormat,
-        dateFrom: exportTimeRange.from ? format(exportTimeRange.from, "yyyy-MM-dd") : "",
-        dateTo: exportTimeRange.to ? format(exportTimeRange.to, "yyyy-MM-dd") : "",
+        date_from: exportTimeRange.from ? format(exportTimeRange.from, "yyyy-MM-dd") : "",
+        date_to: exportTimeRange.to ? format(exportTimeRange.to, "yyyy-MM-dd") : "",
         granularity,
-        includeDetails,
-        courierTypes: selectedCourierTypes,
-        fileName,
-        processInBackground,
-        notificationEmail: processInBackground ? notificationEmail : undefined,
+        include_details: includeDetails,
+        courier_ids: selectedCourierTypes.length > 0 ? selectedCourierTypes.join(",") : undefined,
+        filename: fileName,
+        background_process: processInBackground,
+        notification_email: processInBackground ? notificationEmail : undefined,
       }
 
       // 模拟进度更新
@@ -141,7 +141,12 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
       clearInterval(progressInterval)
       setProgress(100)
       setExportStatus("success")
-      setDownloadUrl(response.downloadUrl)
+      
+      if (response && response.downloadUrl) {
+        setDownloadUrl(response.downloadUrl)
+      } else {
+        throw new Error("导出成功但未获取到下载链接")
+      }
 
       toast({
         title: "导出成功",

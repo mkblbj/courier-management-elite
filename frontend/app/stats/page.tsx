@@ -14,14 +14,23 @@ import { ExportDataDialog } from "@/components/stats/export-data-dialog"
 import { useStatisticsData } from "@/hooks/use-statistics-data"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
+import { subDays } from "date-fns"
 
 export default function StatsPage() {
   const [isVisible, setIsVisible] = useState(false)
   const [activeTab, setActiveTab] = useState("table")
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
 
-  const { data, isLoading, error, timeRange, courierTypeFilter, setTimeRange, setCourierTypeFilter, refetch } =
-    useStatisticsData()
+  const { 
+    data, 
+    isLoading, 
+    error, 
+    timeRange, 
+    courierTypeFilter, 
+    setTimeRange, 
+    setCourierTypeFilter, 
+    refetch 
+  } = useStatisticsData()
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -30,6 +39,23 @@ export default function StatsPage() {
 
     return () => clearTimeout(timer)
   }, [])
+
+  // 重置函数 - 将所有筛选条件重置为默认值
+  const handleReset = () => {
+    // 重置为最近7天
+    const today = new Date()
+    const sevenDaysAgo = subDays(today, 6)
+    setTimeRange({
+      from: sevenDaysAgo,
+      to: today,
+    })
+    
+    // 重置快递类型筛选
+    setCourierTypeFilter([])
+    
+    // 重新加载数据
+    refetch()
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -68,6 +94,7 @@ export default function StatsPage() {
                   onTimeRangeChange={setTimeRange}
                   onCourierTypeFilterChange={setCourierTypeFilter}
                   onRefresh={refetch}
+                  onReset={handleReset}
                   isLoading={isLoading}
                 />
               </div>
