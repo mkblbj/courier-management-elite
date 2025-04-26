@@ -1,6 +1,11 @@
 // 导入环境配置和调试工具
 import { useEnvStore, debugLog, debugError } from "@/lib/env-config"
 
+// 获取API基础URL的辅助函数
+function getApiBaseUrl(): string {
+  return useEnvStore.getState().apiBaseUrl
+}
+
 // 通用的请求处理函数
 async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Promise<T> {
   // 获取当前环境配置 - 确保每次请求都获取最新配置
@@ -106,11 +111,7 @@ export interface UpdateCourierTypeRequest {
 export const api = {
   // 获取快递类型列表
   async getCourierTypes(params?: FilterParams): Promise<CourierType[]> {
-    // 获取当前环境配置 - 每次调用API时重新获取
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    debugLog("当前API基础URL:", API_BASE_URL, "环境:", envConfig.env)
-
+    const API_BASE_URL = getApiBaseUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     // 构建查询参数
@@ -123,9 +124,7 @@ export const api = {
 
   // 获取单个快递类型
   async getCourierType(id: number | string): Promise<CourierType> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
+    const API_BASE_URL = getApiBaseUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<CourierType>(`${COURIERS_ENDPOINT}/${id}`)
@@ -133,9 +132,7 @@ export const api = {
 
   // 创建快递类型
   async createCourierType(data: CreateCourierTypeRequest): Promise<CourierType> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
+    const API_BASE_URL = getApiBaseUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<CourierType>(`${COURIERS_ENDPOINT}`, {
@@ -146,9 +143,7 @@ export const api = {
 
   // 更新快递类型
   async updateCourierType(id: number | string, data: UpdateCourierTypeRequest): Promise<CourierType> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
+    const API_BASE_URL = getApiBaseUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<CourierType>(`${COURIERS_ENDPOINT}/${id}`, {
@@ -159,9 +154,7 @@ export const api = {
 
   // 删除快递类型
   async deleteCourierType(id: number | string): Promise<void> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
+    const API_BASE_URL = getApiBaseUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<void>(`${COURIERS_ENDPOINT}/${id}`, {
@@ -171,9 +164,7 @@ export const api = {
 
   // 切换快递类型状态
   async toggleCourierTypeStatus(id: number | string): Promise<{ id: number | string; is_active: number }> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
+    const API_BASE_URL = getApiBaseUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<{ id: number | string; is_active: number }>(`${COURIERS_ENDPOINT}/${id}/toggle`, {
@@ -183,9 +174,7 @@ export const api = {
 
   // 更新快递类型排序
   async updateCourierTypesOrder(items: { id: number | string; sort_order: number }[]): Promise<void> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
+    const API_BASE_URL = getApiBaseUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<void>(`${COURIERS_ENDPOINT}/sort`, {

@@ -86,23 +86,32 @@ export const useEnvStore = create<EnvStore>((set) => {
 // 导出环境配置 (兼容旧代码)
 export const envConfig = useEnvStore.getState()
 
-// 调试日志函数 - 只在调试模式下输出
+// 判断是否应该记录日志的内部辅助函数
+const shouldLog = () => {
+  // 在生产环境中完全禁用日志
+  if (process.env.NODE_ENV === "production") return false
+  
+  // 根据当前环境配置判断是否需要记录日志
+  return useEnvStore.getState().debug
+}
+
+// 调试日志函数 - 在生产环境中完全禁用
 export function debugLog(...args: any[]): void {
-  if (useEnvStore.getState().debug && process.env.NODE_ENV !== "production") {
+  if (shouldLog()) {
     console.log("[DEBUG]", ...args)
   }
 }
 
-// 调试错误日志函数 - 只在调试模式下输出
+// 调试错误日志函数 - 在生产环境中完全禁用
 export function debugError(...args: any[]): void {
-  if (useEnvStore.getState().debug && process.env.NODE_ENV !== "production") {
+  if (shouldLog()) {
     console.error("[ERROR]", ...args)
   }
 }
 
-// 调试警告日志函数 - 只在调试模式下输出
+// 调试警告日志函数 - 在生产环境中完全禁用
 export function debugWarn(...args: any[]): void {
-  if (useEnvStore.getState().debug && process.env.NODE_ENV !== "production") {
+  if (shouldLog()) {
     console.warn("[WARN]", ...args)
   }
 }

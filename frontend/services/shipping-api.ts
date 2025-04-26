@@ -1,6 +1,32 @@
 // 导入环境配置和调试工具
 import { useEnvStore, debugLog, debugError, debugWarn } from "@/lib/env-config"
 
+// 获取API基础URL的辅助函数
+function getApiBaseUrl(): string {
+  return useEnvStore.getState().apiBaseUrl
+}
+
+// 获取Shipping API基础端点
+function getShippingEndpoint(): string {
+  const apiBaseUrl = getApiBaseUrl()
+  return `${apiBaseUrl}/api/shipping`
+}
+
+// 构建查询字符串的辅助函数
+function buildQueryString(params?: Record<string, any>): string {
+  if (!params) return ''
+  
+  const queryParams = new URLSearchParams()
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      queryParams.append(key, value.toString())
+    }
+  })
+  
+  return queryParams.toString() ? `?${queryParams.toString()}` : ''
+}
+
 // 通用的请求处理函数
 async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Promise<T> {
   // 获取当前环境配置 - 确保每次请求都获取最新配置
@@ -34,7 +60,7 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
           // 获取第一个错误字段的错误信息
           const firstErrorField = Object.keys(errorData.errors)[0]
           const errorMessage = errorData.errors[firstErrorField]
-          throw new Error(errorMessage || "API请求失败")
+          throw new Error(errorMessage || `API请求失败: ${response.status}`)
         } else if (errorData.message) {
           throw new Error(errorData.message)
         }
@@ -147,54 +173,21 @@ export interface BatchCreateShippingRecordRequest {
 export const shippingApi = {
   // 获取发货记录列表
   async getShippingRecords(params?: ShippingFilterParams): Promise<PaginatedResponse<ShippingRecord>> {
-    // 获取当前环境配置 - 每次调用API时重新获取
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    debugLog("当前API基础URL:", API_BASE_URL, "环境:", envConfig.env)
-
-    const SHIPPING_ENDPOINT = `${API_BASE_URL}/api/shipping`
-
-    // 构建查询参数
-    const queryParams = new URLSearchParams()
-
-    if (params?.page) queryParams.append("page", params.page.toString())
-    if (params?.perPage) queryParams.append("perPage", params.perPage.toString())
-    if (params?.sortBy) queryParams.append("sortBy", params.sortBy)
-    if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder)
-    if (params?.date) queryParams.append("date", params.date)
-    if (params?.date_from) queryParams.append("date_from", params.date_from)
-    if (params?.date_to) queryParams.append("date_to", params.date_to)
-    if (params?.courier_id) queryParams.append("courier_id", params.courier_id.toString())
-    if (params?.courier_ids) queryParams.append("courier_ids", params.courier_ids)
-    if (params?.min_quantity) queryParams.append("min_quantity", params.min_quantity.toString())
-    if (params?.max_quantity) queryParams.append("max_quantity", params.max_quantity.toString())
-    if (params?.notes_search) queryParams.append("notes_search", params.notes_search)
-    if (params?.week) queryParams.append("week", params.week.toString())
-    if (params?.month) queryParams.append("month", params.month.toString())
-    if (params?.quarter) queryParams.append("quarter", params.quarter.toString())
-    if (params?.year) queryParams.append("year", params.year.toString())
-
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
+    const queryString = buildQueryString(params)
+    
     return fetchWithErrorHandling<PaginatedResponse<ShippingRecord>>(`${SHIPPING_ENDPOINT}${queryString}`)
   },
 
   // 获取单个发货记录
   async getShippingRecord(id: number | string): Promise<ShippingRecord> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    const SHIPPING_ENDPOINT = `${API_BASE_URL}/api/shipping`
-
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
     return fetchWithErrorHandling<ShippingRecord>(`${SHIPPING_ENDPOINT}/${id}`)
   },
 
   // 创建发货记录
   async createShippingRecord(data: CreateShippingRecordRequest): Promise<ShippingRecord> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    const SHIPPING_ENDPOINT = `${API_BASE_URL}/api/shipping`
-
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
     return fetchWithErrorHandling<ShippingRecord>(`${SHIPPING_ENDPOINT}`, {
       method: "POST",
       body: JSON.stringify(data),
@@ -203,11 +196,7 @@ export const shippingApi = {
 
   // 更新发货记录
   async updateShippingRecord(id: number | string, data: CreateShippingRecordRequest): Promise<ShippingRecord> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    const SHIPPING_ENDPOINT = `${API_BASE_URL}/api/shipping`
-
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
     return fetchWithErrorHandling<ShippingRecord>(`${SHIPPING_ENDPOINT}/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
@@ -216,11 +205,7 @@ export const shippingApi = {
 
   // 删除发货记录
   async deleteShippingRecord(id: number | string): Promise<void> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    const SHIPPING_ENDPOINT = `${API_BASE_URL}/api/shipping`
-
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
     return fetchWithErrorHandling<void>(`${SHIPPING_ENDPOINT}/${id}`, {
       method: "DELETE",
     })
@@ -231,11 +216,7 @@ export const shippingApi = {
     created: number
     records: ShippingRecord[]
   }> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    const SHIPPING_ENDPOINT = `${API_BASE_URL}/api/shipping`
-
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
     return fetchWithErrorHandling<{
       created: number
       records: ShippingRecord[]
@@ -247,205 +228,33 @@ export const shippingApi = {
 
   // 获取发货统计数据摘要
   async getShippingStats(params?: ShippingFilterParams): Promise<any> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    const STATS_ENDPOINT = `${API_BASE_URL}/api/shipping/stats`
-
-    // 构建查询参数
-    const queryParams = new URLSearchParams()
-
-    if (params?.date) queryParams.append("date", params.date)
-    if (params?.date_from) queryParams.append("date_from", params.date_from)
-    if (params?.date_to) queryParams.append("date_to", params.date_to)
-    if (params?.courier_id) queryParams.append("courier_id", params.courier_id.toString())
-    if (params?.week) queryParams.append("week", params.week.toString())
-    if (params?.month) queryParams.append("month", params.month.toString())
-    if (params?.quarter) queryParams.append("quarter", params.quarter.toString())
-    if (params?.year) queryParams.append("year", params.year.toString())
-
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
+    const queryString = buildQueryString(params)
     
-    try {
-      const response = await fetchWithErrorHandling<any>(`${STATS_ENDPOINT}${queryString}`)
-      
-      // 处理响应数据格式，适应不同的API返回格式
-      // 如果response已经是目标数据格式（有total、by_courier等属性），则直接返回
-      // 如果response包含.data属性，则返回.data
-      if (response && typeof response === 'object') {
-        if (response.data) {
-          return response.data
-        } else if (response.total || response.by_courier || response.by_date) {
-          return response
-        } else {
-          // 返回默认格式
-          return { 
-            total: { total: 0 }, 
-            by_courier: [], 
-            by_date: [] 
-          }
-        }
-      }
-      
-      // 返回默认数据格式
-      return { 
-        total: { total: 0 }, 
-        by_courier: [], 
-        by_date: [] 
-      }
-    } catch (error) {
-      console.error("获取统计数据失败:", error)
-      // 出错时返回默认数据格式
-      return { 
-        total: { total: 0 }, 
-        by_courier: [], 
-        by_date: [] 
-      }
-    }
+    return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/stats${queryString}`)
   },
 
-  // 获取发货统计详细数据
+  // 获取发货统计数据详情
   async getShippingStatsDetails(params?: ShippingFilterParams): Promise<any> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    const STATS_ENDPOINT = `${API_BASE_URL}/api/shipping/stats/details`
-
-    // 构建查询参数
-    const queryParams = new URLSearchParams()
-
-    if (params?.date) queryParams.append("date", params.date)
-    if (params?.date_from) queryParams.append("date_from", params.date_from)
-    if (params?.date_to) queryParams.append("date_to", params.date_to)
-    if (params?.courier_id) queryParams.append("courier_id", params.courier_id.toString())
-    if (params?.week) queryParams.append("week", params.week.toString())
-    if (params?.month) queryParams.append("month", params.month.toString())
-    if (params?.quarter) queryParams.append("quarter", params.quarter.toString())
-    if (params?.year) queryParams.append("year", params.year.toString())
-
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
+    const queryString = buildQueryString(params)
     
-    try {
-      const response = await fetchWithErrorHandling<any>(`${STATS_ENDPOINT}${queryString}`)
-      
-      // 处理响应数据格式，适应不同的API返回格式
-      if (response && typeof response === 'object') {
-        if (response.data) {
-          return response.data
-        } else if (response.total || response.details) {
-          return response
-        } else {
-          // 返回默认格式
-          return { 
-            total: { total: 0 }, 
-            details: [] 
-          }
-        }
-      }
-      
-      // 返回默认数据格式
-      return { 
-        total: { total: 0 }, 
-        details: [] 
-      }
-    } catch (error) {
-      console.error("获取统计详情数据失败:", error)
-      // 出错时返回默认数据格式
-      return { 
-        total: { total: 0 }, 
-        details: [] 
-      }
-    }
+    return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/stats/details${queryString}`)
   },
 
   // 导出数据
   async exportData(params: any): Promise<{ downloadUrl: string }> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    const EXPORT_ENDPOINT = `${API_BASE_URL}/api/shipping/export`
-
-    return fetchWithErrorHandling<{ downloadUrl: string }>(`${EXPORT_ENDPOINT}`, {
-      method: "POST",
-      body: JSON.stringify(params),
-    })
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
+    const queryString = buildQueryString(params)
+    
+    return fetchWithErrorHandling<{ downloadUrl: string }>(`${SHIPPING_ENDPOINT}/export${queryString}`)
   },
 
   // 获取图表数据
   async getChartData(params?: any): Promise<any> {
-    // 获取当前环境配置
-    const envConfig = useEnvStore.getState()
-    const API_BASE_URL = envConfig.apiBaseUrl
-    const CHART_ENDPOINT = `${API_BASE_URL}/api/shipping/chart`
-
-    // 构建查询参数
-    const queryParams = new URLSearchParams()
-
-    if (params?.date_from) queryParams.append("date_from", params.date_from)
-    if (params?.date_to) queryParams.append("date_to", params.date_to)
-    if (params?.type) queryParams.append("type", params.type)
-    if (params?.week) queryParams.append("week", params.week.toString())
-    if (params?.month) queryParams.append("month", params.month.toString())
-    if (params?.quarter) queryParams.append("quarter", params.quarter.toString())
-    if (params?.year) queryParams.append("year", params.year.toString())
-
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
+    const queryString = buildQueryString(params)
     
-    try {
-      console.log(`正在请求图表数据: ${CHART_ENDPOINT}${queryString}`)
-      const response = await fetchWithErrorHandling<any>(`${CHART_ENDPOINT}${queryString}`)
-      console.log("图表API返回原始数据:", response)
-      
-      // 处理响应数据格式
-      if (response && typeof response === 'object') {
-        // 首先尝试从标准API响应结构中提取数据
-        if (response.success === true && response.data) {
-          console.log("从标准API响应中提取data字段")
-          const extractedData = response.data
-          
-          // 检查提取的数据是否有效
-          if (extractedData.labels && Array.isArray(extractedData.labels) && 
-              extractedData.datasets && Array.isArray(extractedData.datasets)) {
-            console.log("提取的数据有效，返回")
-            return extractedData
-          }
-        }
-        
-        // 检查是否直接是图表数据格式
-        if (response.labels && Array.isArray(response.labels) && 
-            response.datasets && Array.isArray(response.datasets)) {
-          console.log("响应已经是图表数据格式，直接返回")
-          return response
-        }
-        
-        // 尝试其他可能的数据结构
-        if (response.by_courier && Array.isArray(response.by_courier) && response.by_courier.length > 0) {
-          console.log("从by_courier字段构建饼图数据")
-          return {
-            labels: response.by_courier.map((item: any) => item.courier_name || '未知'),
-            datasets: [{
-              data: response.by_courier.map((item: any) => item.total || 0)
-            }]
-          }
-        }
-        
-        console.warn("无法识别的数据格式，返回默认结构", response)
-      } else {
-        console.warn("API响应无效或为空", response)
-      }
-      
-      // 返回默认数据格式
-      return { 
-        labels: [], 
-        datasets: [{ data: [] }] 
-      }
-    } catch (error) {
-      console.error("获取图表数据失败:", error)
-      // 出错时返回默认数据格式
-      return { 
-        labels: [], 
-        datasets: [{ data: [] }] 
-      }
-    }
-  }
+    return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/chart${queryString}`)
+  },
 }

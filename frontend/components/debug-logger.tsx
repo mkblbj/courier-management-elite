@@ -24,10 +24,15 @@ interface LogEntry {
 // 创建一个全局日志存储
 const logs: LogEntry[] = []
 
+// 判断是否可以记录日志
+const canLog = () => {
+  return process.env.NODE_ENV !== "production"
+}
+
 // 添加日志的函数
 export function addLog(level: LogLevel, message: string, data?: any) {
   // 在生产环境中不记录日志
-  if (process.env.NODE_ENV === "production") return
+  if (!canLog()) return
 
   const log: LogEntry = {
     id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
@@ -43,16 +48,23 @@ export function addLog(level: LogLevel, message: string, data?: any) {
     logs.pop()
   }
 
-  // 触发更新
-  window.dispatchEvent(new CustomEvent("debug-log-update"))
+  // 触发更新 - 只在非生产环境中执行
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent("debug-log-update"))
+  }
 }
 
 // 导出便捷函数
-export const logInfo = (message: string, data?: any) => addLog("info", message, data)
-export const logWarn = (message: string, data?: any) => addLog("warn", message, data)
-export const logError = (message: string, data?: any) => addLog("error", message, data)
+export const logInfo = (message: string, data?: any) => canLog() && addLog("info", message, data)
+export const logWarn = (message: string, data?: any) => canLog() && addLog("warn", message, data)
+export const logError = (message: string, data?: any) => canLog() && addLog("error", message, data)
 
 export function DebugLogger() {
+  // 在生产环境中直接返回null
+  if (process.env.NODE_ENV === "production") {
+    return null
+  }
+  
   const { debug } = useEnvStore()
   const [isOpen, setIsOpen] = useState(false)
   const [localLogs, setLocalLogs] = useState<LogEntry[]>([])
@@ -63,6 +75,9 @@ export function DebugLogger() {
   }, [])
 
   useEffect(() => {
+    // 只在非生产环境中执行
+    if (process.env.NODE_ENV === "production") return
+    
     // 初始加载日志
     setLocalLogs([...logs])
 
@@ -98,8 +113,7 @@ export function DebugLogger() {
   }
 
   // 只在开发环境和调试模式下显示
-  // 添加NODE_ENV检查，确保在生产环境中不显示
-  if (!debug || process.env.NODE_ENV === "production") {
+  if (!debug) {
     return null
   }
 

@@ -17,7 +17,47 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useEnvStore } from "@/lib/env-config"
 
+// 辅助函数：判断是否应该显示调试组件
+const shouldShowDebugComponent = () => {
+  // 在生产环境中不显示
+  if (process.env.NODE_ENV === "production") return false
+  
+  // 根据环境配置判断
+  return useEnvStore.getState().debug
+}
+
+// 通用API测试处理函数
+const handleApiRequest = async <T,>(
+  apiCall: () => Promise<T>,
+  actionName: string,
+  method: string,
+  url: string,
+  requestData?: any,
+  onSuccess?: (response: T) => void,
+  onError?: (error: Error) => void,
+  addLog: (action: string, method: string, url: string, data?: any, error?: string) => void
+) => {
+  addLog(actionName, method, url, requestData)
+  
+  try {
+    const response = await apiCall()
+    addLog("API响应", method, url, response)
+    if (onSuccess) onSuccess(response)
+    return response
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "API请求失败"
+    addLog("API错误", method, url, null, errorMessage)
+    if (onError) onError(err instanceof Error ? err : new Error(errorMessage))
+    throw err
+  }
+}
+
 export function ShippingApiDebug() {
+  // 在生产环境中直接返回null
+  if (process.env.NODE_ENV === "production") {
+    return null
+  }
+
   // 使用useEnvStore钩子获取最新状态
   const { debug } = useEnvStore()
 
@@ -47,25 +87,40 @@ export function ShippingApiDebug() {
   const [batchShippingData, setBatchShippingData] = useState("")
 
   // 在开发模式下且debug为true时才显示API调试工具
-  // 添加NODE_ENV检查，确保在生产环境中不显示
-  if (!debug || process.env.NODE_ENV === "production") {
+  if (!shouldShowDebugComponent()) {
     return null
+  }
+
+  // 添加日志的辅助函数
+  const addLog = (action: string, method: string, url: string, data?: any, error?: string) => {
+    const log = {
+      timestamp: new Date().toISOString(),
+      action,
+      method,
+      url,
+      data,
+      error,
+    }
+
+    setRequestLogs((prev) => [log, ...prev].slice(0, 20)) // 保留最近20条日志
   }
 
   // 发货数据API测试函数
   const testShippingApiConnection = async () => {
     setIsLoading(true)
     setError(null)
-    addLog("测试发货数据API连接", "GET", "/api/shipping")
-
+    
     try {
-      const response = await shippingApi.getShippingRecords()
-      setResult(response)
-      addLog("API响应", "GET", "/api/shipping", response)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "API连接测试失败"
-      setError(errorMessage)
-      addLog("API错误", "GET", "/api/shipping", null, errorMessage)
+      await handleApiRequest(
+        () => shippingApi.getShippingRecords(),
+        "测试发货数据API连接",
+        "GET",
+        "/api/shipping",
+        undefined,
+        (response) => setResult(response),
+        (error) => setError(error.message),
+        addLog
+      )
     } finally {
       setIsLoading(false)
     }
@@ -91,18 +146,17 @@ export function ShippingApiDebug() {
       notes: shippingFormData.notes,
     }
 
-    addLog("添加发货记录", "POST", "/api/shipping", requestData)
-
     try {
-      const response = await shippingApi.createShippingRecord(requestData)
-      setResult(response)
-      addLog("API响应", "POST", "/api/shipping", response)
-      console.log("添加成功:", response)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "添加发货记录失败"
-      setError(errorMessage)
-      addLog("API错误", "POST", "/api/shipping", null, errorMessage)
-      console.error("添加发货记录失败:", err)
+      await handleApiRequest(
+        () => shippingApi.createShippingRecord(requestData),
+        "添加发货记录",
+        "POST",
+        "/api/shipping",
+        requestData,
+        (response) => setResult(response),
+        (error) => setError(error.message),
+        addLog
+      )
     } finally {
       setIsLoading(false)
     }
@@ -131,19 +185,20 @@ export function ShippingApiDebug() {
       quantity: Number.parseInt(shippingUpdateFormData.quantity || "0"),
       notes: shippingUpdateFormData.notes,
     }
-
-    addLog("更新发货记录", "PUT", `/api/shipping/${shippingUpdateFormData.id}`, requestData)
+    
+    const url = `/api/shipping/${shippingUpdateFormData.id}`
 
     try {
-      const response = await shippingApi.updateShippingRecord(shippingUpdateFormData.id, requestData)
-      setResult(response)
-      addLog("API响应", "PUT", `/api/shipping/${shippingUpdateFormData.id}`, response)
-      console.log("更新成功:", response)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "更新发货记录失败"
-      setError(errorMessage)
-      addLog("API错误", "PUT", `/api/shipping/${shippingUpdateFormData.id}`, null, errorMessage)
-      console.error("更新发货记录失败:", err)
+      await handleApiRequest(
+        () => shippingApi.updateShippingRecord(shippingUpdateFormData.id, requestData),
+        "更新发货记录",
+        "PUT",
+        url,
+        requestData,
+        (response) => setResult(response),
+        (error) => setError(error.message),
+        addLog
+      )
     } finally {
       setIsLoading(false)
     }
@@ -157,18 +212,20 @@ export function ShippingApiDebug() {
 
     setIsLoading(true)
     setError(null)
-    addLog("删除发货记录", "DELETE", `/api/shipping/${shippingDeleteId}`)
+    
+    const url = `/api/shipping/${shippingDeleteId}`
 
     try {
-      await shippingApi.deleteShippingRecord(shippingDeleteId)
-      setResult({ message: "删除成功" })
-      addLog("API响应", "DELETE", `/api/shipping/${shippingDeleteId}`, { message: "删除成功" })
-      console.log("删除成功")
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "删除发货记录失败"
-      setError(errorMessage)
-      addLog("API错误", "DELETE", `/api/shipping/${shippingDeleteId}`, null, errorMessage)
-      console.error("删除发货记录失败:", err)
+      await handleApiRequest(
+        () => shippingApi.deleteShippingRecord(shippingDeleteId),
+        "删除发货记录",
+        "DELETE",
+        url,
+        undefined,
+        () => setResult({ message: "删除成功" }),
+        (error) => setError(error.message),
+        addLog
+      )
     } finally {
       setIsLoading(false)
     }
@@ -204,34 +261,20 @@ export function ShippingApiDebug() {
       records: parsedData,
     }
 
-    addLog("批量添加发货记录", "POST", "/api/shipping/batch", requestData)
-
     try {
-      const response = await shippingApi.batchCreateShippingRecords(requestData)
-      setResult(response)
-      addLog("API响应", "POST", "/api/shipping/batch", response)
-      console.log("批量添加成功:", response)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "批量添加发货记录失败"
-      setError(errorMessage)
-      addLog("API错误", "POST", "/api/shipping/batch", null, errorMessage)
-      console.error("批量添加发货记录失败:", err)
+      await handleApiRequest(
+        () => shippingApi.batchCreateShippingRecords(requestData),
+        "批量添加发货记录",
+        "POST",
+        "/api/shipping/batch",
+        requestData,
+        (response) => setResult(response),
+        (error) => setError(error.message),
+        addLog
+      )
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const addLog = (action: string, method: string, url: string, data?: any, error?: string) => {
-    const log = {
-      timestamp: new Date().toISOString(),
-      action,
-      method,
-      url,
-      data,
-      error,
-    }
-
-    setRequestLogs((prev) => [log, ...prev].slice(0, 20)) // 保留最近20条日志
   }
 
   const clearLogs = () => {
