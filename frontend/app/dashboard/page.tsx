@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { RefreshCw, TrendingUp, Package, ChevronRight, Calendar, PlusCircle, BarChart2, Download, AlertCircle, Clock } from "lucide-react"
+import { RefreshCw, TrendingUp, Package, ChevronRight, Calendar, PlusCircle, BarChart2, Download, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -20,8 +20,6 @@ import { useCourierTypes } from "@/hooks/use-courier-types"
 import { shippingApi } from "@/services/shipping-api"
 import { RecentEntries } from "@/components/recent-entries"
 import { useShippingData } from "@/hooks/use-shipping-data"
-import { useAutoRefresh } from "@/hooks/use-auto-refresh"
-import useI18n from "@/hooks/use-i18n"
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
@@ -36,22 +34,12 @@ export default function DashboardPage() {
   const { courierTypes } = useCourierTypes()
   const [selectedTimeRange, setSelectedTimeRange] = useState("7days")
   const [selectedCourierType, setSelectedCourierType] = useState("all")
-  const { t } = useI18n();
   
   const shippingData = useShippingData()
 
   // 获取今日日期
   const today = format(new Date(), "yyyy-MM-dd")
   const currentMonth = format(new Date(), "yyyy-MM")
-
-  // 添加自动刷新功能
-  const { 
-    refreshInterval, 
-    isRefreshing,
-    timeRemaining,
-    getFormattedTimeRemaining, 
-    getFormattedInterval 
-  } = useAutoRefresh(handleRefresh);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,79 +51,78 @@ export default function DashboardPage() {
 
   // 加载仪表盘数据
   useEffect(() => {
-    fetchDashboardData();
+    const fetchDashboardData = async () => {
+      setIsLoading(true)
+      setError(null) // 重置错误状态
+      try {
+        // 获取今日统计数据
+        const todayStatsResponse = await shippingApi.getShippingStats({
+          date: today,
+        })
+        setTodayStats(todayStatsResponse || { total: { total: 0 }, by_courier: [] }) // 添加默认值
+
+        // 获取本月统计数据
+        const monthlyStatsResponse = await shippingApi.getShippingStats({
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
+        })
+        setMonthlyStats(monthlyStatsResponse || { total: { total: 0 } }) // 添加默认值
+        
+        // 获取上月统计数据
+        const lastMonth = new Date().getMonth() === 0 ? 12 : new Date().getMonth()
+        const lastMonthYear = new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()
+        const lastMonthStatsResponse = await shippingApi.getShippingStats({
+          month: lastMonth,
+          year: lastMonthYear,
+        }).catch(() => null)
+        setLastMonthStats(lastMonthStatsResponse || { total: { total: 0 } }) // 添加默认值
+        
+        // 获取近7日统计数据
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+        const weeklyStatsResponse = await shippingApi.getShippingStats({
+          date_from: format(sevenDaysAgo, "yyyy-MM-dd"),
+          date_to: today,
+        })
+        setWeeklyStats(weeklyStatsResponse || { total: { total: 0 }, by_date: [] }) // 添加默认值
+        
+        // 获取上周统计数据
+        const fourteenDaysAgo = new Date()
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+        const lastWeekStatsResponse = await shippingApi.getShippingStats({
+          date_from: format(fourteenDaysAgo, "yyyy-MM-dd"),
+          date_to: format(sevenDaysAgo, "yyyy-MM-dd"),
+        }).catch(() => null)
+        setLastWeekStats(lastWeekStatsResponse || { total: { total: 0 } }) // 添加默认值
+        
+        // 获取最近录入数据
+        const recentEntriesResponse = await shippingApi.getShippingRecords({
+          page: 1,
+          perPage: 10,
+          sortBy: "created_at",
+          sortOrder: "DESC",
+        })
+        setRecentEntries(recentEntriesResponse.records || []) // 添加默认值
+      } catch (error) {
+        console.error("加载仪表盘数据失败:", error)
+        // 设置默认数据，确保UI正常显示
+        setTodayStats({ total: { total: 0 }, by_courier: [] })
+        setMonthlyStats({ total: { total: 0 } })
+        setLastMonthStats({ total: { total: 0 } })
+        setWeeklyStats({ total: { total: 0 }, by_date: [] })
+        setLastWeekStats({ total: { total: 0 } })
+        // 设置错误状态
+        setError(error instanceof Error ? error.message : "未知错误，请检查API服务是否可用")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchDashboardData()
   }, [today])
 
-  // 获取所有仪表盘数据
-  const fetchDashboardData = async () => {
-    setIsLoading(true)
-    setError(null) // 重置错误状态
-    try {
-      // 获取今日统计数据
-      const todayStatsResponse = await shippingApi.getShippingStats({
-        date: today,
-      })
-      setTodayStats(todayStatsResponse || { total: { total: 0 }, by_courier: [] }) // 添加默认值
-
-      // 获取本月统计数据
-      const monthlyStatsResponse = await shippingApi.getShippingStats({
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear(),
-      })
-      setMonthlyStats(monthlyStatsResponse || { total: { total: 0 } }) // 添加默认值
-      
-      // 获取上月统计数据
-      const lastMonth = new Date().getMonth() === 0 ? 12 : new Date().getMonth()
-      const lastMonthYear = new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()
-      const lastMonthStatsResponse = await shippingApi.getShippingStats({
-        month: lastMonth,
-        year: lastMonthYear,
-      }).catch(() => null)
-      setLastMonthStats(lastMonthStatsResponse || { total: { total: 0 } }) // 添加默认值
-      
-      // 获取近7日统计数据
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-      const weeklyStatsResponse = await shippingApi.getShippingStats({
-        date_from: format(sevenDaysAgo, "yyyy-MM-dd"),
-        date_to: today,
-      })
-      setWeeklyStats(weeklyStatsResponse || { total: { total: 0 }, by_date: [] }) // 添加默认值
-      
-      // 获取上周统计数据
-      const fourteenDaysAgo = new Date()
-      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
-      const lastWeekStatsResponse = await shippingApi.getShippingStats({
-        date_from: format(fourteenDaysAgo, "yyyy-MM-dd"),
-        date_to: format(sevenDaysAgo, "yyyy-MM-dd"),
-      }).catch(() => null)
-      setLastWeekStats(lastWeekStatsResponse || { total: { total: 0 } }) // 添加默认值
-      
-      // 获取最近录入数据
-      const recentEntriesResponse = await shippingApi.getShippingRecords({
-        page: 1,
-        perPage: 10,
-        sortBy: "created_at",
-        sortOrder: "DESC",
-      })
-      setRecentEntries(recentEntriesResponse.records || []) // 添加默认值
-    } catch (error) {
-      console.error("加载仪表盘数据失败:", error)
-      // 设置默认数据，确保UI正常显示
-      setTodayStats({ total: { total: 0 }, by_courier: [] })
-      setMonthlyStats({ total: { total: 0 } })
-      setLastMonthStats({ total: { total: 0 } })
-      setWeeklyStats({ total: { total: 0 }, by_date: [] })
-      setLastWeekStats({ total: { total: 0 } })
-      // 设置错误状态
-      setError(error instanceof Error ? error.message : "未知错误，请检查API服务是否可用")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   // 刷新数据
-  async function handleRefresh() {
+  const handleRefresh = async () => {
     setIsLoading(true)
     setError(null) // 重置错误状态
     try {
@@ -211,199 +198,241 @@ export default function DashboardPage() {
     }
   }
 
+  // 获取活跃的快递类型
+  const activeCourierTypes = courierTypes.filter((type) => type.is_active)
+
+  // 计算本月进度
+  const currentDate = new Date()
+  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+  const dayOfMonth = currentDate.getDate()
+  const monthProgress = Math.round((dayOfMonth / daysInMonth) * 100)
+
+  // 计算同比上周增长率
   const calculateWeeklyGrowth = () => {
-    if (!weeklyStats || !lastWeekStats) return 0;
-    
-    const currentWeekTotal = weeklyStats.total?.total || 0;
-    const lastWeekTotal = lastWeekStats.total?.total || 0;
-    
-    if (lastWeekTotal === 0) return currentWeekTotal > 0 ? 100 : 0;
-    
-    return ((currentWeekTotal - lastWeekTotal) / lastWeekTotal) * 100;
+    if (!weeklyStats?.total?.total || !lastWeekStats?.total?.total) return null
+    const currentTotal = weeklyStats.total.total
+    const lastWeekTotal = lastWeekStats.total.total
+    if (lastWeekTotal === 0) return null
+    return Math.round(((currentTotal - lastWeekTotal) / lastWeekTotal) * 100)
   }
-
+  
+  const weeklyGrowth = calculateWeeklyGrowth()
+  
+  // 生成最近7天的每日数据
   const generateDailyData = () => {
-    if (!weeklyStats || !weeklyStats.by_date) return [];
+    if (!weeklyStats) return []
     
-    return weeklyStats.by_date.map((item: any) => ({
-      date: item.date,
-      value: item.total,
-    }));
-  }
-
-  const calculateMonthlyGrowth = () => {
-    if (!monthlyStats || !lastMonthStats) return 0;
-    
-    const currentMonthTotal = monthlyStats.total?.total || 0;
-    const lastMonthTotal = lastMonthStats.total?.total || 0;
-    
-    if (lastMonthTotal === 0) return currentMonthTotal > 0 ? 100 : 0;
-    
-    return ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
-  }
-
-  // 获取活跃快递类型
-  const activeCourierTypes = (todayStats && todayStats.by_courier ? todayStats.by_courier : [])
-    .filter((item: any) => item.total > 0)
-    .map((item: any) => {
-      const courierType = courierTypes.find(type => type.id === Number(item.courier_type_id));
-      return {
-        id: item.courier_type_id,
-        name: courierType ? courierType.name : `类型 ${item.courier_type_id}`,
-        code: courierType ? courierType.code : `${item.courier_type_id}`,
-        total: item.total,
-      };
-    });
-
-  // 渲染开发模式下的自动刷新时间指示器
-  const renderAutoRefreshIndicator = () => {
-    if (process.env.NODE_ENV === 'development' && refreshInterval) {
-      return (
-        <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-2 text-xs flex items-center space-x-2 z-50">
-          <Clock className="h-3 w-3 text-blue-500" />
-          <span>{t('dashboard.autoRefreshTime', { time: getFormattedInterval() })}</span>
-          {timeRemaining !== null && (
-            <span className="text-gray-400">({getFormattedTimeRemaining()})</span>
-          )}
-        </div>
-      );
+    const daily = []
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      const dateStr = format(date, "yyyy-MM-dd")
+      
+      // 尝试从API响应中找到对应日期的数据
+      let dayTotal = 0
+      if (weeklyStats.by_date && Array.isArray(weeklyStats.by_date)) {
+        const dayData = weeklyStats.by_date.find((d) => format(new Date(d.date), "yyyy-MM-dd") === dateStr)
+        if (dayData) {
+          dayTotal = dayData.total
+        }
+      }
+      
+      daily.push({
+        date: dateStr,
+        total: dayTotal
+      })
     }
-    return null;
-  };
+    
+    return daily
+  }
+  
+  const dailyData = generateDailyData()
 
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
       <DashboardNav />
-      
-      {/* 自动刷新指示器 */}
-      {renderAutoRefreshIndicator()}
-      
-      <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
-        {/* 显示错误信息 */}
+
+      <main className="container mx-auto px-4 py-6">
+        {/* 错误提示 */}
         {error && (
-          <div
-            className={cn(
-              "bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 transition-all duration-500",
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
-            )}
-            style={{ transitionDelay: "100ms" }}
-          >
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              <span>{error}</span>
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-start">
+            <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium">数据加载失败</h3>
+              <p className="text-sm mt-1">{error}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2 text-red-700 border-red-300 hover:bg-red-100"
+                onClick={handleRefresh}
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                重试
+              </Button>
             </div>
           </div>
         )}
-
-        {/* 数据统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {/* 今日发货数据 */}
+        
+        {/* 今日各快递类型实时发货量 - 单独占一行 */}
+        <div className="mb-6">
           <StatCard
-            title={t('dashboard.todayShipping')}
-            icon={<Calendar className="h-5 w-5" />}
+            title="今日各快递类型实时发货量"
+            icon={<Package className="h-5 w-5" />}
             isLoading={isLoading}
             isVisible={isVisible}
             delay={100}
           >
-            <div className="space-y-3">
-              <div className="text-3xl font-bold">{todayStats?.total?.total || 0}</div>
-              <div className="flex items-end gap-1">
-                <Progress value={50} className="h-2" />
-                <span className="text-xs text-gray-500">{format(new Date(), "MM/dd")}</span>
-              </div>
-            </div>
-          </StatCard>
+            {todayStats && (todayStats.by_courier || []).length > 0 ? (
+              <div className="flex flex-col">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {activeCourierTypes.map((type) => {
+                    const courierStat = (todayStats.by_courier || []).find(
+                      (stat) => stat.courier_id.toString() === type.id.toString(),
+                    )
+                    const quantity = courierStat ? courierStat.total : 0
 
-          {/* 本周总数 */}
-          <StatCard
-            title={t('dashboard.weeklyTotal')}
-            icon={<TrendingUp className="h-5 w-5" />}
-            isLoading={isLoading}
-            isVisible={isVisible}
-            delay={200}
-          >
-            <div className="space-y-3">
-              <div className="text-3xl font-bold">{weeklyStats?.total?.total || 0}</div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
-                  {calculateWeeklyGrowth().toFixed(1)}%
-                </span>
-                <Badge
-                  variant={calculateWeeklyGrowth() > 0 ? "success" : calculateWeeklyGrowth() < 0 ? "destructive" : "outline"}
-                  className="text-xs"
-                >
-                  {calculateWeeklyGrowth() > 0 
-                    ? t('dashboard.growth')
-                    : calculateWeeklyGrowth() < 0 
-                    ? t('dashboard.decline')
-                    : t('dashboard.noChange')}
-                </Badge>
-              </div>
-            </div>
-          </StatCard>
+                    return (
+                      <div key={type.id} className="border rounded-lg p-3 flex flex-col items-center">
+                        <div className="text-sm font-medium text-gray-700 mb-2">{type.name}</div>
+                        <div className="text-2xl font-bold">{quantity}</div>
+                      </div>
+                    )
+                  })}
 
-          {/* 本月总数 */}
-          <StatCard
-            title={t('dashboard.monthlyTotal')}
-            icon={<TrendingUp className="h-5 w-5" />}
-            isLoading={isLoading}
-            isVisible={isVisible}
-            delay={300}
-          >
-            <div className="space-y-3">
-              <div className="text-3xl font-bold">{monthlyStats?.total?.total || 0}</div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
-                  {calculateMonthlyGrowth().toFixed(1)}%
-                </span>
-                <Badge
-                  variant={calculateMonthlyGrowth() > 0 ? "success" : calculateMonthlyGrowth() < 0 ? "destructive" : "outline"}
-                  className="text-xs"
-                >
-                  {calculateMonthlyGrowth() > 0 
-                    ? t('dashboard.growth')
-                    : calculateMonthlyGrowth() < 0 
-                    ? t('dashboard.decline')
-                    : t('dashboard.noChange')}
-                </Badge>
-              </div>
-            </div>
-          </StatCard>
-
-          {/* 本月分布 */}
-          <StatCard
-            title={t('dashboard.monthlyGrowth')}
-            icon={<Package className="h-5 w-5" />}
-            isLoading={isLoading}
-            isVisible={isVisible}
-            delay={400}
-            className="md:col-span-2"
-          >
-            {monthlyStats && monthlyStats.by_date && monthlyStats.by_date.length > 0 ? (
-              <div>
-                <div className="text-3xl font-bold mb-3">{monthlyStats.total.total}</div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center">
-                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-blue-500 rounded-full" 
-                          style={{ width: `${Math.min(100, (monthlyStats.total.total / 500) * 100)}%` }}
-                        />
+                  {activeCourierTypes.length === 0 && (
+                    <div className="col-span-3 text-center text-gray-500 py-2">暂无活跃快递类型</div>
+                  )}
+                </div>
+                <div className="mt-6 pt-4 border-t border-gray-200 flex flex-col">
+                  <div className="flex w-full">
+                    <div className="w-4/5 flex flex-col items-center">
+                      <div className="text-sm text-gray-500 mb-1">今日总数</div>
+                      <div className="text-4xl font-bold" style={{ color: '#16803C' }}>
+                        {todayStats.total && todayStats.total.total ? todayStats.total.total : 0}
+                      </div>
+                    </div>
+                    <div className="w-1/5 flex flex-col items-center border-l border-gray-200">
+                      <div className="text-sm text-gray-500 mb-1">预计明日总数</div>
+                      <div className="text-4xl font-bold text-blue-600">
+                        {shippingData.tomorrowTotal || 0}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="text-center text-gray-500 py-2">{t('common.noData')}</div>
+              <div className="text-center text-gray-500 py-2">暂无今日数据</div>
+            )}
+          </StatCard>
+        </div>
+        
+        {/* 数据概览区域 - 三个卡片同行显示 */}
+        <div className="grid grid-cols-1 md:grid-cols-10 gap-4 mb-6">
+          {/* 近7日发货量 */}
+          <StatCard
+            title="近7日发货量"
+            icon={<TrendingUp className="h-5 w-5" />}
+            isLoading={isLoading}
+            isVisible={isVisible}
+            delay={200}
+            className="md:col-span-6"
+          >
+            {weeklyStats && weeklyStats.total ? (
+              <div className="flex flex-col h-full justify-between">
+                <div className="text-center">
+                  <div className="text-4xl font-bold mb-1">{weeklyStats.total.total || 0}</div>
+                  <div className="flex items-center justify-center text-sm mb-4">
+                    <span className="text-gray-500 mr-2">同比上周:</span>
+                    {weeklyGrowth !== null ? (
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          weeklyGrowth >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                        )}
+                      >
+                        {weeklyGrowth >= 0 ? "+" : ""}{weeklyGrowth}%
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-gray-50 text-gray-700">
+                        --
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-7 gap-1 mt-auto">
+                  {dailyData.map((day, index) => {
+                    const dayDate = new Date(day.date);
+                    const isToday = format(dayDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                    return (
+                      <div key={index} className="flex flex-col items-center p-2">
+                        <div className={cn(
+                          "text-sm font-medium mb-1",
+                          isToday ? "text-blue-600 font-bold" : ""
+                        )}>
+                          {day.total || 0}
+                        </div>
+                        <div className="text-xs text-gray-900">{format(dayDate, 'MM-dd')}</div>
+                        <div className={cn(
+                          "text-xs",
+                          isToday ? "text-blue-600 font-semibold" : "text-gray-500"
+                        )}>
+                          {format(dayDate, 'EEE')}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-2">暂无近7日数据</div>
+            )}
+          </StatCard>
+
+          {/* 本月发货总量 */}
+          <StatCard
+            title="本月发货总量"
+            icon={<Calendar className="h-5 w-5" />}
+            isLoading={isLoading}
+            isVisible={isVisible}
+            delay={300}
+            className="md:col-span-2"
+          >
+            {monthlyStats && monthlyStats.total ? (
+              <div className="space-y-3 h-full flex flex-col justify-between">
+                <div className="text-center">
+                  <div className="text-3xl font-bold mb-1">{monthlyStats.total.total || 0}</div>
+                  <div className="text-sm text-gray-500">
+                    上月同期: {lastMonthStats && lastMonthStats.total ? (
+                      <span className="font-medium text-gray-700">{lastMonthStats.total.total || 0}</span>
+                    ) : (
+                      <span className="font-medium text-gray-500">--</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 h-24">
+                  <div className="h-full w-4 bg-gray-100 rounded-full relative">
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-full" 
+                      style={{ height: `${monthProgress}%` }}
+                    ></div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-gray-500">月进度</div>
+                    <div className="font-medium">{monthProgress}%</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-2">暂无本月数据</div>
             )}
           </StatCard>
 
           {/* 当前活跃快递类型 */}
           <StatCard
-            title={t('dashboard.activeCourierTypes')}
+            title="当前活跃快递类型"
             icon={<Package className="h-5 w-5" />}
             isLoading={isLoading}
             isVisible={isVisible}
@@ -440,27 +469,27 @@ export default function DashboardPage() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-lg">{t('dashboard.shippingAnalysis')}</CardTitle>
-                  <CardDescription>{t('dashboard.shippingTrend')}</CardDescription>
+                  <CardTitle className="text-lg">发货数据分析</CardTitle>
+                  <CardDescription>发货趋势与快递类型分布</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
                     <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder={t('dashboard.timeRange')} />
+                      <SelectValue placeholder="选择时间范围" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="7days">{t('dashboard.last7Days')}</SelectItem>
-                      <SelectItem value="14days">{t('dashboard.last14Days')}</SelectItem>
-                      <SelectItem value="30days">{t('dashboard.last30Days')}</SelectItem>
-                      <SelectItem value="thisMonth">{t('dashboard.thisMonth')}</SelectItem>
+                      <SelectItem value="7days">最近7天</SelectItem>
+                      <SelectItem value="14days">最近14天</SelectItem>
+                      <SelectItem value="30days">最近30天</SelectItem>
+                      <SelectItem value="thisMonth">本月</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={selectedCourierType} onValueChange={setSelectedCourierType}>
                     <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder={t('common.all')} />
+                      <SelectValue placeholder="选择快递类型" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">{t('common.all')}</SelectItem>
+                      <SelectItem value="all">所有类型</SelectItem>
                       {activeCourierTypes.map((type) => (
                         <SelectItem key={type.id} value={type.id.toString()}>
                           {type.name}
@@ -468,13 +497,8 @@ export default function DashboardPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={handleRefresh} 
-                    disabled={isLoading || isRefreshing}
-                  >
-                    <RefreshCw className={cn("h-4 w-4", (isLoading || isRefreshing) && "animate-spin")} />
+                  <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isLoading}>
+                    <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                   </Button>
                 </div>
               </div>
@@ -484,8 +508,8 @@ export default function DashboardPage() {
                 {/* 最近7天发货趋势 */}
                 <div className="lg:col-span-3">
                   <div className="space-y-1 mb-3">
-                    <div className="text-sm font-medium">{t('dashboard.shippingTrend')}</div>
-                    <div className="text-xs text-gray-500">{t('dashboard.dailyShipping')}</div>
+                    <div className="text-sm font-medium">最近7天发货趋势</div>
+                    <div className="text-xs text-gray-500">按快递类型统计的每日发货量</div>
                   </div>
                   <ShippingTrendChart
                     timeRange={selectedTimeRange}
@@ -497,8 +521,8 @@ export default function DashboardPage() {
                 {/* 快递类型分布 */}
                 <div className="lg:col-span-2">
                   <div className="space-y-1 mb-3">
-                    <div className="text-sm font-medium">{t('dashboard.shippingDistribution')}</div>
-                    <div className="text-xs text-gray-500">{t('dashboard.courierDistribution')}</div>
+                    <div className="text-sm font-medium">快递类型分布</div>
+                    <div className="text-xs text-gray-500">按快递类型统计的发货占比</div>
                   </div>
                   <CourierDistributionChart timeRange={selectedTimeRange} isLoading={isLoading} />
                 </div>
@@ -521,12 +545,12 @@ export default function DashboardPage() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <CardTitle className="text-lg">{t('dashboard.recentEntries')}</CardTitle>
-                    <CardDescription>{t('nav.shippingData')}</CardDescription>
+                    <CardTitle className="text-lg">最近录入数据</CardTitle>
+                    <CardDescription>发货记录管理</CardDescription>
                   </div>
                   <Link href="/shipping-data">
                     <Button variant="outline" size="sm" className="gap-1">
-                      {t('common.viewAll')}
+                      查看全部
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </Link>
@@ -563,30 +587,30 @@ export default function DashboardPage() {
               style={{ transitionDelay: "800ms" }}
             >
               <CardHeader>
-                <CardTitle className="text-lg">{t('dashboard.quickActions')}</CardTitle>
+                <CardTitle className="text-lg">快速操作</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 gap-4">
                 <QuickActionCard
-                  title={t('dashboard.addTodayData')}
-                  description={t('dashboard.todayShipping')}
+                  title="添加今日发货数据"
+                  description="录入今日的发货数量"
                   icon={<PlusCircle className="h-5 w-5" />}
                   href="/shipping-data"
                 />
                 <QuickActionCard
-                  title={t('dashboard.viewMonthlyStats')}
-                  description={t('dashboard.viewMonthlyStats')}
+                  title="查看本月统计"
+                  description="查看本月的发货统计数据"
                   icon={<BarChart2 className="h-5 w-5" />}
                   href="/stats"
                 />
                 <QuickActionCard
-                  title={t('dashboard.exportReport')}
-                  description={t('dashboard.exportReport')}
+                  title="导出报表"
+                  description="导出发货数据报表"
                   icon={<Download className="h-5 w-5" />}
                   href="/stats"
                 />
                 <QuickActionCard
-                  title={t('dashboard.manageCourierTypes')}
-                  description={t('dashboard.manageCourierTypes')}
+                  title="管理快递类型"
+                  description="添加或编辑快递类型"
                   icon={<Package className="h-5 w-5" />}
                   href="/courier-types"
                 />
