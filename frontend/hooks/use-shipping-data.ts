@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useToast } from "@/components/ui/use-toast"
+import { debugLog, debugError } from "@/lib/env-config"
 import {
   shippingApi,
   type ShippingRecord,
@@ -113,7 +114,7 @@ export function useShippingData() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "获取发货数据失败"
       setError(errorMessage)
-      console.error("❌ 获取发货数据失败:", err)
+      debugError("❌ 获取发货数据失败:", err)
 
       toast({
         title: "加载失败",

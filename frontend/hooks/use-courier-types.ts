@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { api, type CourierType, type FilterParams } from "@/services/api"
 import { useToast } from "@/components/ui/use-toast"
+import { debugLog, debugError } from "@/lib/env-config"
 
 export function useCourierTypes() {
   const { toast } = useToast()
@@ -20,7 +21,7 @@ export function useCourierTypes() {
     setDebugInfo(null)
 
     try {
-      console.log("🔍 获取快递类型列表，参数:", params)
+      debugLog("🔍 获取快递类型列表，参数:", params)
 
       // 根据状态筛选转换为API参数
       const apiParams: FilterParams = {}
@@ -32,8 +33,8 @@ export function useCourierTypes() {
       const data = await api.getCourierTypes(apiParams)
       const endTime = performance.now()
 
-      console.log(`⏱️ API请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
-      console.log("📦 获取到的数据:", data)
+      debugLog(`⏱️ API请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      debugLog("📦 获取到的数据:", data)
 
       // 设置数据
       setCourierTypes(data)
@@ -50,7 +51,7 @@ export function useCourierTypes() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "获取数据失败"
       setError(errorMessage)
-      console.error("❌ 获取快递类型数据失败:", err)
+      debugError("❌ 获取快递类型数据失败:", err)
 
       // 设置错误调试信息
       setDebugInfo({
@@ -108,14 +109,14 @@ export function useCourierTypes() {
   }) => {
     try {
       setIsLoading(true)
-      console.log("➕ 添加快递类型:", courierType)
+      debugLog("➕ 添加快递类型:", courierType)
 
       const startTime = performance.now()
       const newCourierType = await api.createCourierType(courierType)
       const endTime = performance.now()
 
-      console.log(`⏱️ 添加请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
-      console.log("✅ 添加成功:", newCourierType)
+      debugLog(`⏱️ 添加请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      debugLog("✅ 添加成功:", newCourierType)
 
       // 重新获取列表以确保数据同步
       await fetchCourierTypes()
@@ -123,7 +124,7 @@ export function useCourierTypes() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "添加快递类型失败"
       setError(errorMessage)
-      console.error("❌ 添加快递类型失败:", err)
+      debugError("❌ 添加快递类型失败:", err)
 
       throw err
     } finally {
@@ -134,7 +135,7 @@ export function useCourierTypes() {
   const updateCourierType = async (updatedCourierType: CourierType) => {
     try {
       setIsLoading(true)
-      console.log("✏️ 更新快递类型:", updatedCourierType)
+      debugLog("✏️ 更新快递类型:", updatedCourierType)
 
       const { id, ...data } = updatedCourierType
 
@@ -147,8 +148,8 @@ export function useCourierTypes() {
       })
       const endTime = performance.now()
 
-      console.log(`⏱️ 更新请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
-      console.log("✅ 更新成功:", result)
+      debugLog(`⏱️ 更新请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      debugLog("✅ 更新成功:", result)
 
       // 重新获取列表以确保数据同步
       await fetchCourierTypes()
@@ -156,7 +157,7 @@ export function useCourierTypes() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "更新快递类型失败"
       setError(errorMessage)
-      console.error("❌ 更新快递类型失败:", err)
+      debugError("❌ 更新快递类型失败:", err)
 
       throw err
     } finally {
@@ -167,21 +168,21 @@ export function useCourierTypes() {
   const deleteCourierType = async (id: number | string) => {
     try {
       setIsLoading(true)
-      console.log("🗑️ 删除快递类型:", id)
+      debugLog("🗑️ 删除快递类型:", id)
 
       const startTime = performance.now()
       await api.deleteCourierType(id)
       const endTime = performance.now()
 
-      console.log(`⏱️ 删除请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
-      console.log("✅ 删除成功")
+      debugLog(`⏱️ 删除请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      debugLog("✅ 删除成功")
 
       // 重新获取列表以确保数据同步
       await fetchCourierTypes()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "删除快递类型失败"
       setError(errorMessage)
-      console.error("❌ 删除快递类型失败:", err)
+      debugError("❌ 删除快递类型失败:", err)
 
       throw err
     } finally {
@@ -192,14 +193,14 @@ export function useCourierTypes() {
   const toggleCourierTypeStatus = async (id: number | string) => {
     try {
       setIsLoading(true)
-      console.log("🔄 切换快递类型状态:", id)
+      debugLog("🔄 切换快递类型状态:", id)
 
       const startTime = performance.now()
       const result = await api.toggleCourierTypeStatus(id)
       const endTime = performance.now()
 
-      console.log(`⏱️ 状态切换请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
-      console.log("✅ 状态切换成功:", result)
+      debugLog(`⏱️ 状态切换请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      debugLog("✅ 状态切换成功:", result)
 
       // 重新获取列表以确保数据同步
       await fetchCourierTypes()
@@ -207,7 +208,7 @@ export function useCourierTypes() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "切换快递类型状态失败"
       setError(errorMessage)
-      console.error("❌ 切换快递类型状态失败:", err)
+      debugError("❌ 切换快递类型状态失败:", err)
 
       throw err
     } finally {
@@ -218,7 +219,7 @@ export function useCourierTypes() {
   const reorderCourierTypes = async (reorderedTypes: CourierType[]) => {
     try {
       setIsLoading(true)
-      console.log("🔃 更新快递类型排序")
+      debugLog("🔃 更新快递类型排序")
 
       // 准备排序数据
       const items = reorderedTypes.map((item, index) => ({
@@ -226,14 +227,14 @@ export function useCourierTypes() {
         sort_order: index + 1,
       }))
 
-      console.log("📊 排序数据:", items)
+      debugLog("📊 排序数据:", items)
 
       const startTime = performance.now()
       await api.updateCourierTypesOrder(items)
       const endTime = performance.now()
 
-      console.log(`⏱️ 排序请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
-      console.log("✅ 排序更新成功")
+      debugLog(`⏱️ 排序请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      debugLog("✅ 排序更新成功")
 
       // 更新本地状态，避免重新请求
       setCourierTypes(
@@ -245,7 +246,7 @@ export function useCourierTypes() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "更新排序失败"
       setError(errorMessage)
-      console.error("❌ 更新排序失败:", err)
+      debugError("❌ 更新排序失败:", err)
 
       throw err
     } finally {

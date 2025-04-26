@@ -29,17 +29,18 @@ function createEnvConfig(env: Environment = getEnvironment()): EnvConfig {
   const isProd = env === "production"
   const isTest = env === "test"
 
-  // 从环境变量获取API基础URL
-  // 确保始终使用当前环境的API URL，而不是缓存的值
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    (isProd ? process.env.NEXT_PUBLIC_PROD_API_URL || "" : process.env.NEXT_PUBLIC_DEV_API_URL || "")
+  // 从环境变量获取API基础URL - 只使用NEXT_PUBLIC_API_BASE_URL
+  // 提供一个默认值以避免类型错误
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ""
 
   // 检查API URL是否有效
   if (!apiBaseUrl) {
-    console.warn(
-      `API基础URL未设置。请在环境变量中设置NEXT_PUBLIC_API_BASE_URL或对应环境的NEXT_PUBLIC_${env.toUpperCase()}_API_URL。`,
-    )
+    // 使用 Debug 警告日志代替 console.warn
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `API基础URL未设置。请在环境变量中设置NEXT_PUBLIC_API_BASE_URL。`,
+      )
+    }
   }
 
   // 调试模式只在开发环境启用

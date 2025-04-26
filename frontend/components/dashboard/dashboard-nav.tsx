@@ -1,0 +1,74 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { BarChart, FileInput, Package, PieChart, Settings } from "lucide-react"
+import { useEffect, useState } from "react"
+
+const navItems = [
+  {
+    title: "仪表盘",
+    href: "/dashboard",
+    icon: <BarChart className="h-4 w-4" />,
+  },
+  {
+    title: "数据录入",
+    href: "/shipping-data",
+    icon: <FileInput className="h-4 w-4" />,
+  },
+  {
+    title: "快递管理",
+    href: "/courier-types",
+    icon: <Package className="h-4 w-4" />,
+  },
+  {
+    title: "统计分析",
+    href: "/stats",
+    icon: <PieChart className="h-4 w-4" />,
+  },
+  {
+    title: "设置",
+    href: "/settings",
+    icon: <Settings className="h-4 w-4" />,
+  },
+]
+
+export function DashboardNav() {
+  const pathname = usePathname()
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true)
+    }, 200)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  return (
+    <nav className="bg-white border-b">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-center">
+          {navItems.map((item, index) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-1 px-4 py-3 text-sm font-medium transition-all duration-500",
+                pathname === item.href
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-600 hover:text-blue-600 hover:bg-blue-50",
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+              )}
+              style={{ transitionDelay: `${index * 50}ms` }}
+            >
+              {item.icon}
+              <span className="hidden sm:inline">{item.title}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </nav>
+  )
+}

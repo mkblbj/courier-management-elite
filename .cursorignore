@@ -1,4 +1,16 @@
-
-
 # Project notes and templates
 xnotes/
+
+node_modules
+.next
+dist
+build
+coverage
+.git
+node_modules/**
+**/.turbo
+**/test
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx

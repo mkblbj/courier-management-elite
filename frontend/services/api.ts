@@ -14,7 +14,7 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
   }
 
   try {
-    console.log(`尝试请求: ${method} ${url}`)
+    debugLog(`尝试请求: ${method} ${url}`)
 
     const response = await fetch(url, {
       ...options,
@@ -26,7 +26,7 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(`API响应错误: ${response.status} ${response.statusText}`, errorText)
+      debugError(`API响应错误: ${response.status} ${response.statusText}`, errorText)
       throw new Error(`API请求失败: ${response.status} ${response.statusText}`)
     }
 
@@ -40,7 +40,7 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
     // 检查API响应中的code字段
     if (responseData.code !== 0) {
       const errorMessage = responseData.message || "API请求失败"
-      console.error(`API业务错误: ${errorMessage}`)
+      debugError(`API业务错误: ${errorMessage}`)
       throw new Error(errorMessage)
     }
 
@@ -50,7 +50,7 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
     if (envConfig.debug) {
       debugError(`API响应错误: ${method} ${url}`, error)
     }
-    console.error(`请求失败: ${url}`, error)
+    debugError(`请求失败: ${url}`, error)
     throw error
   }
 }
@@ -109,7 +109,7 @@ export const api = {
     // 获取当前环境配置 - 每次调用API时重新获取
     const envConfig = useEnvStore.getState()
     const API_BASE_URL = envConfig.apiBaseUrl
-    console.log("当前API基础URL:", API_BASE_URL, "环境:", envConfig.env)
+    debugLog("当前API基础URL:", API_BASE_URL, "环境:", envConfig.env)
 
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
