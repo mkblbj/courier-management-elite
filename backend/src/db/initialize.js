@@ -3,21 +3,8 @@
  * 此脚本用于初始化数据库结构，会自动执行全部必要的表创建和索引添加操作
  */
 
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const mysql = require('mysql2/promise');
-
-// 数据库配置
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'password',
-  multipleStatements: true
-};
-
-// 数据库名称
-const DB_NAME = process.env.DB_NAME || 'courier_db';
+const { initConfig, dbName } = require('./config');
 
 async function initializeDatabase() {
   let connection;
@@ -26,21 +13,15 @@ async function initializeDatabase() {
     console.log('开始初始化数据库...');
     
     // 创建数据库连接（不指定数据库）
-    connection = await mysql.createConnection({
-      host: dbConfig.host,
-      port: dbConfig.port,
-      user: dbConfig.user,
-      password: dbConfig.password,
-      multipleStatements: true
-    });
+    connection = await mysql.createConnection(initConfig);
 
     // 创建数据库（如果不存在）
-    console.log(`尝试创建数据库 ${DB_NAME}...`);
-    await connection.query(`CREATE DATABASE IF NOT EXISTS ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
-    console.log(`数据库 ${DB_NAME} 创建成功或已存在`);
+    console.log(`尝试创建数据库 ${dbName}...`);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
+    console.log(`数据库 ${dbName} 创建成功或已存在`);
 
     // 切换到指定数据库
-    await connection.query(`USE ${DB_NAME};`);
+    await connection.query(`USE ${dbName};`);
     
     // 创建必要的表
     console.log('创建所需的数据表...');
