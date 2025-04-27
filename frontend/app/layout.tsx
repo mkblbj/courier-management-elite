@@ -9,9 +9,9 @@ import { DebugLogger } from "@/components/debug-logger"
 import { EnvInitializer } from "@/components/env-initializer"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.dev",
+  title: "UOcourier",
+  description: "Courier management system",
+  generator: "UO Company",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
