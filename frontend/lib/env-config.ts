@@ -31,7 +31,23 @@ function createEnvConfig(env: Environment = getEnvironment()): EnvConfig {
 
   // 从环境变量获取API基础URL - 只使用NEXT_PUBLIC_API_BASE_URL
   // 提供一个默认值以避免类型错误
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ""
+  let apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ""
+
+  // 在客户端，根据当前页面协议自动调整API URL
+  if (typeof window !== 'undefined') {
+    const currentProtocol = window.location.protocol // 获取当前页面协议 ('http:' 或 'https:')
+    // 如果API URL是完整URL且协议不匹配当前页面
+    if (apiBaseUrl.startsWith('http:') && currentProtocol === 'https:') {
+      // 将API URL转换为相对URL或同协议URL
+      // 方案1: 使用相对URL（如果API与前端部署在同一域名下）
+      // apiBaseUrl = apiBaseUrl.replace(/^http:\/\/[^/]+/, '')
+      
+      // 方案2: 将HTTP转换为HTTPS（如果API与前端不在同一域名下）
+      apiBaseUrl = apiBaseUrl.replace('http:', 'https:')
+      
+      console.log('已自动调整API URL以匹配当前页面协议:', apiBaseUrl)
+    }
+  }
 
   // 检查API URL是否有效
   if (!apiBaseUrl) {
