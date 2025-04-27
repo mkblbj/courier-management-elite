@@ -15,9 +15,11 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
+          // 注意：这是一个非常宽松的CSP配置，仅用于开发和测试
+          // 生产环境中应该使用更严格的配置
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src * 'unsafe-inline';"
+            value: "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
           },
           {
             key: 'Access-Control-Allow-Origin',
