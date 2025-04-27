@@ -112,6 +112,33 @@ npm run build
 npm start
 ```
 
+## 数据库配置说明
+
+### 重要更新
+
+系统已简化数据库配置方式，现在所有数据库设置均通过环境变量(.env 文件)统一管理。关键点：
+
+1. 数据库连接配置必须位于 backend 目录下的`.env`文件中
+2. 应用启动时会自动从此文件读取所有配置信息
+3. 不再需要手动修改任何代码文件进行配置
+
+### 连接池设置
+
+在`.env`文件中可以配置以下数据库参数：
+
+```
+# 必需的基本配置
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=your_user
+DB_PASSWORD=your_password
+DB_NAME=courier_db
+
+# 可选的高级配置
+# DB_CONNECTION_LIMIT=10     # 连接池大小
+# DB_TIMEZONE=+09:00         # 数据库时区
+```
+
 ## 数据库更新和迁移
 
 系统设计为自动处理数据库迁移，当代码更新时：

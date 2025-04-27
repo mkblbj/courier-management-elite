@@ -3,7 +3,8 @@
  * 此脚本用于初始化数据库结构，会自动执行全部必要的表创建和索引添加操作
  */
 
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const mysql = require('mysql2/promise');
 
 // 数据库配置
