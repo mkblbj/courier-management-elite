@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 
-export function RouteChangeLoading() {
+// 创建一个包含useSearchParams的内部组件
+function RouteChangeLoadingInner() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [progress, setProgress] = useState(0)
@@ -54,5 +55,14 @@ export function RouteChangeLoading() {
         style={{ width: `${progress}%` }}
       />
     </div>
+  )
+}
+
+// 导出主组件，包装在Suspense中
+export function RouteChangeLoading() {
+  return (
+    <Suspense fallback={null}>
+      <RouteChangeLoadingInner />
+    </Suspense>
   )
 }

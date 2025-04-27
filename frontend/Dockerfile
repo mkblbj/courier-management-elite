@@ -17,6 +17,10 @@ COPY . .
 # 构建应用
 RUN pnpm build
 
+# 检查构建结果
+RUN ls -la .next || echo ".next directory not found"
+RUN ls -la .next/standalone || echo "standalone directory not found"
+
 # 生产环境阶段
 FROM node:18-alpine AS runner
 WORKDIR /app
