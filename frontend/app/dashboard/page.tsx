@@ -314,7 +314,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="w-1/5 flex flex-col items-center border-l border-gray-200">
                       <div className="text-sm text-gray-500 mb-1">预计明日总数</div>
-                      <div className="text-4xl font-bold text-blue-600">
+                      <div className="text-4xl font-bold" style={{ color: '#ff8c00' }}>
                         {shippingData.tomorrowTotal || 0}
                       </div>
                     </div>
