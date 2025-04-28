@@ -1,0 +1,21 @@
+{
+  "welcome": "Welcome to Courier Management System",
+  "dashboard": "Dashboard",
+  "stats": "Statistics",
+  "settings": "Settings",
+  "shipping_data": "Shipping Data",
+  "courier_types": "Courier Types",
+  "language": "Language",
+  "chinese": "Chinese",
+  "english": "English",
+  "japanese": "Japanese",
+  "search": "Search",
+  "logout": "Logout",
+  "create": "Create",
+  "edit": "Edit",
+  "delete": "Delete",
+  "save": "Save",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "back": "Back"
+} 

@@ -1,0 +1,15 @@
+{
+  "courier_management": "Courier Management",
+  "courier_list": "Courier List",
+  "courier_name": "Courier Name",
+  "courier_code": "Courier Code",
+  "courier_status": "Status",
+  "courier_sort": "Sort Order",
+  "add_courier": "Add Courier",
+  "edit_courier": "Edit Courier",
+  "delete_courier": "Delete Courier",
+  "courier_status_active": "Active",
+  "courier_status_inactive": "Inactive",
+  "courier_name_required": "Courier name is required",
+  "courier_code_required": "Courier code is required"
+} 

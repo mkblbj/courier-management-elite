@@ -1,0 +1,21 @@
+{
+  "welcome": "宅配管理システムへようこそ",
+  "dashboard": "ダッシュボード",
+  "stats": "統計",
+  "settings": "設定",
+  "shipping_data": "配送データ",
+  "courier_types": "宅配タイプ",
+  "language": "言語",
+  "chinese": "中国語",
+  "english": "英語",
+  "japanese": "日本語",
+  "search": "検索",
+  "logout": "ログアウト",
+  "create": "作成",
+  "edit": "編集",
+  "delete": "削除",
+  "save": "保存",
+  "cancel": "キャンセル",
+  "confirm": "確認",
+  "back": "戻る"
+} 

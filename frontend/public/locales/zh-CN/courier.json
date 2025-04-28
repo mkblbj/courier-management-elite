@@ -1,0 +1,15 @@
+{
+  "courier_management": "快递公司管理",
+  "courier_list": "快递公司列表",
+  "courier_name": "快递公司名称",
+  "courier_code": "快递公司代码",
+  "courier_status": "状态",
+  "courier_sort": "排序",
+  "add_courier": "添加快递公司",
+  "edit_courier": "编辑快递公司",
+  "delete_courier": "删除快递公司",
+  "courier_status_active": "启用",
+  "courier_status_inactive": "禁用",
+  "courier_name_required": "快递公司名称不能为空",
+  "courier_code_required": "快递公司代码不能为空"
+} 

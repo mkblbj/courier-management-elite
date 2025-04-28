@@ -5,38 +5,40 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { BarChart, FileInput, Package, PieChart, Settings } from "lucide-react"
 import { useEffect, useState } from "react"
-
-const navItems = [
-  {
-    title: "仪表盘",
-    href: "/dashboard",
-    icon: <BarChart className="h-4 w-4" />,
-  },
-  {
-    title: "数据录入",
-    href: "/shipping-data",
-    icon: <FileInput className="h-4 w-4" />,
-  },
-  {
-    title: "快递管理",
-    href: "/courier-types",
-    icon: <Package className="h-4 w-4" />,
-  },
-  {
-    title: "统计分析",
-    href: "/stats",
-    icon: <PieChart className="h-4 w-4" />,
-  },
-  {
-    title: "设置",
-    href: "/settings",
-    icon: <Settings className="h-4 w-4" />,
-  },
-]
+import { useTranslation } from "react-i18next"
 
 export function DashboardNav() {
   const pathname = usePathname()
   const [isVisible, setIsVisible] = useState(false)
+  const { t } = useTranslation('common')
+
+  const navItems = [
+    {
+      title: t('dashboard'),
+      href: "/dashboard",
+      icon: <BarChart className="h-4 w-4" />,
+    },
+    {
+      title: t('shipping_data'),
+      href: "/shipping-data",
+      icon: <FileInput className="h-4 w-4" />,
+    },
+    {
+      title: t('courier_types'),
+      href: "/courier-types",
+      icon: <Package className="h-4 w-4" />,
+    },
+    {
+      title: t('stats'),
+      href: "/stats",
+      icon: <PieChart className="h-4 w-4" />,
+    },
+    {
+      title: t('settings'),
+      href: "/settings",
+      icon: <Settings className="h-4 w-4" />,
+    },
+  ]
 
   useEffect(() => {
     const timer = setTimeout(() => {

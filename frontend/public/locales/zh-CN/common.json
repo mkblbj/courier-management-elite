@@ -1,0 +1,21 @@
+{
+  "welcome": "欢迎使用快递管理系统",
+  "dashboard": "仪表盘",
+  "stats": "统计数据",
+  "settings": "设置",
+  "shipping_data": "发货数据",
+  "courier_types": "快递类型",
+  "language": "语言",
+  "chinese": "中文",
+  "english": "英文",
+  "japanese": "日文",
+  "search": "搜索",
+  "logout": "退出登录",
+  "create": "创建",
+  "edit": "编辑",
+  "delete": "删除",
+  "save": "保存",
+  "cancel": "取消",
+  "confirm": "确认",
+  "back": "返回"
+} 

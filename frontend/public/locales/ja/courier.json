@@ -1,0 +1,15 @@
+{
+  "courier_management": "宅配会社管理",
+  "courier_list": "宅配会社リスト",
+  "courier_name": "宅配会社名",
+  "courier_code": "宅配会社コード",
+  "courier_status": "ステータス",
+  "courier_sort": "並び順",
+  "add_courier": "宅配会社を追加",
+  "edit_courier": "宅配会社を編集",
+  "delete_courier": "宅配会社を削除",
+  "courier_status_active": "有効",
+  "courier_status_inactive": "無効",
+  "courier_name_required": "宅配会社名は必須です",
+  "courier_code_required": "宅配会社コードは必須です"
+} 
