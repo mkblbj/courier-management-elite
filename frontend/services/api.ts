@@ -3,7 +3,8 @@ import { useEnvStore, debugLog, debugError } from "@/lib/env-config"
 
 // 获取API基础URL的辅助函数
 function getApiBaseUrl(): string {
-  return useEnvStore.getState().apiBaseUrl
+  // 使用新的getEffectiveApiUrl方法，它会自动处理代理问题
+  return useEnvStore.getState().getEffectiveApiUrl()
 }
 
 // 通用的请求处理函数

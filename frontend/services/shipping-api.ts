@@ -3,7 +3,8 @@ import { useEnvStore, debugLog, debugError, debugWarn } from "@/lib/env-config"
 
 // 获取API基础URL的辅助函数
 function getApiBaseUrl(): string {
-  return useEnvStore.getState().apiBaseUrl
+  // 使用新的getEffectiveApiUrl方法，它会自动处理代理问题
+  return useEnvStore.getState().getEffectiveApiUrl()
 }
 
 // 获取Shipping API基础端点
@@ -15,15 +16,15 @@ function getShippingEndpoint(): string {
 // 构建查询字符串的辅助函数
 function buildQueryString(params?: Record<string, any>): string {
   if (!params) return ''
-  
+
   const queryParams = new URLSearchParams()
-  
+
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
       queryParams.append(key, value.toString())
     }
   })
-  
+
   return queryParams.toString() ? `?${queryParams.toString()}` : ''
 }
 
@@ -53,7 +54,7 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
     if (!response.ok) {
       const errorData = await response.json().catch(() => null)
       debugError(`API响应错误: ${response.status} ${response.statusText}`, errorData || "")
-      
+
       // 尝试从错误响应中提取有用的错误信息
       if (errorData && !errorData.success) {
         if (errorData.errors && Object.keys(errorData.errors).length > 0) {
@@ -65,7 +66,7 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
           throw new Error(errorData.message)
         }
       }
-      
+
       throw new Error(`API请求失败: ${response.status} ${response.statusText}`)
     }
 
@@ -175,7 +176,7 @@ export const shippingApi = {
   async getShippingRecords(params?: ShippingFilterParams): Promise<PaginatedResponse<ShippingRecord>> {
     const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-    
+
     return fetchWithErrorHandling<PaginatedResponse<ShippingRecord>>(`${SHIPPING_ENDPOINT}${queryString}`)
   },
 
@@ -230,7 +231,7 @@ export const shippingApi = {
   async getShippingStats(params?: ShippingFilterParams): Promise<any> {
     const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-    
+
     return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/stats${queryString}`)
   },
 
@@ -238,7 +239,7 @@ export const shippingApi = {
   async getShippingStatsDetails(params?: ShippingFilterParams): Promise<any> {
     const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-    
+
     return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/stats/details${queryString}`)
   },
 
@@ -246,7 +247,7 @@ export const shippingApi = {
   async exportData(params: any): Promise<{ downloadUrl: string }> {
     const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-    
+
     return fetchWithErrorHandling<{ downloadUrl: string }>(`${SHIPPING_ENDPOINT}/export${queryString}`)
   },
 
@@ -254,7 +255,7 @@ export const shippingApi = {
   async getChartData(params?: any): Promise<any> {
     const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-    
+
     return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/chart${queryString}`)
   },
 }

@@ -10,6 +10,13 @@ const nextConfig = {
     unoptimized: true,
   },
   output: 'standalone',
+  experimental: {
+    // 使用环境变量配置或默认使用更通用的配置
+    // process.env.ALLOWED_ORIGINS可以在.env文件中设置为逗号分隔的域名或IP列表
+    allowedDevOrigins: process.env.ALLOWED_ORIGINS 
+      ? process.env.ALLOWED_ORIGINS.split(',') 
+      : ['localhost', '.local', 'host.docker.internal'],
+  },
   async headers() {
     return [
       {

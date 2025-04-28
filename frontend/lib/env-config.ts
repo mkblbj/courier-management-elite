@@ -7,6 +7,7 @@ export type Environment = "development" | "production" | "test"
 // 环境配置接口
 export interface EnvConfig {
   apiBaseUrl: string
+  proxyEnabled: boolean
   env: Environment
   isDev: boolean
   isProd: boolean
@@ -31,8 +32,13 @@ function createEnvConfig(env: Environment = getEnvironment()): EnvConfig {
 
   // 从环境变量获取API基础URL - 只使用NEXT_PUBLIC_API_BASE_URL
   // 提供一个默认值以避免类型错误
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ""
-
+  let apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ""
+  
+  // 检查是否启用代理
+  // 在HTTPS环境中默认使用代理来避免混合内容问题
+  const useHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const useProxy = useHttps || process.env.NEXT_PUBLIC_USE_API_PROXY === 'true';
+  
   // 检查API URL是否有效
   if (!apiBaseUrl) {
     // 使用 Debug 警告日志代替 console.warn
@@ -48,6 +54,7 @@ function createEnvConfig(env: Environment = getEnvironment()): EnvConfig {
 
   return {
     apiBaseUrl,
+    proxyEnabled: useProxy,
     env,
     isDev,
     isProd,
@@ -60,9 +67,11 @@ function createEnvConfig(env: Environment = getEnvironment()): EnvConfig {
 interface EnvStore extends EnvConfig {
   setEnvironment: (env: Environment) => void
   resetToDefault: () => void
+  // 获取实际使用的API URL（考虑代理）
+  getEffectiveApiUrl: () => string
 }
 
-export const useEnvStore = create<EnvStore>((set) => {
+export const useEnvStore = create<EnvStore>((set, get) => {
   // 初始化时根据当前NODE_ENV创建配置
   const defaultConfig = createEnvConfig(getEnvironment())
 
@@ -80,6 +89,28 @@ export const useEnvStore = create<EnvStore>((set) => {
       }
     },
     resetToDefault: () => set(() => createEnvConfig(getEnvironment())),
+    // 获取实际使用的API URL（考虑代理）
+    getEffectiveApiUrl: () => {
+      const { apiBaseUrl, proxyEnabled } = get();
+      
+      // 如果启用代理，使用相对路径通过Next.js API路由访问
+      if (proxyEnabled) {
+        // 使用本地代理
+        return '/api/proxy';
+      }
+      
+      // 否则使用直接API URL，确保它有正确的协议前缀
+      let url = apiBaseUrl.trim();
+      
+      // 检查URL是否缺少协议前缀
+      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        // 默认添加http://前缀
+        url = `http://${url}`;
+        console.warn(`API URL缺少协议前缀，自动添加http://: ${url}`);
+      }
+      
+      return url;
+    }
   }
 })
 

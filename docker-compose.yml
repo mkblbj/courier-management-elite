@@ -53,7 +53,13 @@ services:
     depends_on:
       - backend
     environment:
+      # API连接配置
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3000}
+      INTERNAL_API_URL: ${INTERNAL_API_URL:-http://backend:3000}
+      NEXT_PUBLIC_USE_API_PROXY: ${NEXT_PUBLIC_USE_API_PROXY:-true}
+      # 安全与开发配置
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-localhost,courier-service.com}
+      NEXT_PUBLIC_DEBUG: ${NEXT_PUBLIC_DEBUG:-false}
     ports:
       - "80:3000"
     networks:
