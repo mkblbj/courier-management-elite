@@ -11,5 +11,18 @@
   "courier_status_active": "启用",
   "courier_status_inactive": "禁用",
   "courier_name_required": "快递公司名称不能为空",
-  "courier_code_required": "快递公司代码不能为空"
+  "courier_code_required": "快递公司代码不能为空",
+  "name_too_long": "名称不能超过50个字符",
+  "name_already_exists": "该名称已存在，请使用其他名称",
+  "code_too_long": "代码不能超过10个字符",
+  "code_format_invalid": "代码只能包含字母和数字",
+  "code_already_exists": "该代码已存在，请使用其他代码",
+  "remark": "备注",
+  "remark_too_long": "备注不能超过200个字符",
+  "enter_courier_name": "请输入快递公司名称",
+  "enter_courier_code": "请输入快递公司代码",
+  "enter_remark": "请输入备注信息（可选）",
+  "code_description": "只能包含字母和数字，最多10个字符",
+  "add_courier_description": "填写以下信息来创建快递类型",
+  "edit_courier_description": "填写以下信息来更新快递类型"
 } 

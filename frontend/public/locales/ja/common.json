@@ -17,5 +17,21 @@
   "save": "保存",
   "cancel": "キャンセル",
   "confirm": "確認",
-  "back": "戻る"
+  "back": "戻る",
+  "success": "成功",
+  "failed": "失敗",
+  "operation_failed": "操作に失敗しました",
+  "status_update_failed": "ステータス更新に失敗しました",
+  "refresh": "更新",
+  "data_updated": "データが更新されました",
+  "data_fetch_failed": "データの取得に失敗しました",
+  "all": "すべて",
+  "total_count": "合計 {{count}} 件",
+  "no_data": "データなし",
+  "loading_error": "読み込みエラー",
+  "test_notification": "テスト通知",
+  "reset": "リセット",
+  "saving": "保存中...",
+  "confirm_reset": "フォームリセットの確認",
+  "reset_warning": "フォームをリセットしてもよろしいですか？保存されていない変更はすべて失われます。"
 } 

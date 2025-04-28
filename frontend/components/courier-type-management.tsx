@@ -12,6 +12,7 @@ import { Plus, RefreshCw, Search, Bell } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import type { CourierType } from "@/services/api"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
 
 // 调试模式开关，与API调试工具保持一致
 const showDebugTool = false // 设置为true可以启用调试功能
@@ -19,6 +20,7 @@ const showDebugTool = false // 设置为true可以启用调试功能
 export function CourierTypeManagement() {
   const { toast } = useToast()
   const [isVisible, setIsVisible] = useState(false)
+  const { t } = useTranslation(['common', 'courier'])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,20 +74,20 @@ export function CourierTypeManagement() {
           ...courierType,
         })
         toast({
-          title: "更新成功",
+          title: t('common:save') + t('common:success'),
           variant: "default",
         })
       } else {
         await addCourierType(courierType)
         toast({
-          title: "添加成功",
+          title: t('common:create') + t('common:success'),
           variant: "default",
         })
       }
       setOpen(false)
     } catch (err) {
       toast({
-        title: "操作失败",
+        title: t('common:operation_failed'),
         variant: "destructive",
       })
     }
@@ -96,12 +98,12 @@ export function CourierTypeManagement() {
     try {
       await deleteCourierType(id)
       toast({
-        title: "删除成功",
+        title: t('common:delete') + t('common:success'),
         variant: "default",
       })
     } catch (err) {
       toast({
-        title: "删除失败",
+        title: t('common:delete') + t('common:failed'),
         variant: "destructive",
       })
     }
@@ -112,12 +114,14 @@ export function CourierTypeManagement() {
     try {
       await toggleCourierTypeStatus(id)
       toast({
-        title: `状态${active ? "激活" : "禁用"}成功`,
+        title: active 
+          ? t('courier:courier_status_active') + t('common:success')
+          : t('courier:courier_status_inactive') + t('common:success'),
         variant: "default",
       })
     } catch (err) {
       toast({
-        title: "状态更新失败",
+        title: t('common:status_update_failed'),
         variant: "destructive",
       })
     }
@@ -128,12 +132,12 @@ export function CourierTypeManagement() {
     try {
       await reorderCourierTypes(reorderedTypes)
       toast({
-        title: "排序更新成功",
+        title: t('common:sort') + t('common:success'),
         variant: "default",
       })
     } catch (err) {
       toast({
-        title: "排序更新失败",
+        title: t('common:sort') + t('common:failed'),
         variant: "destructive",
       })
     }
@@ -146,15 +150,15 @@ export function CourierTypeManagement() {
       refetch();
       // 刷新成功提示
       toast({
-        title: "刷新成功",
-        description: "数据已更新",
+        title: t('common:refresh') + t('common:success'),
+        description: t('common:data_updated'),
         variant: "default",
       });
     } catch (error) {
       // 刷新失败提示
       toast({
-        title: "刷新失败",
-        description: error instanceof Error ? error.message : "获取数据失败",
+        title: t('common:refresh') + t('common:failed'),
+        description: error instanceof Error ? error.message : t('common:data_fetch_failed'),
         variant: "destructive",
       });
     }
@@ -184,6 +188,11 @@ export function CourierTypeManagement() {
     }, 2000)
   }
 
+  // 状态筛选处理器
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value as "all" | "active" | "inactive");
+  };
+
   return (
     <>
       <Card
@@ -199,93 +208,73 @@ export function CourierTypeManagement() {
               isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
             )}
           >
-            <div className="relative w-full sm:w-[300px]">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground" />
+            <div className="flex-1 flex flex-col gap-2 sm:flex-row items-start sm:items-center">
+              {/* 搜索输入框 */}
+              <div className="relative max-w-sm w-full">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  type="search"
+                  placeholder={t('common:search')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 bg-white text-black"
+                />
               </div>
-              {/* 修改搜索和筛选的toast提示 */}
-              <Input
-                placeholder="搜索快递类型..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                }}
-                className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="flex gap-2">
-              {/* 修改搜索和筛选的toast提示 */}
-              <Select
-                value={statusFilter}
-                onValueChange={(value) => {
-                  setStatusFilter(value as "all" | "active" | "inactive")
-                }}
-              >
-                <SelectTrigger className="w-[120px] transition-all duration-200 hover:border-blue-400">
-                  <SelectValue placeholder="状态筛选" />
+              {/* 状态筛选 */}
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder={t('courier:courier_status')} />
                 </SelectTrigger>
-                <SelectContent className="animate-fade-in">
-                  <SelectItem value="all">全部</SelectItem>
-                  <SelectItem value="active">激活</SelectItem>
-                  <SelectItem value="inactive">禁用</SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">{t('common:all')}</SelectItem>
+                  <SelectItem value="active">{t('courier:courier_status_active')}</SelectItem>
+                  <SelectItem value="inactive">{t('courier:courier_status_inactive')}</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* 刷新按钮 */}
               <Button
                 variant="outline"
                 size="icon"
                 onClick={handleRefresh}
-                title="刷新数据"
-                className="transition-all duration-200 hover:rotate-180"
+                className="h-9 w-9 p-0"
+                aria-label={t('common:refresh')}
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button onClick={handleAddClick} className="bg-blue-600 transition-colors hover:bg-blue-700">
+              {/* 添加按钮 */}
+              <Button onClick={handleAddClick}>
                 <Plus className="mr-2 h-4 w-4" />
-                添加快递类型
+                {t('courier:add_courier')}
               </Button>
-              {/* 测试提示按钮 - 仅在调试模式下显示 */}
-              {showDebugTool && (
-                <Button variant="outline" onClick={testToast} title="测试提示">
-                  <Bell className="h-4 w-4 mr-2" />
-                  测试提示
-                </Button>
-              )}
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {error ? (
-            <div className="flex justify-center p-6 text-red-500 animate-fade-in">
-              加载数据时出错: {error}
-              <Button variant="outline" size="sm" className="ml-2" onClick={() => refetch()}>
-                重试
-              </Button>
-            </div>
-          ) : (
-            <div
-              className={cn(
-                "transition-all duration-500 delay-200",
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
-              )}
-            >
-              <CourierTypeTable
-                courierTypes={filteredCourierTypes}
-                isLoading={isLoading}
-                onEdit={handleEditClick}
-                onDelete={handleDelete}
-                onReorder={handleReorder}
-                onStatusChange={handleStatusChange}
-                onRetry={() => refetch()}
-                error={error}
-                searchQuery={searchQuery} // 传递搜索查询
-              />
-            </div>
-          )}
+          <CourierTypeTable
+            courierTypes={filteredCourierTypes}
+            onDelete={handleDelete}
+            onEdit={handleEditClick}
+            onStatusChange={handleStatusChange}
+            onReorder={handleReorder}
+            isLoading={isLoading}
+          />
         </CardContent>
-        <CardFooter className="bg-muted/10">
-          <div className="flex w-full justify-between items-center">
-            <div className="text-sm text-muted-foreground">共 {filteredCourierTypes.length} 条记录</div>
+        <CardFooter className="pb-6 pt-3 flex justify-between items-center">
+          <div className="text-xs text-muted-foreground">
+            {!error
+              ? filteredCourierTypes.length > 0
+                ? t('common:total_count', { count: filteredCourierTypes.length })
+                : t('common:no_data')
+              : t('common:loading_error')}
           </div>
+          {showDebugTool && (
+            <Button size="sm" variant="outline" onClick={testToast}>
+              <Bell className="h-4 w-4 mr-2" />
+              {t('common:test_notification')}
+            </Button>
+          )}
         </CardFooter>
       </Card>
 

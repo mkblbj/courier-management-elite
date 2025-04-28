@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import type { CourierType } from "@/services/api"
+import { useTranslation } from "react-i18next"
 
 interface CourierTypeDialogProps {
   open: boolean
@@ -48,6 +49,8 @@ export function CourierTypeDialog({
   onSave,
   existingCourierTypes,
 }: CourierTypeDialogProps) {
+  const { t } = useTranslation(['common', 'courier'])
+  
   // 表单数据状态
   const [formData, setFormData] = useState<{
     name: string
@@ -147,27 +150,27 @@ export function CourierTypeDialog({
 
     // 名称验证
     if (!formData.name?.trim()) {
-      newErrors.name = "名称不能为空"
+      newErrors.name = t('courier:courier_name_required')
     } else if (formData.name.length > 50) {
-      newErrors.name = "名称不能超过50个字符"
+      newErrors.name = t('courier:name_too_long')
     } else if (existingCourierTypes.some((ct) => ct.name === formData.name && ct.id !== courierType?.id)) {
-      newErrors.name = "该名称已存在，请使用其他名称"
+      newErrors.name = t('courier:name_already_exists')
     }
 
     // 代码验证
     if (!formData.code?.trim()) {
-      newErrors.code = "代码不能为空"
+      newErrors.code = t('courier:courier_code_required')
     } else if (formData.code.length > 10) {
-      newErrors.code = "代码不能超过10个字符"
+      newErrors.code = t('courier:code_too_long')
     } else if (!/^[A-Za-z0-9]+$/.test(formData.code)) {
-      newErrors.code = "代码只能包含字母和数字"
+      newErrors.code = t('courier:code_format_invalid')
     } else if (existingCourierTypes.some((ct) => ct.code === formData.code && ct.id !== courierType?.id)) {
-      newErrors.code = "该代码已存在，请使用其他代码"
+      newErrors.code = t('courier:code_already_exists')
     }
 
     // 备注验证
     if (formData.remark && formData.remark.length > 200) {
-      newErrors.remark = "备注不能超过200个字符"
+      newErrors.remark = t('courier:remark_too_long')
     }
 
     setErrors(newErrors)
@@ -199,210 +202,153 @@ export function CourierTypeDialog({
 
   // 处理重置按钮点击
   const handleResetClick = () => {
-    setShowResetConfirm(true)
+    // 检查表单是否有更改
+    const hasChanges =
+      courierType &&
+      (formData.name !== courierType.name ||
+        formData.code !== courierType.code ||
+        formData.remark !== (courierType.remark || "") ||
+        Boolean(formData.is_active) !== Boolean(courierType.is_active))
+
+    // 如果有更改或是新建记录（没有courierType），则显示确认对话框
+    if (hasChanges || !courierType) {
+      setShowResetConfirm(true)
+    }
   }
 
-  // 处理重置确认
+  // 确认重置表单
   const handleResetConfirm = () => {
     resetForm()
   }
 
-  // 处理重置取消
+  // 取消重置表单
   const handleResetCancel = () => {
     setShowResetConfirm(false)
   }
 
   return (
     <>
-      {/* 主对话框 */}
-      <Dialog
-        open={open}
-        onOpenChange={(newOpen) => {
-          if (!isSubmitting) {
-            onOpenChange(newOpen)
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-[500px] animate-scale-in">
-          <form onSubmit={handleSubmit}>
-            <DialogHeader>
-              <DialogTitle className="animate-fade-in">{courierType ? "编辑快递类型" : "添加快递类型"}</DialogTitle>
-              <DialogDescription className="animate-fade-in" style={{ animationDelay: "50ms" }}>
-                填写以下信息来{courierType ? "更新" : "创建"}快递类型。
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="grid gap-4 py-4">
-              {/* 名称字段 */}
-              <div
-                className="grid gap-2 transition-all duration-300"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible ? "translateY(0)" : "translateY(10px)",
-                  transitionDelay: "100ms",
-                }}
-              >
-                <Label htmlFor="name" className="flex items-center gap-1">
-                  名称
-                  <span className="text-red-500">*</span>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {courierType ? t('courier:edit_courier') : t('courier:add_courier')}
+            </DialogTitle>
+            <DialogDescription>
+              {courierType
+                ? t('courier:edit_courier_description')
+                : t('courier:add_courier_description')}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-4 py-2">
+              {/* 快递公司名称 */}
+              <div className="space-y-2">
+                <Label htmlFor="name">
+                  {t('courier:courier_name')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="name"
                   name="name"
-                  value={formData.name || ""}
+                  value={formData.name}
                   onChange={handleChange}
+                  placeholder={t('courier:enter_courier_name')}
                   className={errors.name ? "border-red-500" : ""}
-                  maxLength={50}
                   disabled={isSubmitting}
+                  maxLength={50}
                 />
-                {errors.name && <p className="text-sm text-red-500 animate-fade-in">{errors.name}</p>}
-                {!errors.name && <p className="text-xs text-muted-foreground">最多50个字符</p>}
+                {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
               </div>
 
-              {/* 代码字段 */}
-              <div
-                className="grid gap-2 transition-all duration-300"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible ? "translateY(0)" : "translateY(10px)",
-                  transitionDelay: "150ms",
-                }}
-              >
-                <Label htmlFor="code" className="flex items-center gap-1">
-                  代码
-                  <span className="text-red-500">*</span>
+              {/* 快递公司代码 */}
+              <div className="space-y-2">
+                <Label htmlFor="code">
+                  {t('courier:courier_code')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="code"
                   name="code"
-                  value={formData.code || ""}
+                  value={formData.code}
                   onChange={handleChange}
+                  placeholder={t('courier:enter_courier_code')}
                   className={errors.code ? "border-red-500" : ""}
-                  maxLength={10}
                   disabled={isSubmitting}
+                  maxLength={10}
                 />
-                {errors.code && <p className="text-sm text-red-500 animate-fade-in">{errors.code}</p>}
-                {!errors.code && <p className="text-xs text-muted-foreground">只能包含字母和数字，最多10个字符</p>}
+                {errors.code && <p className="text-red-500 text-sm">{errors.code}</p>}
+                <p className="text-xs text-muted-foreground">
+                  {t('courier:code_description')}
+                </p>
               </div>
 
-              {/* 备注字段 */}
-              <div
-                className="grid gap-2 transition-all duration-300"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible ? "translateY(0)" : "translateY(10px)",
-                  transitionDelay: "200ms",
-                }}
-              >
-                <Label htmlFor="remark">备注</Label>
+              {/* 备注信息 */}
+              <div className="space-y-2">
+                <Label htmlFor="remark">{t('courier:remark')}</Label>
                 <Textarea
                   id="remark"
                   name="remark"
-                  value={formData.remark || ""}
+                  value={formData.remark}
                   onChange={handleChange}
+                  placeholder={t('courier:enter_remark')}
                   className={errors.remark ? "border-red-500" : ""}
-                  placeholder="请输入备注信息（可选）"
-                  rows={3}
-                  maxLength={200}
                   disabled={isSubmitting}
+                  maxLength={200}
                 />
-                {errors.remark && <p className="text-sm text-red-500 animate-fade-in">{errors.remark}</p>}
+                {errors.remark && <p className="text-red-500 text-sm">{errors.remark}</p>}
               </div>
 
-              {/* 激活状态开关 */}
-              <div
-                className="flex items-center gap-2 transition-all duration-300"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible ? "translateY(0)" : "translateY(10px)",
-                  transitionDelay: "250ms",
-                }}
-              >
-                <Label htmlFor="is_active">激活状态</Label>
+              {/* 启用状态 */}
+              <div className="flex items-center space-x-2">
                 <Switch
                   id="is_active"
                   checked={formData.is_active}
                   onCheckedChange={handleSwitchChange}
                   disabled={isSubmitting}
                 />
+                <Label htmlFor="is_active">{t('courier:courier_status_active')}</Label>
               </div>
             </div>
 
-            {/* 底部按钮 */}
-            <DialogFooter
-              className="transition-all duration-300"
-              style={{
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible ? "translateY(0)" : "translateY(10px)",
-                transitionDelay: "300ms",
-              }}
-            >
+            <DialogFooter className="flex justify-end space-x-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleResetClick}
                 disabled={isSubmitting}
-                className="transition-colors hover:bg-gray-100"
               >
-                重置
+                {t('common:reset')}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
-                className="transition-colors hover:bg-gray-100"
               >
-                取消
+                {t('common:cancel')}
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-blue-600 transition-colors hover:bg-blue-700">
-                {isSubmitting ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    保存中...
-                  </>
-                ) : (
-                  "保存"
-                )}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? t('common:saving') : t('common:save')}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* 重置确认对话框 - 完全独立于主对话框 */}
+      {/* 重置确认对话框 */}
       <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
-        <AlertDialogContent className="animate-scale-in">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认重置表单</AlertDialogTitle>
-            <AlertDialogDescription>您确定要重置表单吗？所有未保存的更改将会丢失。</AlertDialogDescription>
+            <AlertDialogTitle>{t('common:confirm_reset')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('common:reset_warning')}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleResetCancel}>取消</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleResetConfirm}
-              className="bg-blue-600 transition-colors hover:bg-blue-700"
-            >
-              确认重置
+            <AlertDialogCancel onClick={handleResetCancel}>
+              {t('common:cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetConfirm}>
+              {t('common:confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

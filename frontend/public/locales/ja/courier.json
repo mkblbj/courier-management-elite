@@ -11,5 +11,18 @@
   "courier_status_active": "有効",
   "courier_status_inactive": "無効",
   "courier_name_required": "宅配会社名は必須です",
-  "courier_code_required": "宅配会社コードは必須です"
+  "courier_code_required": "宅配会社コードは必須です",
+  "name_too_long": "名前は50文字以内で入力してください",
+  "name_already_exists": "この名前は既に存在します。別の名前を使用してください",
+  "code_too_long": "コードは10文字以内で入力してください",
+  "code_format_invalid": "コードは英数字のみ使用可能です",
+  "code_already_exists": "このコードは既に存在します。別のコードを使用してください",
+  "remark": "備考",
+  "remark_too_long": "備考は200文字以内で入力してください",
+  "enter_courier_name": "宅配会社名を入力",
+  "enter_courier_code": "宅配会社コードを入力",
+  "enter_remark": "備考を入力（任意）",
+  "code_description": "英数字のみ、最大10文字",
+  "add_courier_description": "以下の情報を入力して宅配タイプを作成してください",
+  "edit_courier_description": "以下の情報を入力して宅配タイプを更新してください"
 } 

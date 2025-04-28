@@ -371,7 +371,7 @@ export function CourierTypeTable({
 
       toast({
         title: "排序已更改",
-        variant: "success",
+        variant: "default",
         duration: 2000,
       })
     } else {
