@@ -1,7 +1,7 @@
 "use client";
 import { useTranslation } from "react-i18next";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -37,6 +37,9 @@ export default function DashboardPage() {
   const { courierTypes } = useCourierTypes()
   const [selectedTimeRange, setSelectedTimeRange] = useState("7days")
   const [selectedCourierType, setSelectedCourierType] = useState("all")
+  const [refreshInterval, setRefreshInterval] = useState("60000") // 默认1分钟
+  const [isRefreshingTodayStats, setIsRefreshingTodayStats] = useState(false)
+  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const shippingData = useShippingData()
 
@@ -251,6 +254,76 @@ export default function DashboardPage() {
 
   const dailyData = generateDailyData()
 
+  // 单独刷新今日各快递类型实时发货量
+  const refreshTodayStats = async () => {
+    setIsRefreshingTodayStats(true)
+    try {
+      // 获取当前日期（确保始终使用最新日期）
+      const currentDate = format(new Date(), "yyyy-MM-dd")
+      
+      // 获取今日统计数据
+      const todayStatsResponse = await shippingApi.getShippingStats({
+        date: currentDate,
+      })
+      setTodayStats(todayStatsResponse || { total: { total: 0 }, by_courier: [] })
+    } catch (error) {
+      console.error("刷新今日数据失败:", error)
+    } finally {
+      setIsRefreshingTodayStats(false)
+    }
+  }
+
+  // 用于计算下次刷新剩余时间
+  const [nextRefreshTime, setNextRefreshTime] = useState<number>(parseInt(refreshInterval) / 1000)
+
+  // 初始化时启动倒计时
+  useEffect(() => {
+    const countdownTimer = setInterval(() => {
+      setNextRefreshTime((prev) => {
+        if (prev <= 1) {
+          return parseInt(refreshInterval) / 1000
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(countdownTimer)
+  }, [refreshInterval])
+
+  // 设置自动刷新定时器
+  useEffect(() => {
+    // 清除之前的定时器
+    if (refreshTimerRef.current) {
+      clearInterval(refreshTimerRef.current)
+    }
+
+    // 重置下次刷新时间
+    setNextRefreshTime(parseInt(refreshInterval) / 1000)
+
+    // 设置刷新定时器
+    refreshTimerRef.current = setInterval(() => {
+      refreshTodayStats()
+      // 重置倒计时
+      setNextRefreshTime(parseInt(refreshInterval) / 1000)
+    }, parseInt(refreshInterval))
+
+    return () => {
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current)
+      }
+    }
+  }, [refreshInterval])
+
+  // 格式化倒计时显示
+  const formatCountdown = (seconds: number) => {
+    if (seconds < 60) {
+      return `${seconds}${t("秒")}`
+    }
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}${t("分")} ${remainingSeconds}${t("秒")}`
+  }
+
   return (
     (<div className="min-h-screen bg-gray-50">
       <DashboardHeader />
@@ -282,7 +355,38 @@ export default function DashboardPage() {
             isLoading={isLoading}
             isVisible={isVisible}
             delay={100}
+            headerRight={
+              <div className="flex items-center space-x-2">
+                <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md flex items-center">
+                  <RefreshCw className="h-3 w-3 mr-1 text-gray-500" />
+                  {t("下次刷新")}: <span className="font-medium ml-1">{formatCountdown(nextRefreshTime)}</span>
+                </div>
+                <Select value={refreshInterval} onValueChange={setRefreshInterval}>
+                  <SelectTrigger className="w-[100px] h-8 text-xs">
+                    <SelectValue placeholder={t("刷新间隔")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30000">{t("30秒")}</SelectItem>
+                    <SelectItem value="60000">{t("1分钟")}</SelectItem>
+                    <SelectItem value="120000">{t("2分钟")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-8 w-8" 
+                  onClick={() => {
+                    refreshTodayStats();
+                    setNextRefreshTime(parseInt(refreshInterval) / 1000);
+                  }} 
+                  disabled={isRefreshingTodayStats}
+                >
+                  <RefreshCw className={cn("h-4 w-4", isRefreshingTodayStats && "animate-spin")} />
+                </Button>
+              </div>
+            }
           >
+            {/* 卡片内容 */}
             {todayStats && (todayStats.by_courier || []).length > 0 ? (
               <div className="flex flex-col">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

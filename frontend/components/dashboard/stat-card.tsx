@@ -7,13 +7,14 @@ import { LoadingSpinner } from "@/components/loading-spinner"
 import { cn } from "@/lib/utils"
 
 interface StatCardProps {
-  title: string
+  title: React.ReactNode
   icon: React.ReactNode
   children: React.ReactNode
   isLoading: boolean
   isVisible: boolean
   delay?: number
   className?: string
+  headerRight?: React.ReactNode
 }
 
 export function StatCard({ 
@@ -23,7 +24,8 @@ export function StatCard({
   isLoading, 
   isVisible, 
   delay = 0,
-  className 
+  className,
+  headerRight
 }: StatCardProps) {
   return (
     <Card
@@ -35,11 +37,16 @@ export function StatCard({
       style={{ transitionDelay: `${delay}ms` }}
     >
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between w-full">
           <CardTitle className="text-lg flex items-center gap-2">
-            <div className="p-1.5 bg-blue-100 rounded-md text-blue-700">{icon}</div>
+            {icon && <div className="p-1.5 bg-blue-100 rounded-md text-blue-700">{icon}</div>}
             {title}
           </CardTitle>
+          {headerRight && (
+            <div className="flex items-center">
+              {headerRight}
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
