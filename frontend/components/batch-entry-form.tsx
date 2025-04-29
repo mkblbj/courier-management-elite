@@ -18,6 +18,7 @@ import { useCourierTypes } from "@/hooks/use-courier-types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { ShippingEntry } from "@/hooks/use-shipping-data"
+import { toast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -127,7 +128,15 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
       form.reset(defaultValues)
     } catch (error) {
       console.error("批量提交失败:", error)
-      // 不需要在这里处理错误显示，错误已在useShippingData的hook中显示
+      // 在这里显示错误提示，而不仅仅依赖于 useShippingData hook
+      if (error instanceof Error) {
+        toast({
+          title: t("提交失败"),
+          description: error.message,
+          variant: "destructive",
+        })
+      }
+      throw error // 继续抛出错误，让上层组件也能处理
     } finally {
       setSubmitting(false)
     }

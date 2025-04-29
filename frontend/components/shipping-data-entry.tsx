@@ -46,11 +46,19 @@ export function ShippingDataEntry() {
   }, [])
 
   const handleSingleSubmit = async (data: Parameters<typeof addEntry>[0]) => {
-    await addEntry(data);
+    try {
+      await addEntry(data);
+    } finally {
+      refetch();
+    }
   }
 
-  const handleBatchSubmit = async (data: Parameters<typeof addBatchEntries>[0]) => {
-    await addBatchEntries(data);
+  const handleBatchSubmit = async (data: Parameters<typeof addBatchEntries>[0]): Promise<void> => {
+    try {
+      await addBatchEntries(data);
+    } finally {
+      refetch();
+    }
   }
 
   return (

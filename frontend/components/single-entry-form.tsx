@@ -28,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { toast } from "@/components/ui/use-toast"
 
 const formSchema = z.object({
   date: z.date({
@@ -68,14 +69,22 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     setSubmitting(true)
     try {
+      if (!values.courierTypeId) {
+        toast({
+          title: t("提交失败"),
+          description: t("请选择快递类型"),
+          variant: "destructive",
+        })
+        return;
+      }
+      
       const courierType = courierTypes.find((ct) => ct.id.toString() === values.courierTypeId)
-      if (!courierType) throw new Error(t("快递类型不存在"))
-
-      await onSubmit({
+      
+      const result = await onSubmit({
         id: initialData?.id || Date.now().toString(),
         date: values.date.toISOString(),
         courierTypeId: values.courierTypeId,
-        courierTypeName: courierType.name,
+        courierTypeName: courierType?.name || "",
         quantity: Number.parseInt(values.quantity),
         remarks: values.remarks || "",
       })
@@ -88,9 +97,19 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
           remarks: "",
         })
       }
+
+      return result
     } catch (error) {
       console.error("提交失败:", error)
-      // 不需要在这里处理错误显示，错误已在useShippingData的hook中显示
+      // 在这里显示错误提示，而不仅仅依赖于 useShippingData hook
+      if (error instanceof Error) {
+        toast({
+          title: t("提交失败"),
+          description: error.message,
+          variant: "destructive",
+        })
+      }
+      throw error // 继续抛出错误，让上层组件也能处理
     } finally {
       setSubmitting(false)
     }
@@ -108,8 +127,13 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
       courierTypeId: initialData?.courierTypeId?.toString() || "",
       quantity: initialData?.quantity?.toString() || "",
       remarks: initialData?.remarks || "",
-    })
-    setShowResetConfirm(false)
+    });
+    
+    setTimeout(() => {
+      form.trigger();
+    }, 0);
+    
+    setShowResetConfirm(false);
   }
 
   return (<>
@@ -188,7 +212,7 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
                       <FormLabel>{t("快递类型")}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                         disabled={isLoadingCourierTypes}
                       >
                         <FormControl>

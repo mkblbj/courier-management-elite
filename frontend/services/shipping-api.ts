@@ -55,19 +55,79 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
       const errorData = await response.json().catch(() => null)
       debugError(`API响应错误: ${response.status} ${response.statusText}`, errorData || "")
 
-      // 尝试从错误响应中提取有用的错误信息
-      if (errorData && !errorData.success) {
+      // 直接使用后端返回的原始错误信息
+      if (errorData) {
+        // 优先使用后端的message字段（如果它包含有意义的业务错误信息）
+        if (errorData.message && (
+          errorData.message.includes("记录已存在") || 
+          errorData.message.includes("已存在") ||
+          errorData.message.includes("日期")
+        )) {
+          debugLog("使用后端返回的message字段:", errorData.message);
+          throw new Error(errorData.message);
+        }
+        
+        // 如果有errors对象，先检查是否有业务错误
         if (errorData.errors && Object.keys(errorData.errors).length > 0) {
-          // 获取第一个错误字段的错误信息
-          const firstErrorField = Object.keys(errorData.errors)[0]
-          const errorMessage = errorData.errors[firstErrorField]
-          throw new Error(errorMessage || `API请求失败: ${response.status}`)
-        } else if (errorData.message) {
-          throw new Error(errorData.message)
+          // 要过滤掉的技术性错误消息
+          const technicalErrors = [
+            "快递公司ID必须是整数",
+            "ID为",
+            "快递公司不存在",
+            "快递公司已停用"
+          ];
+          
+          // 先检查是否有包含"已存在"的错误消息
+          let businessError = null;
+          for (const key of Object.keys(errorData.errors)) {
+            const errMsg = errorData.errors[key];
+            if (errMsg && (
+              errMsg.includes("记录已存在") || 
+              errMsg.includes("已存在")
+            )) {
+              businessError = errMsg;
+              break;
+            }
+          }
+          
+          // 如果找到业务错误，使用它
+          if (businessError) {
+            debugLog("使用业务错误:", businessError);
+            throw new Error(businessError);
+          }
+          
+          // 如果没有业务错误，检查是否有非技术性错误
+          for (const key of Object.keys(errorData.errors)) {
+            const errMsg = errorData.errors[key];
+            if (errMsg) {
+              let isTechnicalError = false;
+              for (const techErr of technicalErrors) {
+                if (errMsg.includes(techErr)) {
+                  isTechnicalError = true;
+                  break;
+                }
+              }
+              
+              if (!isTechnicalError) {
+                debugLog("使用非技术性错误:", errMsg);
+                throw new Error(errMsg);
+              }
+            }
+          }
+          
+          // 只在没有找到任何业务错误或非技术性错误时使用message字段
+          if (errorData.message) {
+            debugLog("没有找到业务错误，使用message字段:", errorData.message);
+            throw new Error(errorData.message);
+          }
+          
+          // 最后才使用技术性错误（但实际上不应该走到这里）
+          debugLog("没有找到适合的错误信息");
         }
       }
 
-      throw new Error(`API请求失败: ${response.status} ${response.statusText}`)
+      // 如果无法解析错误数据，使用HTTP状态
+      throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
     }
 
     const responseData = (await response.json()) as ApiResponseFormat<T>
