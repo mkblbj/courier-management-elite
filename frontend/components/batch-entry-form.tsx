@@ -29,15 +29,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-// 修改createBatchFormSchema函数，只为激活的快递类型创建表单字段
-const createBatchFormSchema = (courierTypeIds: string[]) => {
-  const {
-    t: t
-  } = useTranslation();
-
+// 修改createBatchFormSchema函数，使用传入的t函数而不是在函数内部调用useTranslation
+const createBatchFormSchema = (courierTypeIds: string[], t: (key: string) => string) => {
   const schema: Record<string, z.ZodTypeAny> = {
     date: z.date({
-      required_error: "请选择日期",
+      required_error: t("请选择日期"),
     }),
   }
 
@@ -46,7 +42,7 @@ const createBatchFormSchema = (courierTypeIds: string[]) => {
       .string()
       .default("")
       .refine((val) => val === "" || (!isNaN(Number(val)) && Number(val) >= 0 && Number.isInteger(Number(val))), {
-        message: "请输入大于或等于0的整数",
+        message: t("请输入大于或等于0的整数"),
       })
     schema[`remarks_${id}`] = z.string().default("")
   })
@@ -60,25 +56,20 @@ interface BatchEntryFormProps {
 }
 
 export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const { courierTypes, isLoading: isLoadingCourierTypes } = useCourierTypes()
   const [submitting, setSubmitting] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
 
-  // 修改formSchema创建，只为激活的快递类型创建schema
+  // 修改formSchema创建，传入t函数
   const formSchema = createBatchFormSchema(
     courierTypes.filter((ct) => Boolean(ct.is_active)).map((ct) => ct.id.toString()),
+    t
   )
 
-  // 修改createDefaultValues函数，只为激活的快递类型创建默认值
+  // 修改createDefaultValues函数，使用外部的t函数
   const createDefaultValues = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     const values: any = {
       date: new Date(),
     }
@@ -100,12 +91,8 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
     defaultValues: createDefaultValues(),
   })
 
-  // 修改handleSubmit函数，只处理激活的快递类型
+  // 修改handleSubmit函数，使用外部的t函数
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setSubmitting(true)
     try {
       const entries: ShippingEntry[] = []
@@ -148,19 +135,11 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
 
   // Handle form reset with confirmation
   const handleReset = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setShowResetConfirm(true)
   }
 
   // Confirm reset action
   const confirmReset = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     const defaultValues = createDefaultValues()
     form.reset(defaultValues)
     setShowResetConfirm(false)
@@ -292,7 +271,7 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
                 disabled={submitting || isLoading || isLoadingCourierTypes}
                 className="bg-blue-600 transition-colors hover:bg-blue-700"
               >
-                {submitting ? "提交中..." : "全部提交"}
+                {submitting ? t("提交中...") : t("全部提交")}
               </Button>
             </div>
           </form>
