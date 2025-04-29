@@ -13,9 +13,7 @@ import { InfoIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function ShippingDataEntry() {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<string>("single")
   const {
@@ -48,18 +46,10 @@ export function ShippingDataEntry() {
   }, [])
 
   const handleSingleSubmit = async (data: Parameters<typeof addEntry>[0]) => {
-    const {
-      t: t
-    } = useTranslation();
-
     await addEntry(data);
   }
 
   const handleBatchSubmit = async (data: Parameters<typeof addBatchEntries>[0]) => {
-    const {
-      t: t
-    } = useTranslation();
-
     await addBatchEntries(data);
   }
 

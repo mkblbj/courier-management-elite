@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -54,47 +54,38 @@ const handleApiRequest = async <T,>(
 
 export function ShippingApiDebug() {
   const { t } = useTranslation();
+  
+  // 将所有的useState hooks移到组件顶部，确保每次渲染的调用顺序一致
   const [isMounted, setIsMounted] = useState(false);
-
-  // 在挂载后设置isMounted为true
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  // 在生产环境中直接返回null
-  if (process.env.NODE_ENV === "production") {
-    return null
-  }
-
-  // 非客户端或环境配置不支持调试时返回null
-  if (!isMounted || !useEnvStore.getState().debug) {
-    return null
-  }
-
-  const [result, setResult] = useState<any>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [requestLogs, setRequestLogs] = useState<any[]>([])
-  const [selectedTab, setSelectedTab] = useState("test")
-
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [requestLogs, setRequestLogs] = useState<any[]>([]);
+  const [selectedTab, setSelectedTab] = useState("test");
+  
   // 发货数据相关表单状态
-  const [shippingDate, setShippingDate] = useState<Date | undefined>(new Date())
+  const [shippingDate, setShippingDate] = useState<Date | undefined>(new Date());
   const [shippingFormData, setShippingFormData] = useState({
     courier_id: "",
     quantity: "10",
     notes: "测试发货记录",
-  })
-
+  });
+  
   const [shippingUpdateFormData, setShippingUpdateFormData] = useState({
     id: "",
     date: new Date(),
     courier_id: "",
     quantity: "",
     notes: "",
-  })
+  });
+  
+  const [shippingDeleteId, setShippingDeleteId] = useState("");
+  const [batchShippingData, setBatchShippingData] = useState("");
 
-  const [shippingDeleteId, setShippingDeleteId] = useState("")
-  const [batchShippingData, setBatchShippingData] = useState("")
+  // 在挂载后设置isMounted为true
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // 添加日志的辅助函数
   const addLog = (action: string, method: string, url: string, data?: any, error?: string) => {
@@ -294,6 +285,16 @@ export function ShippingApiDebug() {
   const handleShippingUpdateFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setShippingUpdateFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  // 在生产环境中直接返回null
+  if (process.env.NODE_ENV === "production") {
+    return null
+  }
+
+  // 非客户端或环境配置不支持调试时返回null
+  if (!isMounted || !useEnvStore.getState().debug) {
+    return null
   }
 
   return (
