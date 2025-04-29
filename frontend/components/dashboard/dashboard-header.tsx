@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 
 export function DashboardHeader() {
   const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { t } = useTranslation("common");
 
   useEffect(() => {
@@ -16,6 +17,8 @@ export function DashboardHeader() {
       setIsVisible(true);
     }, 100);
 
+    setIsMounted(true);
+    
     return () => clearTimeout(timer);
   }, []);
 
@@ -33,7 +36,9 @@ export function DashboardHeader() {
             )}
           >
             <Package className="h-6 w-6 text-blue-600" />
-            <span className="font-bold text-xl">{t("welcome")}</span>
+            <span className="font-bold text-xl">
+              {isMounted ? t("welcome") : ""}
+            </span>
           </Link>
         </div>
         <div className="flex items-center gap-4">

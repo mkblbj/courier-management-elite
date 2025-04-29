@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useState } from "react"
 import { shippingApi } from "@/services/shipping-api"
@@ -20,6 +21,8 @@ interface FormattedChartData {
 }
 
 export function CourierDistributionChart({ timeRange, isLoading }: CourierDistributionChartProps) {
+  const { t } = useTranslation();
+
   const [chartData, setChartData] = useState<FormattedChartData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -107,7 +110,7 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
             !processedResponse.datasets || !Array.isArray(processedResponse.datasets) ||
             !processedResponse.datasets[0] || !Array.isArray(processedResponse.datasets[0].data)) {
           console.error("饼图数据格式无效:", processedResponse)
-          setError("返回的数据格式无效")
+          setError(t("返回的数据格式无效"))
           setChartData([])
           setLoading(false)
           return
@@ -161,7 +164,7 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
     }
 
     fetchChartData()
-  }, [timeRange, courierTypes])
+  }, [timeRange, courierTypes, t])
 
   // 图例格式化函数，将code转换为完整名称
   const renderLegendText = (value: string) => {
@@ -173,27 +176,23 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
 
   if (loading || isLoading) {
     return (
-      <div className="flex justify-center items-center h-[300px]">
-        <LoadingSpinner size="lg" text="加载中..." />
-      </div>
-    )
+      (<div className="flex justify-center items-center h-[300px]">
+        <LoadingSpinner size="lg" text={t("加载中...")} />
+      </div>)
+    );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col justify-center items-center h-[300px] text-red-500">
-        <div>加载饼图数据失败</div>
+      (<div className="flex flex-col justify-center items-center h-[300px] text-red-500">
+        <div>{t("加载饼图数据失败")}</div>
         <div className="text-sm mt-2">{error}</div>
-      </div>
-    )
+      </div>)
+    );
   }
 
   if (!hasDisplayableData) {
-    return (
-      <div className="flex justify-center items-center h-[300px] text-gray-500">
-        所选时间范围内没有数据
-      </div>
-    )
+    return (<div className="flex justify-center items-center h-[300px] text-gray-500">{t("所选时间范围内没有数据")}</div>);
   }
 
   return (

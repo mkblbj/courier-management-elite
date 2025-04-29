@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -16,14 +17,18 @@ interface StatisticsTableProps {
 }
 
 export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsTableProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   const [showDetails, setShowDetails] = useState(false)
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-[300px]">
-        <LoadingSpinner size="lg" text="加载中..." />
-      </div>
-    )
+      (<div className="flex justify-center items-center h-[300px]">
+        <LoadingSpinner size="lg" text={t("加载中...")} />
+      </div>)
+    );
   }
 
   if (error) {
@@ -31,17 +36,17 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
   }
 
   if (!data) {
-    return <div className="text-center py-8 text-muted-foreground">暂无统计数据</div>
+    return <div className="text-center py-8 text-muted-foreground">{t("暂无统计数据")}</div>;
   }
 
   return (
-    <div className="space-y-6">
+    (<div className="space-y-6">
       {/* 总计数据卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm font-medium text-muted-foreground">总发货量</p>
+              <p className="text-sm font-medium text-muted-foreground">{t("总发货量")}</p>
               <p className="text-3xl font-bold mt-1">{data.summary.total}</p>
             </div>
           </CardContent>
@@ -50,7 +55,7 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm font-medium text-muted-foreground">统计天数</p>
+              <p className="text-sm font-medium text-muted-foreground">{t("统计天数")}</p>
               <p className="text-3xl font-bold mt-1">{data.summary.daysCount}</p>
             </div>
           </CardContent>
@@ -59,24 +64,23 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm font-medium text-muted-foreground">记录数量</p>
+              <p className="text-sm font-medium text-muted-foreground">{t("记录数量")}</p>
               <p className="text-3xl font-bold mt-1">{data.summary.recordCount}</p>
             </div>
           </CardContent>
         </Card>
       </div>
-
       {/* 按快递类型统计表格 */}
       <div>
-        <h3 className="text-lg font-medium mb-3">按快递类型统计</h3>
+        <h3 className="text-lg font-medium mb-3">{t("按快递类型统计")}</h3>
         <div className="border rounded-md overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>快递类型</TableHead>
-                <TableHead className="text-right">发货量</TableHead>
-                <TableHead className="text-right">占比</TableHead>
-                <TableHead className="text-right">记录数</TableHead>
+                <TableHead>{t("快递类型")}</TableHead>
+                <TableHead className="text-right">{t("发货量")}</TableHead>
+                <TableHead className="text-right">{t("占比")}</TableHead>
+                <TableHead className="text-right">{t("记录数")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -91,7 +95,7 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
                 </TableRow>
               ))}
               <TableRow className="bg-muted/50">
-                <TableCell className="font-bold">总计</TableCell>
+                <TableCell className="font-bold">{t("总计")}</TableCell>
                 <TableCell className="text-right font-bold">{data.summary.total}</TableCell>
                 <TableCell className="text-right font-bold">100%</TableCell>
                 <TableCell className="text-right font-bold">{data.summary.recordCount}</TableCell>
@@ -100,11 +104,10 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
           </Table>
         </div>
       </div>
-
       {/* 按日期统计表格 */}
       <div>
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-medium">按日期统计</h3>
+          <h3 className="text-lg font-medium">{t("按日期统计")}</h3>
           <button
             className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
             onClick={() => setShowDetails(!showDetails)}
@@ -117,10 +120,10 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>日期</TableHead>
-                <TableHead className="text-right">发货量</TableHead>
-                <TableHead className="text-right">占比</TableHead>
-                <TableHead className="text-right">记录数</TableHead>
+                <TableHead>{t("日期")}</TableHead>
+                <TableHead className="text-right">{t("发货量")}</TableHead>
+                <TableHead className="text-right">{t("占比")}</TableHead>
+                <TableHead className="text-right">{t("记录数")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -151,7 +154,7 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
                 </>
               ))}
               <TableRow className="bg-muted/50">
-                <TableCell className="font-bold">总计</TableCell>
+                <TableCell className="font-bold">{t("总计")}</TableCell>
                 <TableCell className="text-right font-bold">{data.summary.total}</TableCell>
                 <TableCell className="text-right font-bold">100%</TableCell>
                 <TableCell className="text-right font-bold">{data.summary.recordCount}</TableCell>
@@ -160,6 +163,6 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
           </Table>
         </div>
       </div>
-    </div>
-  )
+    </div>)
+  );
 }

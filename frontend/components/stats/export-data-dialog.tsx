@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import { useState } from "react"
 import { format } from "date-fns"
@@ -33,6 +34,10 @@ interface ExportDataDialogProps {
 type ExportStatus = "idle" | "processing" | "success" | "error"
 
 export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFilter }: ExportDataDialogProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   const { toast } = useToast()
 
   // 导出选项状态
@@ -60,6 +65,10 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 重置表单
   const resetForm = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setExportStatus("idle")
     setProgress(0)
     setEstimatedTime(0)
@@ -69,6 +78,10 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 关闭对话框时重置表单
   const handleOpenChange = (open: boolean) => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!open) {
       resetForm()
     }
@@ -77,6 +90,10 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 修改 DateRangePicker 的 onChange 回调，处理可能的 undefined 值
   const handleDateRangeChange = (value: DateRange | undefined) => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (value) {
       setExportTimeRange(value);
     }
@@ -84,6 +101,10 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 处理导出过程，使用真实API
   const handleExport = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     // 验证表单
     if (!exportTimeRange.from || !exportTimeRange.to) {
       toast({
@@ -145,7 +166,7 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
       if (response && response.downloadUrl) {
         setDownloadUrl(response.downloadUrl)
       } else {
-        throw new Error("导出成功但未获取到下载链接")
+        throw new Error(t("导出成功但未获取到下载链接"))
       }
 
       toast({
@@ -167,6 +188,10 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 处理下载
   const handleDownload = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     // 实际应用中应该使用真实的下载URL
     const link = document.createElement("a")
     link.href = downloadUrl
@@ -181,23 +206,27 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 处理重试
   const handleRetry = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     resetForm()
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    (<Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         {exportStatus === "idle" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-xl">导出统计数据</DialogTitle>
-              <DialogDescription>配置导出选项，将统计数据导出为文件</DialogDescription>
+              <DialogTitle className="text-xl">{t("导出统计数据")}</DialogTitle>
+              <DialogDescription>{t("配置导出选项，将统计数据导出为文件")}</DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-6 py-4">
               {/* 文件格式 */}
               <div className="space-y-2">
-                <Label>文件格式</Label>
+                <Label>{t("文件格式")}</Label>
                 <RadioGroup value={fileFormat} onValueChange={setFileFormat} className="flex space-x-4">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="csv" id="csv" />
@@ -218,21 +247,21 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
               {/* 时间范围 */}
               <div className="space-y-2">
-                <Label>时间范围</Label>
+                <Label>{t("时间范围")}</Label>
                 <DateRangePicker value={exportTimeRange} onChange={handleDateRangeChange} />
               </div>
 
               {/* 数据粒度 */}
               <div className="space-y-2">
-                <Label>数据粒度</Label>
+                <Label>{t("数据粒度")}</Label>
                 <Select value={granularity} onValueChange={setGranularity}>
                   <SelectTrigger>
-                    <SelectValue placeholder="选择数据粒度" />
+                    <SelectValue placeholder={t("选择数据粒度")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="day">按日</SelectItem>
-                    <SelectItem value="week">按周</SelectItem>
-                    <SelectItem value="month">按月</SelectItem>
+                    <SelectItem value="day">{t("按日")}</SelectItem>
+                    <SelectItem value="week">{t("按周")}</SelectItem>
+                    <SelectItem value="month">{t("按月")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -240,14 +269,12 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
               {/* 快递类型 */}
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <Label>快递类型</Label>
+                  <Label>{t("快递类型")}</Label>
                   <button
                     type="button"
                     className="text-sm text-blue-600 hover:text-blue-800"
                     onClick={() => setSelectedCourierTypes([])}
-                  >
-                    清除选择
-                  </button>
+                  >{t("清除选择")}</button>
                 </div>
                 <div className="border rounded-md p-4 max-h-[150px] overflow-y-auto">
                   <div className="flex items-center space-x-2 mb-2">
@@ -258,9 +285,7 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
                         if (checked) setSelectedCourierTypes([])
                       }}
                     />
-                    <Label htmlFor="all-types" className="font-medium">
-                      全部类型
-                    </Label>
+                    <Label htmlFor="all-types" className="font-medium">{t("全部类型")}</Label>
                   </div>
 
                   {/* 这里应该从API获取快递类型列表，目前使用模拟数据 */}
@@ -290,18 +315,18 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
                   checked={includeDetails}
                   onCheckedChange={(checked) => setIncludeDetails(!!checked)}
                 />
-                <Label htmlFor="include-details">包含详细记录</Label>
+                <Label htmlFor="include-details">{t("包含详细记录")}</Label>
               </div>
 
               {/* 文件命名 */}
               <div className="space-y-2">
-                <Label htmlFor="file-name">文件命名</Label>
+                <Label htmlFor="file-name">{t("文件命名")}</Label>
                 <Input id="file-name" value={fileName} onChange={(e) => setFileName(e.target.value)} />
               </div>
 
               {/* 高级选项 */}
               <div className="space-y-4 border-t pt-4">
-                <h3 className="font-medium">高级选项</h3>
+                <h3 className="font-medium">{t("高级选项")}</h3>
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -309,12 +334,12 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
                     checked={processInBackground}
                     onCheckedChange={(checked) => setProcessInBackground(!!checked)}
                   />
-                  <Label htmlFor="background-process">在后台处理并通知我</Label>
+                  <Label htmlFor="background-process">{t("在后台处理并通知我")}</Label>
                 </div>
 
                 {processInBackground && (
                   <div className="space-y-2 ml-6">
-                    <Label htmlFor="notification-email">通知邮箱</Label>
+                    <Label htmlFor="notification-email">{t("通知邮箱")}</Label>
                     <Input
                       id="notification-email"
                       type="email"
@@ -328,13 +353,9 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                取消
-              </Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{t("取消")}</Button>
               <Button onClick={handleExport} className="bg-blue-600 hover:bg-blue-700">
-                <Download className="mr-2 h-4 w-4" />
-                导出
-              </Button>
+                <Download className="mr-2 h-4 w-4" />{t("导出")}</Button>
             </DialogFooter>
           </>
         )}
@@ -342,8 +363,8 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
         {exportStatus === "processing" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-xl">正在导出数据</DialogTitle>
-              <DialogDescription>请稍候，正在处理您的导出请求</DialogDescription>
+              <DialogTitle className="text-xl">{t("正在导出数据")}</DialogTitle>
+              <DialogDescription>{t("请稍候，正在处理您的导出请求")}</DialogDescription>
             </DialogHeader>
 
             <div className="py-8 space-y-6">
@@ -353,18 +374,16 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>导出进度</span>
+                  <span>{t("导出进度")}</span>
                   <span>{progress}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
-                <p className="text-sm text-muted-foreground text-center">预计剩余时间: {estimatedTime} 秒</p>
+                <p className="text-sm text-muted-foreground text-center">{t("预计剩余时间:")}{estimatedTime} 秒</p>
               </div>
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setExportStatus("idle")}>
-                取消导出
-              </Button>
+              <Button variant="outline" onClick={() => setExportStatus("idle")}>{t("取消导出")}</Button>
             </DialogFooter>
           </>
         )}
@@ -373,29 +392,22 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
           <>
             <DialogHeader>
               <DialogTitle className="text-xl flex items-center">
-                <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
-                导出成功
-              </DialogTitle>
-              <DialogDescription>您的数据已成功导出，可以下载文件</DialogDescription>
+                <CheckCircle className="mr-2 h-5 w-5 text-green-600" />{t("导出成功")}</DialogTitle>
+              <DialogDescription>{t("您的数据已成功导出，可以下载文件")}</DialogDescription>
             </DialogHeader>
 
             <div className="py-8 flex flex-col items-center">
               <div className="bg-green-50 text-green-700 rounded-full p-6 mb-4">
                 <CheckCircle className="h-12 w-12" />
               </div>
-              <p className="text-center">
-                文件名: {fileName}.{fileFormat}
+              <p className="text-center">{t("文件名:")}{fileName}.{fileFormat}
               </p>
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                关闭
-              </Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{t("关闭")}</Button>
               <Button onClick={handleDownload} className="bg-blue-600 hover:bg-blue-700">
-                <Download className="mr-2 h-4 w-4" />
-                下载文件
-              </Button>
+                <Download className="mr-2 h-4 w-4" />{t("下载文件")}</Button>
             </DialogFooter>
           </>
         )}
@@ -404,10 +416,8 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
           <>
             <DialogHeader>
               <DialogTitle className="text-xl flex items-center">
-                <AlertCircle className="mr-2 h-5 w-5 text-red-600" />
-                导出失败
-              </DialogTitle>
-              <DialogDescription>导出过程中发生错误</DialogDescription>
+                <AlertCircle className="mr-2 h-5 w-5 text-red-600" />{t("导出失败")}</DialogTitle>
+              <DialogDescription>{t("导出过程中发生错误")}</DialogDescription>
             </DialogHeader>
 
             <div className="py-8 flex flex-col items-center">
@@ -418,16 +428,12 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                关闭
-              </Button>
-              <Button onClick={handleRetry} className="bg-blue-600 hover:bg-blue-700">
-                重试
-              </Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{t("关闭")}</Button>
+              <Button onClick={handleRetry} className="bg-blue-600 hover:bg-blue-700">{t("重试")}</Button>
             </DialogFooter>
           </>
         )}
       </DialogContent>
-    </Dialog>
-  )
+    </Dialog>)
+  );
 }

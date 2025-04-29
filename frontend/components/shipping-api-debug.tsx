@@ -1,8 +1,9 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -21,7 +22,7 @@ import { useEnvStore } from "@/lib/env-config"
 const shouldShowDebugComponent = () => {
   // 在生产环境中不显示
   if (process.env.NODE_ENV === "production") return false
-  
+
   // 根据环境配置判断
   return useEnvStore.getState().debug
 }
@@ -32,14 +33,13 @@ const handleApiRequest = async <T,>(
   actionName: string,
   method: string,
   url: string,
-  requestData?: any,
+  addLog: (action: string, method: string, url: string, data?: any, error?: string) => void,
+  requestData: any,
   onSuccess?: (response: T) => void,
-  onError?: (error: Error) => void,
-  addLog: (action: string, method: string, url: string, data?: any, error?: string) => void
+  onError?: (error: Error) => void
 ) => {
-  addLog(actionName, method, url, requestData)
-  
   try {
+    addLog(actionName, method, url, requestData)
     const response = await apiCall()
     addLog("API响应", method, url, response)
     if (onSuccess) onSuccess(response)
@@ -53,13 +53,23 @@ const handleApiRequest = async <T,>(
 }
 
 export function ShippingApiDebug() {
+  const { t } = useTranslation();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // 在挂载后设置isMounted为true
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // 在生产环境中直接返回null
   if (process.env.NODE_ENV === "production") {
     return null
   }
 
-  // 使用useEnvStore钩子获取最新状态
-  const { debug } = useEnvStore()
+  // 非客户端或环境配置不支持调试时返回null
+  if (!isMounted || !useEnvStore.getState().debug) {
+    return null
+  }
 
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
@@ -86,11 +96,6 @@ export function ShippingApiDebug() {
   const [shippingDeleteId, setShippingDeleteId] = useState("")
   const [batchShippingData, setBatchShippingData] = useState("")
 
-  // 在开发模式下且debug为true时才显示API调试工具
-  if (!shouldShowDebugComponent()) {
-    return null
-  }
-
   // 添加日志的辅助函数
   const addLog = (action: string, method: string, url: string, data?: any, error?: string) => {
     const log = {
@@ -109,17 +114,17 @@ export function ShippingApiDebug() {
   const testShippingApiConnection = async () => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       await handleApiRequest(
         () => shippingApi.getShippingRecords(),
-        "测试发货数据API连接",
+        t("测试发货数据API连接"),
         "GET",
         "/api/shipping",
+        addLog,
         undefined,
         (response) => setResult(response),
-        (error) => setError(error.message),
-        addLog
+        (error) => setError(error.message)
       )
     } finally {
       setIsLoading(false)
@@ -128,11 +133,11 @@ export function ShippingApiDebug() {
 
   const testAddShippingRecord = async () => {
     if (!shippingDate) {
-      setError("请选择日期")
+      setError(t("请选择日期"))
       return
     }
     if (!shippingFormData.courier_id) {
-      setError("请输入快递公司ID")
+      setError(t("请输入快递公司ID"))
       return
     }
 
@@ -149,13 +154,13 @@ export function ShippingApiDebug() {
     try {
       await handleApiRequest(
         () => shippingApi.createShippingRecord(requestData),
-        "添加发货记录",
+        t("添加发货记录"),
         "POST",
         "/api/shipping",
+        addLog,
         requestData,
         (response) => setResult(response),
-        (error) => setError(error.message),
-        addLog
+        (error) => setError(error.message)
       )
     } finally {
       setIsLoading(false)
@@ -164,15 +169,15 @@ export function ShippingApiDebug() {
 
   const testUpdateShippingRecord = async () => {
     if (!shippingUpdateFormData.id) {
-      setError("请输入要更新的发货记录ID")
+      setError(t("请输入要更新的发货记录ID"))
       return
     }
     if (!shippingUpdateFormData.date) {
-      setError("请选择日期")
+      setError(t("请选择日期"))
       return
     }
     if (!shippingUpdateFormData.courier_id) {
-      setError("请输入快递公司ID")
+      setError(t("请输入快递公司ID"))
       return
     }
 
@@ -185,19 +190,19 @@ export function ShippingApiDebug() {
       quantity: Number.parseInt(shippingUpdateFormData.quantity || "0"),
       notes: shippingUpdateFormData.notes,
     }
-    
+
     const url = `/api/shipping/${shippingUpdateFormData.id}`
 
     try {
       await handleApiRequest(
         () => shippingApi.updateShippingRecord(shippingUpdateFormData.id, requestData),
-        "更新发货记录",
+        t("更新发货记录"),
         "PUT",
         url,
+        addLog,
         requestData,
         (response) => setResult(response),
-        (error) => setError(error.message),
-        addLog
+        (error) => setError(error.message)
       )
     } finally {
       setIsLoading(false)
@@ -206,25 +211,25 @@ export function ShippingApiDebug() {
 
   const testDeleteShippingRecord = async () => {
     if (!shippingDeleteId) {
-      setError("请输入要删除的发货记录ID")
+      setError(t("请输入要删除的发货记录ID"))
       return
     }
 
     setIsLoading(true)
     setError(null)
-    
+
     const url = `/api/shipping/${shippingDeleteId}`
 
     try {
       await handleApiRequest(
         () => shippingApi.deleteShippingRecord(shippingDeleteId),
-        "删除发货记录",
+        t("删除发货记录"),
         "DELETE",
         url,
+        addLog,
         undefined,
         () => setResult({ message: "删除成功" }),
-        (error) => setError(error.message),
-        addLog
+        (error) => setError(error.message)
       )
     } finally {
       setIsLoading(false)
@@ -233,11 +238,11 @@ export function ShippingApiDebug() {
 
   const testBatchAddShippingRecords = async () => {
     if (!shippingDate) {
-      setError("请选择日期")
+      setError(t("请选择日期"))
       return
     }
     if (!batchShippingData) {
-      setError("请输入批量发货数据")
+      setError(t("请输入批量发货数据"))
       return
     }
 
@@ -245,11 +250,11 @@ export function ShippingApiDebug() {
     try {
       parsedData = JSON.parse(batchShippingData)
       if (!Array.isArray(parsedData)) {
-        setError("批量发货数据必须是数组格式")
+        setError(t("批量发货数据必须是数组格式"))
         return
       }
     } catch (err) {
-      setError("批量发货数据格式错误，请输入有效的JSON数组")
+      setError(t("批量发货数据格式错误，请输入有效的JSON数组"))
       return
     }
 
@@ -264,13 +269,13 @@ export function ShippingApiDebug() {
     try {
       await handleApiRequest(
         () => shippingApi.batchCreateShippingRecords(requestData),
-        "批量添加发货记录",
+        t("批量添加发货记录"),
         "POST",
         "/api/shipping/batch",
+        addLog,
         requestData,
         (response) => setResult(response),
-        (error) => setError(error.message),
-        addLog
+        (error) => setError(error.message)
       )
     } finally {
       setIsLoading(false)
@@ -292,19 +297,19 @@ export function ShippingApiDebug() {
   }
 
   return (
-    <Card className="mt-6">
+    (<Card className="mt-6">
       <CardHeader>
-        <CardTitle>发货数据API调试工具 ({useEnvStore.getState().env}环境)</CardTitle>
+        <CardTitle>{t("发货数据API调试工具 (")}{useEnvStore.getState().env}{t("环境)")}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           <TabsList className="mb-4">
-            <TabsTrigger value="test">基础测试</TabsTrigger>
-            <TabsTrigger value="add">添加</TabsTrigger>
-            <TabsTrigger value="update">更新</TabsTrigger>
-            <TabsTrigger value="delete">删除</TabsTrigger>
-            <TabsTrigger value="batch">批量添加</TabsTrigger>
-            <TabsTrigger value="logs">请求日志</TabsTrigger>
+            <TabsTrigger value="test">{t("基础测试")}</TabsTrigger>
+            <TabsTrigger value="add">{t("添加")}</TabsTrigger>
+            <TabsTrigger value="update">{t("更新")}</TabsTrigger>
+            <TabsTrigger value="delete">{t("删除")}</TabsTrigger>
+            <TabsTrigger value="batch">{t("批量添加")}</TabsTrigger>
+            <TabsTrigger value="logs">{t("请求日志")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="test" className="space-y-4">
@@ -316,7 +321,7 @@ export function ShippingApiDebug() {
           <TabsContent value="add" className="space-y-4">
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="shipping-date">日期</Label>
+                <Label htmlFor="shipping-date">{t("日期")}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -327,7 +332,7 @@ export function ShippingApiDebug() {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {shippingDate ? format(shippingDate, "yyyy-MM-dd") : <span>选择日期</span>}
+                      {shippingDate ? format(shippingDate, "yyyy-MM-dd") : <span>{t("选择日期")}</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -337,18 +342,18 @@ export function ShippingApiDebug() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-courier-id">快递公司ID</Label>
+                <Label htmlFor="shipping-courier-id">{t("快递公司ID")}</Label>
                 <Input
                   id="shipping-courier-id"
                   name="courier_id"
                   value={shippingFormData.courier_id}
                   onChange={handleShippingFormChange}
-                  placeholder="输入快递公司ID"
+                  placeholder={t("输入快递公司ID")}
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-quantity">数量</Label>
+                <Label htmlFor="shipping-quantity">{t("数量")}</Label>
                 <Input
                   id="shipping-quantity"
                   name="quantity"
@@ -356,18 +361,18 @@ export function ShippingApiDebug() {
                   min="0"
                   value={shippingFormData.quantity}
                   onChange={handleShippingFormChange}
-                  placeholder="输入发货数量"
+                  placeholder={t("输入发货数量")}
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-notes">备注</Label>
+                <Label htmlFor="shipping-notes">{t("备注")}</Label>
                 <Textarea
                   id="shipping-notes"
                   name="notes"
                   value={shippingFormData.notes || ""}
                   onChange={handleShippingFormChange}
-                  placeholder="可选备注信息"
+                  placeholder={t("可选备注信息")}
                 />
               </div>
 
@@ -386,12 +391,12 @@ export function ShippingApiDebug() {
                   name="id"
                   value={shippingUpdateFormData.id}
                   onChange={handleShippingUpdateFormChange}
-                  placeholder="请输入要更新的发货记录ID"
+                  placeholder={t("请输入要更新的发货记录ID")}
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-update-date">日期</Label>
+                <Label htmlFor="shipping-update-date">{t("日期")}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -405,7 +410,7 @@ export function ShippingApiDebug() {
                       {shippingUpdateFormData.date ? (
                         format(shippingUpdateFormData.date, "yyyy-MM-dd")
                       ) : (
-                        <span>选择日期</span>
+                        <span>{t("选择日期")}</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -421,18 +426,18 @@ export function ShippingApiDebug() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-update-courier-id">快递公司ID</Label>
+                <Label htmlFor="shipping-update-courier-id">{t("快递公司ID")}</Label>
                 <Input
                   id="shipping-update-courier-id"
                   name="courier_id"
                   value={shippingUpdateFormData.courier_id}
                   onChange={handleShippingUpdateFormChange}
-                  placeholder="输入快递公司ID"
+                  placeholder={t("输入快递公司ID")}
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-update-quantity">数量</Label>
+                <Label htmlFor="shipping-update-quantity">{t("数量")}</Label>
                 <Input
                   id="shipping-update-quantity"
                   name="quantity"
@@ -440,18 +445,18 @@ export function ShippingApiDebug() {
                   min="0"
                   value={shippingUpdateFormData.quantity}
                   onChange={handleShippingUpdateFormChange}
-                  placeholder="输入发货数量"
+                  placeholder={t("输入发货数量")}
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-update-notes">备注</Label>
+                <Label htmlFor="shipping-update-notes">{t("备注")}</Label>
                 <Textarea
                   id="shipping-update-notes"
                   name="notes"
                   value={shippingUpdateFormData.notes || ""}
                   onChange={handleShippingUpdateFormChange}
-                  placeholder="可选备注信息"
+                  placeholder={t("可选备注信息")}
                 />
               </div>
 
@@ -469,7 +474,7 @@ export function ShippingApiDebug() {
                   id="shipping-delete-id"
                   value={shippingDeleteId}
                   onChange={(e) => setShippingDeleteId(e.target.value)}
-                  placeholder="请输入要删除的发货记录ID"
+                  placeholder={t("请输入要删除的发货记录ID")}
                 />
               </div>
 
@@ -482,7 +487,7 @@ export function ShippingApiDebug() {
           <TabsContent value="batch" className="space-y-4">
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="shipping-batch-date">日期</Label>
+                <Label htmlFor="shipping-batch-date">{t("日期")}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -493,7 +498,7 @@ export function ShippingApiDebug() {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {shippingDate ? format(shippingDate, "yyyy-MM-dd") : <span>选择日期</span>}
+                      {shippingDate ? format(shippingDate, "yyyy-MM-dd") : <span>{t("选择日期")}</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -503,7 +508,7 @@ export function ShippingApiDebug() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-batch-data">批量发货数据 (JSON格式)</Label>
+                <Label htmlFor="shipping-batch-data">{t("批量发货数据 (JSON格式)")}</Label>
                 <Textarea
                   id="shipping-batch-data"
                   value={batchShippingData}
@@ -521,14 +526,12 @@ export function ShippingApiDebug() {
 
           <TabsContent value="logs" className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={clearLogs}>
-                清除日志
-              </Button>
+              <Button variant="outline" size="sm" onClick={clearLogs}>{t("清除日志")}</Button>
             </div>
 
             <div className="border rounded-md p-4 max-h-[400px] overflow-auto">
               {requestLogs.length === 0 ? (
-                <p className="text-center text-muted-foreground">暂无日志记录</p>
+                <p className="text-center text-muted-foreground">{t("暂无日志记录")}</p>
               ) : (
                 <div className="space-y-4">
                   {requestLogs.map((log, index) => (
@@ -548,7 +551,7 @@ export function ShippingApiDebug() {
                       )}
                       {log.data && (
                         <details className="mt-2">
-                          <summary className="text-sm cursor-pointer">查看数据</summary>
+                          <summary className="text-sm cursor-pointer">{t("查看数据")}</summary>
                           <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
                             {JSON.stringify(log.data, null, 2)}
                           </pre>
@@ -564,24 +567,24 @@ export function ShippingApiDebug() {
 
         {error && (
           <div className="mt-4 p-4 border border-red-200 bg-red-50 text-red-800 rounded-md">
-            <h3 className="font-semibold">错误:</h3>
+            <h3 className="font-semibold">{t("错误:")}</h3>
             <p>{error}</p>
           </div>
         )}
 
         {result && (
           <div className="mt-4 p-4 border border-green-200 bg-green-50 text-green-800 rounded-md">
-            <h3 className="font-semibold">成功:</h3>
-            <p>API请求成功</p>
+            <h3 className="font-semibold">{t("成功:")}</h3>
+            <p>{t("API请求成功")}</p>
             <details className="mt-2">
-              <summary className="cursor-pointer">查看响应详情</summary>
+              <summary className="cursor-pointer">{t("查看响应详情")}</summary>
               <pre className="mt-2 p-2 bg-gray-100 overflow-auto text-xs">{JSON.stringify(result, null, 2)}</pre>
             </details>
           </div>
         )}
       </CardContent>
-    </Card>
-  )
+    </Card>)
+  );
 }
 
 // 根据HTTP方法返回不同的颜色类名

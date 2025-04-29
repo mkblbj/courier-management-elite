@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import type React from "react"
 
@@ -14,6 +15,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { useEnvStore } from "@/lib/env-config"
 
 export function ApiDebug() {
+  const {
+    t: t
+  } = useTranslation();
+
   // 使用useEnvStore钩子获取最新状态
   const { debug } = useEnvStore()
 
@@ -52,19 +57,23 @@ export function ApiDebug() {
 
   // 快递类型API测试函数
   const testApiConnection = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setIsLoading(true)
     setError(null)
-    addLog("测试API连接", "GET", "/api/couriers")
+    addLog(t("测试API连接"), "GET", "/api/couriers")
 
     try {
       const response = await api.getCourierTypes()
       setResult(response)
-      addLog("API响应", "GET", "/api/couriers", response)
+      addLog(t("API响应"), "GET", "/api/couriers", response)
       console.log("API响应:", response)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "API连接测试失败"
       setError(errorMessage)
-      addLog("API错误", "GET", "/api/couriers", null, errorMessage)
+      addLog(t("API错误"), "GET", "/api/couriers", null, errorMessage)
       console.error("API连接测试失败:", err)
     } finally {
       setIsLoading(false)
@@ -72,19 +81,23 @@ export function ApiDebug() {
   }
 
   const testAddCourier = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setIsLoading(true)
     setError(null)
-    addLog("添加快递类型", "POST", "/api/couriers", addFormData)
+    addLog(t("添加快递类型"), "POST", "/api/couriers", addFormData)
 
     try {
       const response = await api.createCourierType(addFormData)
       setResult(response)
-      addLog("API响应", "POST", "/api/couriers", response)
+      addLog(t("API响应"), "POST", "/api/couriers", response)
       console.log("添加成功:", response)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "添加快递类型失败"
       setError(errorMessage)
-      addLog("API错误", "POST", "/api/couriers", null, errorMessage)
+      addLog(t("API错误"), "POST", "/api/couriers", null, errorMessage)
       console.error("添加快递类型失败:", err)
     } finally {
       setIsLoading(false)
@@ -92,25 +105,29 @@ export function ApiDebug() {
   }
 
   const testUpdateCourier = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!updateFormData.id) {
-      setError("请输入要更新的快递类型ID")
+      setError(t("请输入要更新的快递类型ID"))
       return
     }
 
     setIsLoading(true)
     setError(null)
-    addLog("更新快递类型", "PUT", `/api/couriers/${updateFormData.id}`, updateFormData)
+    addLog(t("更新快递类型"), "PUT", `/api/couriers/${updateFormData.id}`, updateFormData)
 
     try {
       const { id, ...data } = updateFormData
       const response = await api.updateCourierType(id, data)
       setResult(response)
-      addLog("API响应", "PUT", `/api/couriers/${id}`, response)
+      addLog(t("API响应"), "PUT", `/api/couriers/${id}`, response)
       console.log("更新成功:", response)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "更新快递类型失败"
       setError(errorMessage)
-      addLog("API错误", "PUT", `/api/couriers/${updateFormData.id}`, null, errorMessage)
+      addLog(t("API错误"), "PUT", `/api/couriers/${updateFormData.id}`, null, errorMessage)
       console.error("更新快递类型失败:", err)
     } finally {
       setIsLoading(false)
@@ -118,14 +135,18 @@ export function ApiDebug() {
   }
 
   const testDeleteCourier = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!deleteId) {
-      setError("请输入要删除的快递类型ID")
+      setError(t("请输入要删除的快递类型ID"))
       return
     }
 
     setIsLoading(true)
     setError(null)
-    addLog("删除快递类型", "DELETE", `/api/couriers/${deleteId}`)
+    addLog(t("删除快递类型"), "DELETE", `/api/couriers/${deleteId}`)
 
     try {
       await api.deleteCourierType(deleteId)
@@ -143,14 +164,18 @@ export function ApiDebug() {
   }
 
   const testToggleStatus = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!toggleId) {
-      setError("请输入要切换状态的快递类型ID")
+      setError(t("请输入要切换状态的快递类型ID"))
       return
     }
 
     setIsLoading(true)
     setError(null)
-    addLog("切换快递类型状态", "PUT", `/api/couriers/${toggleId}/toggle`)
+    addLog(t("切换快递类型状态"), "PUT", `/api/couriers/${toggleId}/toggle`)
 
     try {
       const response = await api.toggleCourierTypeStatus(toggleId)
@@ -168,8 +193,12 @@ export function ApiDebug() {
   }
 
   const testUpdateSort = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!sortData) {
-      setError("请输入排序数据")
+      setError(t("请输入排序数据"))
       return
     }
 
@@ -177,17 +206,17 @@ export function ApiDebug() {
     try {
       parsedData = JSON.parse(sortData)
       if (!Array.isArray(parsedData)) {
-        setError("排序数据必须是数组格式")
+        setError(t("排序数据必须是数组格式"))
         return
       }
     } catch (err) {
-      setError("排序数据格式错误，请输入有效的JSON数组")
+      setError(t("排序数据格式错误，请输入有效的JSON数组"))
       return
     }
 
     setIsLoading(true)
     setError(null)
-    addLog("更新快递类型排序", "POST", "/api/couriers/sort", parsedData)
+    addLog(t("更新快递类型排序"), "POST", "/api/couriers/sort", parsedData)
 
     try {
       await api.updateCourierTypesOrder(parsedData)
@@ -205,6 +234,10 @@ export function ApiDebug() {
   }
 
   const addLog = (action: string, method: string, url: string, data?: any, error?: string) => {
+    const {
+      t: t
+    } = useTranslation();
+
     const log = {
       timestamp: new Date().toISOString(),
       action,
@@ -218,48 +251,68 @@ export function ApiDebug() {
   }
 
   const clearLogs = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setRequestLogs([])
   }
 
   const handleAddFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const {
+      t: t
+    } = useTranslation();
+
     const { name, value } = e.target
     setAddFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleAddFormSwitchChange = (checked: boolean) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setAddFormData((prev) => ({ ...prev, is_active: checked }))
   }
 
   const handleUpdateFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const {
+      t: t
+    } = useTranslation();
+
     const { name, value } = e.target
     setUpdateFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleUpdateFormSwitchChange = (checked: boolean) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setUpdateFormData((prev) => ({ ...prev, is_active: checked }))
   }
 
   return (
-    <Card className="mt-4">
+    (<Card className="mt-4">
       <CardHeader>
-        <CardTitle>API调试工具 ({process.env.NODE_ENV !== "production" ? "开发" : "生产"}环境)</CardTitle>
+        <CardTitle>{t("API调试工具 (")}{process.env.NODE_ENV !== "production" ? "开发" : "生产"}{t("环境)")}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           <TabsList className="mb-4">
-            <TabsTrigger value="courier">快递类型API</TabsTrigger>
-            <TabsTrigger value="logs">请求日志</TabsTrigger>
+            <TabsTrigger value="courier">{t("快递类型API")}</TabsTrigger>
+            <TabsTrigger value="logs">{t("请求日志")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="courier">
             <Tabs value={selectedCourierTab} onValueChange={setSelectedCourierTab}>
               <TabsList className="mb-4">
-                <TabsTrigger value="test">基础测试</TabsTrigger>
-                <TabsTrigger value="add">添加</TabsTrigger>
-                <TabsTrigger value="update">更新</TabsTrigger>
-                <TabsTrigger value="delete">删除</TabsTrigger>
-                <TabsTrigger value="toggle">状态切换</TabsTrigger>
-                <TabsTrigger value="sort">排序</TabsTrigger>
+                <TabsTrigger value="test">{t("基础测试")}</TabsTrigger>
+                <TabsTrigger value="add">{t("添加")}</TabsTrigger>
+                <TabsTrigger value="update">{t("更新")}</TabsTrigger>
+                <TabsTrigger value="delete">{t("删除")}</TabsTrigger>
+                <TabsTrigger value="toggle">{t("状态切换")}</TabsTrigger>
+                <TabsTrigger value="sort">{t("排序")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="test" className="space-y-4">
@@ -271,17 +324,17 @@ export function ApiDebug() {
               <TabsContent value="add" className="space-y-4">
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="add-name">名称</Label>
+                    <Label htmlFor="add-name">{t("名称")}</Label>
                     <Input id="add-name" name="name" value={addFormData.name} onChange={handleAddFormChange} />
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="add-code">代码</Label>
+                    <Label htmlFor="add-code">{t("代码")}</Label>
                     <Input id="add-code" name="code" value={addFormData.code} onChange={handleAddFormChange} />
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="add-remark">备注</Label>
+                    <Label htmlFor="add-remark">{t("备注")}</Label>
                     <Textarea
                       id="add-remark"
                       name="remark"
@@ -291,7 +344,7 @@ export function ApiDebug() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="add-is_active">激活状态</Label>
+                    <Label htmlFor="add-is_active">{t("激活状态")}</Label>
                     <Switch
                       id="add-is_active"
                       checked={addFormData.is_active}
@@ -314,22 +367,22 @@ export function ApiDebug() {
                       name="id"
                       value={updateFormData.id}
                       onChange={handleUpdateFormChange}
-                      placeholder="请输入要更新的快递类型ID"
+                      placeholder={t("请输入要更新的快递类型ID")}
                     />
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="update-name">名称</Label>
+                    <Label htmlFor="update-name">{t("名称")}</Label>
                     <Input id="update-name" name="name" value={updateFormData.name} onChange={handleUpdateFormChange} />
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="update-code">代码</Label>
+                    <Label htmlFor="update-code">{t("代码")}</Label>
                     <Input id="update-code" name="code" value={updateFormData.code} onChange={handleUpdateFormChange} />
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="update-remark">备注</Label>
+                    <Label htmlFor="update-remark">{t("备注")}</Label>
                     <Textarea
                       id="update-remark"
                       name="remark"
@@ -339,7 +392,7 @@ export function ApiDebug() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="update-is_active">激活状态</Label>
+                    <Label htmlFor="update-is_active">{t("激活状态")}</Label>
                     <Switch
                       id="update-is_active"
                       checked={updateFormData.is_active}
@@ -361,7 +414,7 @@ export function ApiDebug() {
                       id="delete-id"
                       value={deleteId}
                       onChange={(e) => setDeleteId(e.target.value)}
-                      placeholder="请输入要删除的快递类型ID"
+                      placeholder={t("请输入要删除的快递类型ID")}
                     />
                   </div>
 
@@ -379,7 +432,7 @@ export function ApiDebug() {
                       id="toggle-id"
                       value={toggleId}
                       onChange={(e) => setToggleId(e.target.value)}
-                      placeholder="请输入要切换状态的快递类型ID"
+                      placeholder={t("请输入要切换状态的快递类型ID")}
                     />
                   </div>
 
@@ -392,7 +445,7 @@ export function ApiDebug() {
               <TabsContent value="sort" className="space-y-4">
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="sort-data">排序数据 (JSON格式)</Label>
+                    <Label htmlFor="sort-data">{t("排序数据 (JSON格式)")}</Label>
                     <Textarea
                       id="sort-data"
                       value={sortData}
@@ -412,14 +465,12 @@ export function ApiDebug() {
 
           <TabsContent value="logs" className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={clearLogs}>
-                清除日志
-              </Button>
+              <Button variant="outline" size="sm" onClick={clearLogs}>{t("清除日志")}</Button>
             </div>
 
             <div className="border rounded-md p-4 max-h-[400px] overflow-auto">
               {requestLogs.length === 0 ? (
-                <p className="text-center text-muted-foreground">暂无日志记录</p>
+                <p className="text-center text-muted-foreground">{t("暂无日志记录")}</p>
               ) : (
                 <div className="space-y-4">
                   {requestLogs.map((log, index) => (
@@ -439,7 +490,7 @@ export function ApiDebug() {
                       )}
                       {log.data && (
                         <details className="mt-2">
-                          <summary className="text-sm cursor-pointer">查看数据</summary>
+                          <summary className="text-sm cursor-pointer">{t("查看数据")}</summary>
                           <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
                             {JSON.stringify(log.data, null, 2)}
                           </pre>
@@ -455,28 +506,32 @@ export function ApiDebug() {
 
         {error && (
           <div className="mt-4 p-4 border border-red-200 bg-red-50 text-red-800 rounded-md">
-            <h3 className="font-semibold">错误:</h3>
+            <h3 className="font-semibold">{t("错误:")}</h3>
             <p>{error}</p>
           </div>
         )}
 
         {result && (
           <div className="mt-4 p-4 border border-green-200 bg-green-50 text-green-800 rounded-md">
-            <h3 className="font-semibold">成功:</h3>
-            <p>API请求成功</p>
+            <h3 className="font-semibold">{t("成功:")}</h3>
+            <p>{t("API请求成功")}</p>
             <details className="mt-2">
-              <summary className="cursor-pointer">查看响应详情</summary>
+              <summary className="cursor-pointer">{t("查看响应详情")}</summary>
               <pre className="mt-2 p-2 bg-gray-100 overflow-auto text-xs">{JSON.stringify(result, null, 2)}</pre>
             </details>
           </div>
         )}
       </CardContent>
-    </Card>
-  )
+    </Card>)
+  );
 }
 
 // 根据HTTP方法返回不同的颜色类名
 function getMethodColor(method: string) {
+  const {
+    t: t
+  } = useTranslation();
+
   switch (method.toUpperCase()) {
     case "GET":
       return "bg-blue-100 text-blue-800"

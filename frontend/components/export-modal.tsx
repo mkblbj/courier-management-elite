@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,12 +24,20 @@ export interface ExportModalProps {
 }
 
 export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   const [open, setOpen] = useState(false)
   const [filename, setFilename] = useState(`快递数据导出_${format(new Date(), "yyyyMMdd")}`)
   const [isExporting, setIsExporting] = useState(false)
   const shippingApi = useShippingApi()
 
   const handleExport = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!filename.trim()) {
       toast({
         title: "错误",
@@ -94,22 +103,18 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    (<Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">导出数据</Button>
+        <Button variant="outline">{t("导出数据")}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>导出数据</DialogTitle>
-          <DialogDescription>
-            导出所选时间范围和快递类型的发货数据到Excel文件
-          </DialogDescription>
+          <DialogTitle>{t("导出数据")}</DialogTitle>
+          <DialogDescription>{t("导出所选时间范围和快递类型的发货数据到Excel文件")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="filename" className="text-right">
-              文件名
-            </Label>
+            <Label htmlFor="filename" className="text-right">{t("文件名")}</Label>
             <Input
               id="filename"
               value={filename}
@@ -119,7 +124,7 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
           </div>
           {timeRange?.from && timeRange?.to && (
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">时间范围</Label>
+              <Label className="text-right">{t("时间范围")}</Label>
               <div className="col-span-3 text-sm">
                 {format(timeRange.from, "yyyy-MM-dd")} 至 {format(timeRange.to, "yyyy-MM-dd")}
               </div>
@@ -127,27 +132,23 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
           )}
           {courierTypeFilter && courierTypeFilter.length > 0 && (
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">快递类型</Label>
-              <div className="col-span-3 text-sm">已选择 {courierTypeFilter.length} 种快递类型</div>
+              <Label className="text-right">{t("快递类型")}</Label>
+              <div className="col-span-3 text-sm">{t("已选择")}{courierTypeFilter.length}{t("种快递类型")}</div>
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            取消
-          </Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{t("取消")}</Button>
           <Button type="submit" onClick={handleExport} disabled={isExporting}>
             {isExporting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                导出中...
-              </>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("导出中...")}</>
             ) : (
               "导出"
             )}
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  )
+    </Dialog>)
+  );
 } 

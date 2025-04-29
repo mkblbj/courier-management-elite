@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { useState, useEffect } from "react"
@@ -16,6 +17,8 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
+  const { t } = useTranslation();
+
   const [isOpen, setIsOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -70,7 +73,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
   }
 
   return (
-    <div className={cn("grid gap-2", className)}>
+    (<div className={cn("grid gap-2", className)}>
       <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
@@ -92,7 +95,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                 format(value.from, "yyyy-MM-dd")
               )
             ) : (
-              <span>选择日期范围</span>
+              <span>{t("选择日期范围")}</span>
             )}
           </Button>
         </PopoverTrigger>
@@ -109,61 +112,49 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
           <div className="flex flex-col md:flex-row">
             {/* Quick Options - Always visible on the left */}
             <div className="p-3 border-b md:border-b-0 md:border-r md:w-[180px] space-y-2 bg-muted/5">
-              <h3 className="text-sm font-medium mb-2">快捷选项</h3>
+              <h3 className="text-sm font-medium mb-2">{t("快捷选项")}</h3>
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-left hover:bg-blue-50 transition-colors"
                 onClick={handleTodayClick}
-              >
-                今天
-              </Button>
+              >{t("今天")}</Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-left hover:bg-blue-50 transition-colors"
                 onClick={() => handleQuickOptionSelect("last7Days")}
-              >
-                最近7天
-              </Button>
+              >{t("最近7天")}</Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-left hover:bg-blue-50 transition-colors"
                 onClick={() => handleQuickOptionSelect("last30Days")}
-              >
-                最近30天
-              </Button>
+              >{t("最近30天")}</Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-left hover:bg-blue-50 transition-colors"
                 onClick={() => handleQuickOptionSelect("thisWeek")}
-              >
-                本周
-              </Button>
+              >{t("本周")}</Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-left hover:bg-blue-50 transition-colors"
                 onClick={() => handleQuickOptionSelect("thisMonth")}
-              >
-                本月
-              </Button>
+              >{t("本月")}</Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full justify-start text-left hover:bg-blue-50 transition-colors"
                 onClick={() => handleQuickOptionSelect("lastMonth")}
-              >
-                上个月
-              </Button>
+              >{t("上个月")}</Button>
             </div>
 
             {/* Calendar - Always visible on the right */}
             <div className="p-3">
               <div className="p-1 border-b mb-2 flex justify-between items-center">
-                <span className="text-sm font-medium">选择日期范围</span>
+                <span className="text-sm font-medium">{t("选择日期范围")}</span>
               </div>
               <Calendar
                 initialFocus
@@ -178,6 +169,6 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
           </div>
         </PopoverContent>
       </Popover>
-    </div>
-  )
+    </div>)
+  );
 }

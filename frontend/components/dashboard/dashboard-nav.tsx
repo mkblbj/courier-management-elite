@@ -10,31 +10,32 @@ import { useTranslation } from "react-i18next"
 export function DashboardNav() {
   const pathname = usePathname()
   const [isVisible, setIsVisible] = useState(false)
-  const { t } = useTranslation('common')
+  const [mounted, setMounted] = useState(false)
+  const { t, i18n } = useTranslation('common')
 
   const navItems = [
     {
-      title: t('dashboard'),
+      title: mounted ? t('dashboard') : '',
       href: "/dashboard",
       icon: <BarChart className="h-4 w-4" />,
     },
     {
-      title: t('shipping_data'),
+      title: mounted ? t('shipping_data') : '',
       href: "/shipping-data",
       icon: <FileInput className="h-4 w-4" />,
     },
     {
-      title: t('courier_types'),
+      title: mounted ? t('courier_types') : '',
       href: "/courier-types",
       icon: <Package className="h-4 w-4" />,
     },
     {
-      title: t('stats'),
+      title: mounted ? t('stats') : '',
       href: "/stats",
       icon: <PieChart className="h-4 w-4" />,
     },
     {
-      title: t('settings'),
+      title: mounted ? t('settings') : '',
       href: "/settings",
       icon: <Settings className="h-4 w-4" />,
     },
@@ -44,6 +45,8 @@ export function DashboardNav() {
     const timer = setTimeout(() => {
       setIsVisible(true)
     }, 200)
+
+    setMounted(true)
 
     return () => clearTimeout(timer)
   }, [])

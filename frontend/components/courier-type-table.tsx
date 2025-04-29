@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import { useState, useEffect } from "react"
 import {
@@ -65,6 +66,10 @@ function SortableRow({
   isMobile?: boolean
   index?: number
 }) {
+  const {
+    t: t
+  } = useTranslation();
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: courierType.id })
   const [isVisible, setIsVisible] = useState(false)
 
@@ -88,7 +93,7 @@ function SortableRow({
 
   if (isMobile) {
     return (
-      <div
+      (<div
         ref={setNodeRef}
         style={{
           ...style,
@@ -129,7 +134,6 @@ function SortableRow({
             )}
           </div>
         </div>
-
         {toggleExpand && (
           <div
             className={cn(
@@ -138,7 +142,7 @@ function SortableRow({
             )}
           >
             <div className="grid grid-cols-3 gap-1">
-              <div className="text-sm font-medium">代码:</div>
+              <div className="text-sm font-medium">{t("代码:")}</div>
               <div className="col-span-2 font-mono">
                 {searchQuery ? highlightText(courierType.code, searchQuery) : courierType.code}
               </div>
@@ -146,7 +150,7 @@ function SortableRow({
 
             {courierType.remark && (
               <div className="grid grid-cols-3 gap-1">
-                <div className="text-sm font-medium">备注:</div>
+                <div className="text-sm font-medium">{t("备注:")}</div>
                 <div className="col-span-2 text-sm text-muted-foreground break-words">
                   {searchQuery ? highlightText(courierType.remark, searchQuery) : courierType.remark}
                 </div>
@@ -154,7 +158,7 @@ function SortableRow({
             )}
 
             <div className="grid grid-cols-3 gap-1 items-center">
-              <div className="text-sm font-medium">状态:</div>
+              <div className="text-sm font-medium">{t("状态:")}</div>
               <div className="col-span-2">
                 <Switch
                   checked={Boolean(courierType.is_active)}
@@ -170,27 +174,23 @@ function SortableRow({
                 onClick={() => onEdit(courierType)}
                 className="transition-colors hover:bg-blue-50"
               >
-                <Edit className="h-3.5 w-3.5 mr-1 text-blue-600" />
-                编辑
-              </Button>
+                <Edit className="h-3.5 w-3.5 mr-1 text-blue-600" />{t("编辑")}</Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onDelete(courierType.id)}
                 className="transition-colors hover:bg-red-50 border-red-200"
               >
-                <Trash2 className="h-3.5 w-3.5 mr-1 text-red-500" />
-                删除
-              </Button>
+                <Trash2 className="h-3.5 w-3.5 mr-1 text-red-500" />{t("删除")}</Button>
             </div>
           </div>
         )}
-      </div>
-    )
+      </div>)
+    );
   }
 
   return (
-    <div
+    (<div
       ref={setNodeRef}
       style={{
         ...style,
@@ -253,7 +253,7 @@ function SortableRow({
             className="h-8 w-8 transition-colors hover:bg-blue-50"
           >
             <Edit className="h-4 w-4 text-blue-600" />
-            <span className="sr-only">编辑</span>
+            <span className="sr-only">{t("编辑")}</span>
           </Button>
           <Button
             variant="ghost"
@@ -262,12 +262,12 @@ function SortableRow({
             className="h-8 w-8 transition-colors hover:bg-red-50"
           >
             <Trash2 className="h-4 w-4 text-red-500" />
-            <span className="sr-only">删除</span>
+            <span className="sr-only">{t("删除")}</span>
           </Button>
         </div>
       </div>
-    </div>
-  )
+    </div>)
+  );
 }
 
 interface CourierTypeTableProps {
@@ -294,6 +294,10 @@ export function CourierTypeTable({
   error,
   searchQuery = "",
 }: CourierTypeTableProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   const { toast } = useToast()
   const [deleteId, setDeleteId] = useState<number | string | null>(null)
   const [items, setItems] = useState(courierTypes)
@@ -338,6 +342,10 @@ export function CourierTypeTable({
 
   // 修改handleDragStart函数，保留排序模式提示
   const handleDragStart = (event: { active: { id: string | number } }) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setActiveId(event.active.id)
     toast({
       title: "排序模式",
@@ -348,6 +356,10 @@ export function CourierTypeTable({
 
   // 修改handleDragEnd函数，简化成功提示并保留排序未变更提示
   const handleDragEnd = (event: DragEndEvent) => {
+    const {
+      t: t
+    } = useTranslation();
+
     const { active, over } = event
     setActiveId(null)
 
@@ -385,6 +397,10 @@ export function CourierTypeTable({
 
   // 修改toggleExpand函数，简化提示
   const toggleExpand = (id: number | string) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setExpandedItems((prev) => ({
       ...prev,
       [id]: !prev[id],
@@ -392,10 +408,18 @@ export function CourierTypeTable({
   }
 
   const handleDeleteClick = (id: number | string) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setDeleteId(id)
   }
 
   const handleDeleteConfirm = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (deleteId) {
       onDelete(deleteId)
       setDeleteId(null)
@@ -404,15 +428,15 @@ export function CourierTypeTable({
 
   if (isLoading && courierTypes.length === 0) {
     return (
-      <div className="flex justify-center items-center p-8 animate-pulse-subtle">
+      (<div className="flex justify-center items-center p-8 animate-pulse-subtle">
         <div className="flex flex-col items-center">
           <div className="relative h-10 w-10">
             <div className="absolute h-10 w-10 rounded-full border-4 border-muted-foreground/30 border-t-muted-foreground animate-spin"></div>
           </div>
-          <p className="mt-4 text-muted-foreground">加载中...</p>
+          <p className="mt-4 text-muted-foreground">{t("加载中...")}</p>
         </div>
-      </div>
-    )
+      </div>)
+    );
   }
 
   if (error) {
@@ -420,18 +444,14 @@ export function CourierTypeTable({
   }
 
   if (courierTypes.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground animate-fade-in">
-        没有找到快递类型数据。请添加新的快递类型。
-      </div>
-    )
+    return (<div className="text-center py-8 text-muted-foreground animate-fade-in">{t("没有找到快递类型数据。请添加新的快递类型。")}</div>);
   }
 
   // Define the grid template columns based on actual data length
   const gridTemplateColumns = "40px 80px 200px 1fr 80px 100px"
 
   return (
-    <TooltipProvider>
+    (<TooltipProvider>
       {/* Desktop View - Hidden on small screens */}
       <div
         className={cn(
@@ -444,11 +464,11 @@ export function CourierTypeTable({
           style={{ gridTemplateColumns }}
         >
           <div className="w-6 flex justify-center">#</div>
-          <div className="text-center">代码</div>
-          <div>名称</div>
-          <div className="text-left">备注</div>
-          <div className="text-center">状态</div>
-          <div className="text-center">操作</div>
+          <div className="text-center">{t("代码")}</div>
+          <div>{t("名称")}</div>
+          <div className="text-left">{t("备注")}</div>
+          <div className="text-center">{t("状态")}</div>
+          <div className="text-center">{t("操作")}</div>
         </div>
         <DndContext
           sensors={sensors}
@@ -472,7 +492,6 @@ export function CourierTypeTable({
           </SortableContext>
         </DndContext>
       </div>
-
       {/* Mobile View - Shown only on small screens */}
       <div
         className={cn(
@@ -504,21 +523,18 @@ export function CourierTypeTable({
           </SortableContext>
         </DndContext>
       </div>
-
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent className="animate-scale-in">
           <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
-            <AlertDialogDescription>您确定要删除这个快递类型吗？此操作无法撤销。</AlertDialogDescription>
+            <AlertDialogTitle>{t("确认删除")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("您确定要删除这个快递类型吗？此操作无法撤销。")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="transition-colors duration-200">
-              删除
-            </AlertDialogAction>
+            <AlertDialogCancel>{t("取消")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="transition-colors duration-200">{t("删除")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </TooltipProvider>
-  )
+    </TooltipProvider>)
+  );
 }
