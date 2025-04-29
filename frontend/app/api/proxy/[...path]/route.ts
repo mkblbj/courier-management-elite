@@ -144,9 +144,6 @@ export async function PUT(
     // 构建API URL
     const path = pathArray.join('/');
     
-    // 获取请求体
-    const body = await request.json();
-    
     // 内部API服务器地址 - 从环境变量获取
     const apiBaseUrl = getInternalApiUrl();
     if (!apiBaseUrl) {
@@ -159,14 +156,42 @@ export async function PUT(
     
     console.log(`[API Proxy] 转发PUT请求到: ${apiUrl}`);
     
-    // 发送请求
-    const response = await fetch(apiUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
+    // 判断是否有请求体，避免空请求体导致的JSON解析错误
+    const contentType = request.headers.get('Content-Type');
+    const hasBody = contentType && contentType.includes('application/json') && request.body !== null;
+    
+    // 根据是否有请求体决定如何发送请求
+    let response;
+    if (hasBody) {
+      // 有请求体的情况，解析并转发
+      try {
+        const body = await request.json();
+        response = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+      } catch (jsonError) {
+        console.error('[API Proxy] 解析请求体JSON失败:', jsonError);
+        // 即使JSON解析失败，仍然尝试发送空请求体
+        response = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+    } else {
+      // 无请求体的情况，直接转发请求
+      response = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
     
     // 获取响应数据
     const data = await response.json();
