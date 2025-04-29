@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,6 +24,8 @@ export interface ExportModalProps {
 }
 
 export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalProps) {
+  const { t } = useTranslation();
+
   const [open, setOpen] = useState(false)
   const [filename, setFilename] = useState(`快递数据导出_${format(new Date(), "yyyyMMdd")}`)
   const [isExporting, setIsExporting] = useState(false)
@@ -31,8 +34,8 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
   const handleExport = async () => {
     if (!filename.trim()) {
       toast({
-        title: "错误",
-        description: "请输入有效的文件名",
+        title: t("错误"),
+        description: t("请输入有效的文件名"),
         variant: "destructive",
       })
       return
@@ -63,8 +66,8 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
 
       if (response.success) {
         toast({
-          title: "导出成功",
-          description: "数据已成功导出到Excel文件",
+          title: t("导出成功"),
+          description: t("数据已成功导出到Excel文件"),
         })
         
         // 创建下载链接（如果API返回了文件URL）
@@ -79,13 +82,13 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
         
         setOpen(false)
       } else {
-        throw new Error(response.message || "导出失败")
+        throw new Error(response.message || t("导出失败"))
       }
     } catch (error) {
       console.error("导出错误:", error)
       toast({
-        title: "导出失败",
-        description: error instanceof Error ? error.message : "无法导出数据，请稍后重试",
+        title: t("导出失败"),
+        description: error instanceof Error ? error.message : t("无法导出数据，请稍后重试"),
         variant: "destructive",
       })
     } finally {
@@ -94,22 +97,18 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    (<Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">导出数据</Button>
+        <Button variant="outline">{t("导出数据")}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>导出数据</DialogTitle>
-          <DialogDescription>
-            导出所选时间范围和快递类型的发货数据到Excel文件
-          </DialogDescription>
+          <DialogTitle>{t("导出数据")}</DialogTitle>
+          <DialogDescription>{t("导出所选时间范围和快递类型的发货数据到Excel文件")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="filename" className="text-right">
-              文件名
-            </Label>
+            <Label htmlFor="filename" className="text-right">{t("文件名")}</Label>
             <Input
               id="filename"
               value={filename}
@@ -119,7 +118,7 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
           </div>
           {timeRange?.from && timeRange?.to && (
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">时间范围</Label>
+              <Label className="text-right">{t("时间范围")}</Label>
               <div className="col-span-3 text-sm">
                 {format(timeRange.from, "yyyy-MM-dd")} 至 {format(timeRange.to, "yyyy-MM-dd")}
               </div>
@@ -127,27 +126,23 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
           )}
           {courierTypeFilter && courierTypeFilter.length > 0 && (
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">快递类型</Label>
-              <div className="col-span-3 text-sm">已选择 {courierTypeFilter.length} 种快递类型</div>
+              <Label className="text-right">{t("快递类型")}</Label>
+              <div className="col-span-3 text-sm">{t("已选择")}{courierTypeFilter.length}{t("种快递类型")}</div>
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            取消
-          </Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{t("取消")}</Button>
           <Button type="submit" onClick={handleExport} disabled={isExporting}>
             {isExporting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                导出中...
-              </>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("导出中...")}</>
             ) : (
-              "导出"
+              t("导出")
             )}
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  )
+    </Dialog>)
+  );
 } 

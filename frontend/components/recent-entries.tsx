@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
@@ -62,6 +63,8 @@ export function RecentEntries({
   onClearFilters,
   isLoading,
 }: RecentEntriesProps) {
+  const { t } = useTranslation();
+
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [editingEntry, setEditingEntry] = useState<ShippingEntry | null>(null)
   const [isVisible, setIsVisible] = useState(false)
@@ -131,15 +134,15 @@ export function RecentEntries({
       onRefresh();
       // 刷新成功提示
       toast({
-        title: "刷新成功",
-        description: "数据已更新",
+        title: t("刷新成功"),
+        description: t("数据已更新"),
         variant: "default",
       });
     } catch (error) {
       // 刷新失败提示
       toast({
-        title: "刷新失败",
-        description: error instanceof Error ? error.message : "获取数据失败",
+        title: t("刷新失败"),
+        description: error instanceof Error ? error.message : t("获取数据失败"),
         variant: "destructive",
       });
     }
@@ -167,9 +170,19 @@ export function RecentEntries({
   const handleCourierTypeChange = (value: string | number | undefined) => {
     setCourierTypeId(value)
     
-    // 创建新的筛选条件对象，保留当前的日期筛选设置
-    const newFilter = { ...dateFilter, courierTypeId: value };
-    onFilterChange(newFilter);
+    // 应用快递类型筛选
+    if (dateRange?.from && dateRange?.to) {
+      onFilterChange({
+        type: "range",
+        dateFrom: format(dateRange.from, "yyyy-MM-dd"),
+        dateTo: format(dateRange.to, "yyyy-MM-dd"),
+        courierTypeId: value,
+      })
+    } else {
+      onFilterChange({
+        courierTypeId: value,
+      })
+    }
   }
 
   const handleResetFilters = () => {
@@ -197,23 +210,23 @@ export function RecentEntries({
     } else if (dateFilter.type === "year" && dateFilter.year) {
       descriptions.push(`${dateFilter.year} 年`);
     }
-    
+
     // 添加快递类型筛选描述
     if (dateFilter.courierTypeId && courierTypes[dateFilter.courierTypeId.toString()]) {
       descriptions.push(`快递类型: ${courierTypes[dateFilter.courierTypeId.toString()]}`);
     }
-    
+
     // 如果有多个描述，用逗号连接
     return descriptions.join(", ");
   }
 
   return (
-    <TooltipProvider>
+    (<TooltipProvider>
       <Card className="border">
         <CardHeader className="pb-2">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
-              <CardTitle className="text-lg font-medium whitespace-nowrap">最近录入记录</CardTitle>
+              <CardTitle className="text-lg font-medium whitespace-nowrap">{t("最近录入记录")}</CardTitle>
               
               {/* 日期范围选择器和快递类型选择器 */}
               <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
@@ -223,7 +236,7 @@ export function RecentEntries({
                 <CourierTypeSelector 
                   value={courierTypeId} 
                   onChange={handleCourierTypeChange} 
-                  placeholder="选择快递类型"
+                  placeholder={t("选择快递类型")}
                   className="w-[150px] sm:w-[180px]"
                 />
               </div>
@@ -247,17 +260,17 @@ export function RecentEntries({
         </CardHeader>
         <CardContent>
           {entries.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">暂无记录</div>
+            <div className="text-center py-6 text-muted-foreground">{t("暂无记录")}</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="animate-fade-in" style={{ animationDelay: "50ms" }}>
-                    <TableHead className="w-[120px]">日期</TableHead>
-                    <TableHead className="w-[180px]">快递类型</TableHead>
-                    <TableHead className="w-[80px] text-center">数量</TableHead>
-                    <TableHead>备注</TableHead>
-                    <TableHead className="w-[100px] text-center">操作</TableHead>
+                    <TableHead className="w-[120px]">{t("日期")}</TableHead>
+                    <TableHead className="w-[180px]">{t("快递类型")}</TableHead>
+                    <TableHead className="w-[80px] text-center">{t("数量")}</TableHead>
+                    <TableHead>{t("备注")}</TableHead>
+                    <TableHead className="w-[100px] text-center">{t("操作")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -310,7 +323,7 @@ export function RecentEntries({
                             className="h-8 w-8 transition-colors hover:bg-blue-50"
                           >
                             <Edit2 className="h-4 w-4 text-blue-600" />
-                            <span className="sr-only">编辑</span>
+                            <span className="sr-only">{t("编辑")}</span>
                           </Button>
                           <Button
                             variant="ghost"
@@ -320,7 +333,7 @@ export function RecentEntries({
                             className="h-8 w-8 transition-colors hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
-                            <span className="sr-only">删除</span>
+                            <span className="sr-only">{t("删除")}</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -332,7 +345,7 @@ export function RecentEntries({
           )}
         </CardContent>
         <CardFooter className="flex items-center justify-between border-t px-6 py-3">
-          <div className="text-sm text-muted-foreground">共 {totalRecords} 条记录</div>
+          <div className="text-sm text-muted-foreground">共 {totalRecords}{t("条记录")}</div>
           <div className="flex items-center gap-2">
             <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(Number.parseInt(value))}>
               <SelectTrigger className="h-8 w-[70px]">
@@ -373,30 +386,26 @@ export function RecentEntries({
           </div>
         </CardFooter>
       </Card>
-
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent className="animate-scale-in">
           <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
-            <AlertDialogDescription>您确定要删除这条发货记录吗？此操作无法撤销。</AlertDialogDescription>
+            <AlertDialogTitle>{t("确认删除")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("您确定要删除这条发货记录吗？此操作无法撤销。")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600 transition-colors">
-              删除
-            </AlertDialogAction>
+            <AlertDialogCancel>{t("取消")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600 transition-colors">{t("删除")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
       <Dialog open={!!editingEntry} onOpenChange={(open) => !open && setEditingEntry(null)}>
         <DialogContent className="sm:max-w-[600px] animate-scale-in">
           <DialogHeader>
-            <DialogTitle>编辑发货记录</DialogTitle>
+            <DialogTitle>{t("编辑发货记录")}</DialogTitle>
           </DialogHeader>
           {editingEntry && <SingleEntryForm onSubmit={handleUpdate} isLoading={isLoading} initialData={editingEntry} />}
         </DialogContent>
       </Dialog>
-    </TooltipProvider>
-  )
+    </TooltipProvider>)
+  );
 }

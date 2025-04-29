@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import { useState, useEffect } from "react"
 import { 
@@ -27,6 +28,8 @@ export function CourierTypeSelector({
   placeholder = "选择快递类型",
   className
 }: CourierTypeSelectorProps) {
+  const { t } = useTranslation();
+
   const [courierTypes, setCourierTypes] = useState<CourierType[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -43,14 +46,14 @@ export function CourierTypeSelector({
         setCourierTypes(activeTypes)
       } catch (err) {
         console.error("获取快递类型失败:", err)
-        setError(err instanceof Error ? err.message : "获取快递类型失败")
+        setError(err instanceof Error ? err.message : t("获取快递类型失败"))
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchCourierTypes()
-  }, [])
+  }, [t])
 
   const handleValueChange = (newValue: string) => {
     // 处理"所有"情况
@@ -62,12 +65,12 @@ export function CourierTypeSelector({
   }
 
   return (
-    <Select value={value?.toString() || "all"} onValueChange={handleValueChange}>
+    (<Select value={value?.toString() || "all"} onValueChange={handleValueChange}>
       <SelectTrigger className={cn("w-[180px]", className)}>
         {isLoading ? (
           <div className="flex items-center">
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            <span>加载中...</span>
+            <span>{t("加载中...")}</span>
           </div>
         ) : (
           <SelectValue placeholder={placeholder} />
@@ -75,7 +78,7 @@ export function CourierTypeSelector({
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectItem value="all">所有快递类型</SelectItem>
+          <SelectItem value="all">{t("所有快递类型")}</SelectItem>
           {courierTypes.map((type) => (
             <SelectItem key={type.id} value={type.id.toString()}>
               {type.name}
@@ -84,6 +87,6 @@ export function CourierTypeSelector({
         </SelectGroup>
         {error && <div className="p-2 text-sm text-red-500">{error}</div>}
       </SelectContent>
-    </Select>
-  )
+    </Select>)
+  );
 } 

@@ -206,7 +206,11 @@ console.log("SQL查询选项:", JSON.stringify(options));
         return res.status(400).json({
           success: false,
           errors: errors.array().reduce((acc, err) => {
-            acc[err.path] = err.msg;
+            if (err.type === 'field') {
+              acc[err.path] = err.msg;
+            } else {
+              acc[err.type] = err.msg;
+            }
             return acc;
           }, {})
         });
@@ -248,6 +252,7 @@ console.log("SQL查询选项:", JSON.stringify(options));
       if (existingRecord) {
         return res.status(400).json({
           success: false,
+          message: `${req.body.date}日期的${existingRecord.courier_name}记录已存在，如需修改请使用更新功能`,
           errors: {
             courier_id: `${req.body.date}日期的${existingRecord.courier_name}记录已存在，如需修改请使用更新功能`
           }
@@ -256,21 +261,6 @@ console.log("SQL查询选项:", JSON.stringify(options));
       
       // 验证快递公司是否存在且处于活跃状态
       const courier = await Courier.getById(req.body.courier_id);
-      if (!courier) {
-        return res.status(400).json({
-          success: false,
-          errors: {
-            courier_id: `ID为${req.body.courier_id}的快递公司不存在`
-          }
-        });
-      } else if (!courier.is_active) {
-        return res.status(400).json({
-          success: false,
-          errors: {
-            courier_id: `ID为${req.body.courier_id}的快递公司已停用`
-          }
-        });
-      }
       
       // 创建发货记录
       const id = await ShippingRecord.add(req.body);
@@ -312,7 +302,11 @@ console.log("SQL查询选项:", JSON.stringify(options));
         return res.status(400).json({
           success: false,
           errors: errors.array().reduce((acc, err) => {
-            acc[err.path] = err.msg;
+            if (err.type === 'field') {
+              acc[err.path] = err.msg;
+            } else {
+              acc[err.type] = err.msg;
+            }
             return acc;
           }, {})
         });
@@ -363,21 +357,6 @@ console.log("SQL查询选项:", JSON.stringify(options));
       // 如果更新快递公司，验证快递公司是否存在且处于活跃状态
       if (req.body.courier_id) {
         const courier = await Courier.getById(req.body.courier_id);
-        if (!courier) {
-          return res.status(400).json({
-            success: false,
-            errors: {
-              courier_id: `ID为${req.body.courier_id}的快递公司不存在`
-            }
-          });
-        } else if (!courier.is_active) {
-          return res.status(400).json({
-            success: false,
-            errors: {
-              courier_id: `ID为${req.body.courier_id}的快递公司已停用`
-            }
-          });
-        }
       }
       
       // 更新记录
@@ -457,7 +436,11 @@ console.log("SQL查询选项:", JSON.stringify(options));
         return res.status(400).json({
           success: false,
           errors: errors.array().reduce((acc, err) => {
-            acc[err.path] = err.msg;
+            if (err.type === 'field') {
+              acc[err.path] = err.msg;
+            } else {
+              acc[err.type] = err.msg;
+            }
             return acc;
           }, {})
         });
@@ -515,7 +498,7 @@ console.log("SQL查询选项:", JSON.stringify(options));
       if (duplicates.length > 0) {
         const errors = {};
         duplicates.forEach(duplicate => {
-          errors[`records.${duplicate.index}.courier_id`] = `${req.body.date}日期的${duplicate.courier_name}记录已存在，如需修改请使用更新功能`;
+          errors[`records.${duplicate.index}.courier_id`] = `${req.body.date}日期的快递记录已存在，如需修改请使用更新功能`;
         });
         
         return res.status(400).json({
@@ -528,22 +511,6 @@ console.log("SQL查询选项:", JSON.stringify(options));
       for (let i = 0; i < req.body.records.length; i++) {
         const record = req.body.records[i];
         const courier = await Courier.getById(record.courier_id);
-        
-        if (!courier) {
-          return res.status(400).json({
-            success: false,
-            errors: {
-              [`records.${i}.courier_id`]: `ID为${record.courier_id}的快递公司不存在`
-            }
-          });
-        } else if (!courier.is_active) {
-          return res.status(400).json({
-            success: false,
-            errors: {
-              [`records.${i}.courier_id`]: `ID为${record.courier_id}的快递公司已停用`
-            }
-          });
-        }
       }
       
       // 执行批量添加

@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import { useState, useEffect, useCallback } from "react"
 import { useEnvStore } from "@/lib/env-config"
@@ -60,11 +61,15 @@ export const logWarn = (message: string, data?: any) => canLog() && addLog("warn
 export const logError = (message: string, data?: any) => canLog() && addLog("error", message, data)
 
 export function DebugLogger() {
+  const {
+    t
+  } = useTranslation();
+
   // 在生产环境中直接返回null
   if (process.env.NODE_ENV === "production") {
     return null
   }
-  
+
   const { debug } = useEnvStore()
   const [isOpen, setIsOpen] = useState(false)
   const [localLogs, setLocalLogs] = useState<LogEntry[]>([])
@@ -118,7 +123,7 @@ export function DebugLogger() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-50">
+    (<div className="fixed bottom-4 left-4 z-50">
       <Button
         variant="outline"
         size="icon"
@@ -130,7 +135,6 @@ export function DebugLogger() {
       >
         <Bug className={cn("h-5 w-5 transition-transform", isOpen && "rotate-90")} />
       </Button>
-
       {isOpen && (
         <Card
           className={cn(
@@ -140,14 +144,12 @@ export function DebugLogger() {
         >
           <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Bug className="h-4 w-4" />
-              调试日志
-            </CardTitle>
+              <Bug className="h-4 w-4" />{t("调试日志")}</CardTitle>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearLogs} title="清除日志">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearLogs} title={t("清除日志")}>
                 <Trash2 className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)} title="关闭">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)} title={t("关闭")}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -155,13 +157,13 @@ export function DebugLogger() {
           <CardContent className="p-0">
             <ScrollArea className="h-80">
               {localLogs.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">暂无日志记录</div>
+                <div className="py-8 text-center text-muted-foreground">{t("暂无日志记录")}</div>
               ) : (
                 <div className="divide-y">
                   {localLogs.map((log) => {
                     const { icon, color } = getLogLevelInfo(log.level)
                     return (
-                      <div key={log.id} className="p-3 hover:bg-muted/30 transition-colors">
+                      (<div key={log.id} className="p-3 hover:bg-muted/30 transition-colors">
                         <div className="flex items-center justify-between mb-1">
                           <Badge variant="outline" className={cn("px-1.5 py-0", color)}>
                             <div className="flex items-center gap-1">
@@ -177,26 +179,23 @@ export function DebugLogger() {
                         <div className="text-sm">{log.message}</div>
                         {log.data && (
                           <details className="mt-1">
-                            <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                              查看详情
-                            </summary>
+                            <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">{t("查看详情")}</summary>
                             <pre className="mt-2 p-2 text-xs bg-muted/50 rounded overflow-auto max-h-40">
                               {JSON.stringify(log.data, null, 2)}
                             </pre>
                           </details>
                         )}
-                      </div>
-                    )
+                      </div>)
+                    );
                   })}
                 </div>
               )}
             </ScrollArea>
           </CardContent>
           <CardFooter className="py-2 px-4 border-t text-xs text-muted-foreground">
-            共 {localLogs.length} 条日志记录
-          </CardFooter>
+            共 {localLogs.length}{t("条日志记录")}</CardFooter>
         </Card>
       )}
-    </div>
-  )
+    </div>)
+  );
 }

@@ -182,11 +182,17 @@ export function useShippingData() {
       const errorMessage = err instanceof Error ? err.message : "添加记录失败"
       setError(errorMessage)
 
-      toast({
-        title: "添加失败",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      // 确保发生错误时也刷新数据
+      fetchShippingData()
+
+      // 使用setTimeout确保toast在组件完全hydrate之后显示
+      setTimeout(() => {
+        toast({
+          title: "添加失败",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }, 0)
 
       throw err
     } finally {
@@ -237,11 +243,17 @@ export function useShippingData() {
       const errorMessage = err instanceof Error ? err.message : "批量添加记录失败"
       setError(errorMessage)
 
-      toast({
-        title: "批量添加失败",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      // 确保发生错误时也刷新数据
+      fetchShippingData()
+
+      // 使用setTimeout确保toast在组件完全hydrate之后显示
+      setTimeout(() => {
+        toast({
+          title: "批量添加失败",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }, 0)
 
       throw err
     } finally {
@@ -271,11 +283,17 @@ export function useShippingData() {
       const errorMessage = err instanceof Error ? err.message : "更新记录失败"
       setError(errorMessage)
 
-      toast({
-        title: "更新失败",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      // 确保发生错误时也刷新数据
+      fetchShippingData()
+
+      // 使用setTimeout确保toast在组件完全hydrate之后显示
+      setTimeout(() => {
+        toast({
+          title: "更新失败",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }, 0)
 
       throw err
     } finally {
@@ -297,18 +315,8 @@ export function useShippingData() {
       // 更新总记录数
       setTotalRecords((prev) => Math.max(0, prev - 1))
       
-      // 如果当前页变为空且不是第一页，自动跳转到上一页
-      if (entries.length === 1 && currentPage > 1) {
-        // 使用 setTimeout 来确保状态更新完成后再获取新页面数据
-        setTimeout(() => {
-          fetchShippingData(currentPage - 1, pageSize)
-        }, 0)
-      } else {
-        // 否则刷新当前页数据，确保UI与服务器数据同步
-        setTimeout(() => {
-          fetchShippingData(currentPage, pageSize)
-        }, 0)
-      }
+      // 无论是否是页面最后一条记录，都刷新数据以确保UI和服务器同步
+      fetchShippingData(currentPage, pageSize)
 
       toast({
         title: "删除成功",
@@ -319,11 +327,17 @@ export function useShippingData() {
       const errorMessage = err instanceof Error ? err.message : "删除记录失败"
       setError(errorMessage)
 
-      toast({
-        title: "删除失败",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      // 确保发生错误时立即刷新数据
+      fetchShippingData(currentPage, pageSize)
+
+      // 使用setTimeout确保toast在组件完全hydrate之后显示
+      setTimeout(() => {
+        toast({
+          title: "删除失败",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }, 0)
 
       throw err
     } finally {

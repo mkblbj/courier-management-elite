@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import { useEffect, useState } from "react"
 import { shippingApi } from "@/services/shipping-api"
@@ -13,6 +14,8 @@ interface ShippingTrendChartProps {
 }
 
 export function ShippingTrendChart({ timeRange, courierType, isLoading }: ShippingTrendChartProps) {
+  const { t } = useTranslation();
+
   const [chartData, setChartData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -101,14 +104,14 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
     }
 
     fetchChartData()
-  }, [timeRange, courierType])
+  }, [timeRange, courierType, t])
 
   if (loading || isLoading) {
     return (
-      <div className="flex justify-center items-center h-[300px]">
-        <LoadingSpinner size="lg" text="加载中..." />
-      </div>
-    )
+      (<div className="flex justify-center items-center h-[300px]">
+        <LoadingSpinner size="lg" text={t("加载中...")} />
+      </div>)
+    );
   }
 
   // 从图表数据中获取所有快递类型

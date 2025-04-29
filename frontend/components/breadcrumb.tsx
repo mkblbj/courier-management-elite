@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import type React from "react"
 
@@ -21,6 +22,10 @@ interface BreadcrumbProps {
 }
 
 export function Breadcrumb({ items, action }: BreadcrumbProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -32,7 +37,7 @@ export function Breadcrumb({ items, action }: BreadcrumbProps) {
   }, [])
 
   return (
-    <nav
+    (<nav
       className={cn(
         "flex items-center justify-between text-sm mb-6 bg-white px-4 py-3 rounded-lg border transition-all duration-300",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
@@ -47,7 +52,7 @@ export function Breadcrumb({ items, action }: BreadcrumbProps) {
           )}
         >
           <Home className="h-4 w-4 mr-1" />
-          <span>首页</span>
+          <span>{t("首页")}</span>
         </Link>
 
         {items.map((item, index) => (
@@ -74,7 +79,6 @@ export function Breadcrumb({ items, action }: BreadcrumbProps) {
           </div>
         ))}
       </div>
-      
       {action && (
         <div 
           className={cn(
@@ -86,11 +90,15 @@ export function Breadcrumb({ items, action }: BreadcrumbProps) {
           {action}
         </div>
       )}
-    </nav>
-  )
+    </nav>)
+  );
 }
 
 export function useBreadcrumb() {
+  const {
+    t: t
+  } = useTranslation();
+
   const pathname = usePathname()
 
   const breadcrumbMap: Record<string, { label: string; href: string; icon: React.ReactNode }> = {

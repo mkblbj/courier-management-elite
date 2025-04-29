@@ -1,20 +1,26 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Package } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useEffect, useState } from "react"
+import Link from "next/link";
+import { Package } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import LanguageSwitcher from "@/components/language-switcher";
+import { useTranslation } from "react-i18next";
 
 export function DashboardHeader() {
-  const [isVisible, setIsVisible] = useState(false)
+  const [isVisible, setIsVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const { t } = useTranslation("common");
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsVisible(true)
-    }, 100)
+      setIsVisible(true);
+    }, 100);
 
-    return () => clearTimeout(timer)
-  }, [])
+    setIsMounted(true);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <header className="bg-white border-b sticky top-0 z-30">
@@ -24,14 +30,21 @@ export function DashboardHeader() {
             href="/"
             className={cn(
               "flex items-center gap-2 transition-all duration-500",
-              isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4",
+              isVisible
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 -translate-x-4"
             )}
           >
             <Package className="h-6 w-6 text-blue-600" />
-            <span className="font-bold text-xl">快递管理系统</span>
+            <span className="font-bold text-xl">
+              {isMounted ? t("welcome") : ""}
+            </span>
           </Link>
+        </div>
+        <div className="flex items-center gap-4">
+          <LanguageSwitcher />
         </div>
       </div>
     </header>
-  )
+  );
 }

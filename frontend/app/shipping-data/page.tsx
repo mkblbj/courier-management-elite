@@ -11,10 +11,12 @@ import { cn } from "@/lib/utils"
 import { useEnvStore } from "@/lib/env-config"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
+import { useTranslation } from "react-i18next"
 
 export default function ShippingDataPage() {
   const { debug } = useEnvStore()
   const [isVisible, setIsVisible] = useState(false)
+  const { t } = useTranslation(['common', 'shipping', 'courier'])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -31,14 +33,14 @@ export default function ShippingDataPage() {
       
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
         <PageHeader
-          title="发货数据录入"
-          description="记录每日各快递类型的发货数量"
+          title={t('shipping:shipping_management')}
+          description={t('shipping:shipping_list')}
           className="w-full"
           action={
             <Link href="/courier-types">
               <Button className="bg-blue-600 hover:bg-blue-700 transition-all duration-300">
                 <Package className="mr-2 h-4 w-4" />
-                编辑快递种类
+                {t('courier:edit_courier')}
               </Button>
             </Link>
           }

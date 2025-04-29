@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { useTranslation } from "react-i18next";
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,6 +30,10 @@ interface StatisticsChartProps {
 }
 
 export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsChartProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   const [chartType, setChartType] = useState("distribution")
 
   const COLORS = [
@@ -46,10 +51,10 @@ export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsC
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-[400px]">
-        <LoadingSpinner size="lg" text="加载中..." />
-      </div>
-    )
+      (<div className="flex justify-center items-center h-[400px]">
+        <LoadingSpinner size="lg" text={t("加载中...")} />
+      </div>)
+    );
   }
 
   if (error) {
@@ -57,7 +62,7 @@ export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsC
   }
 
   if (!data) {
-    return <div className="text-center py-8 text-muted-foreground">暂无统计数据</div>
+    return <div className="text-center py-8 text-muted-foreground">{t("暂无统计数据")}</div>;
   }
 
   // 准备饼图数据
@@ -86,17 +91,17 @@ export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsC
   const courierNames = data.byCourier.map((item) => item.courierName)
 
   return (
-    <div className="space-y-6">
+    (<div className="space-y-6">
       <Tabs value={chartType} onValueChange={setChartType} className="w-full">
         <TabsList className="w-full max-w-md mx-auto mb-6">
-          <TabsTrigger value="distribution">快递类型分布</TabsTrigger>
-          <TabsTrigger value="trend">发货趋势</TabsTrigger>
+          <TabsTrigger value="distribution">{t("快递类型分布")}</TabsTrigger>
+          <TabsTrigger value="trend">{t("发货趋势")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="distribution" className="animate-fade-in">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-medium text-center">快递类型分布</CardTitle>
+              <CardTitle className="text-lg font-medium text-center">{t("快递类型分布")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[400px] w-full">
@@ -128,7 +133,7 @@ export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsC
         <TabsContent value="trend" className="animate-fade-in">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-medium text-center">发货趋势</CardTitle>
+              <CardTitle className="text-lg font-medium text-center">{t("发货趋势")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[400px] w-full">
@@ -157,6 +162,6 @@ export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsC
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  )
+    </div>)
+  );
 }
