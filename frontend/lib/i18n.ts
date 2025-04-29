@@ -25,8 +25,14 @@ const initOptions: InitOptions = {
   },
   // 语言检测选项
   detection: {
-    order: ['cookie', 'localStorage', 'navigator'],
-    caches: ['cookie', 'localStorage'],
+    // 调整检测顺序：先检查浏览器设置，再检查已保存的设置
+    order: ['navigator', 'localStorage', 'cookie'],
+    caches: ['localStorage', 'cookie'],
+    // 添加浏览器语言检测的更多配置
+    lookupLocalStorage: 'i18nextLng',
+    lookupCookie: 'i18nextLng',
+    // 确保检测支持的语言
+    lookupFromPathIndex: 0,
   },
 };
 
