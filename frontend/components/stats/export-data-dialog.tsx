@@ -34,9 +34,7 @@ interface ExportDataDialogProps {
 type ExportStatus = "idle" | "processing" | "success" | "error"
 
 export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFilter }: ExportDataDialogProps) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const { toast } = useToast()
 
@@ -65,10 +63,6 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 重置表单
   const resetForm = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setExportStatus("idle")
     setProgress(0)
     setEstimatedTime(0)
@@ -78,10 +72,6 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 关闭对话框时重置表单
   const handleOpenChange = (open: boolean) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!open) {
       resetForm()
     }
@@ -90,10 +80,6 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 修改 DateRangePicker 的 onChange 回调，处理可能的 undefined 值
   const handleDateRangeChange = (value: DateRange | undefined) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (value) {
       setExportTimeRange(value);
     }
@@ -101,10 +87,6 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 处理导出过程，使用真实API
   const handleExport = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     // 验证表单
     if (!exportTimeRange.from || !exportTimeRange.to) {
       toast({
@@ -188,10 +170,6 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 处理下载
   const handleDownload = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     // 实际应用中应该使用真实的下载URL
     const link = document.createElement("a")
     link.href = downloadUrl
@@ -206,10 +184,6 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
   // 处理重试
   const handleRetry = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     resetForm()
   }
 

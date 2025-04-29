@@ -49,9 +49,7 @@ interface SingleEntryFormProps {
 }
 
 export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntryFormProps) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const { courierTypes, isLoading: isLoadingCourierTypes } = useCourierTypes()
   const [submitting, setSubmitting] = useState(false)
@@ -68,10 +66,6 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
   })
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setSubmitting(true)
     try {
       const courierType = courierTypes.find((ct) => ct.id.toString() === values.courierTypeId)
@@ -104,19 +98,11 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
 
   // Handle form reset with confirmation
   const handleReset = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setShowResetConfirm(true)
   }
 
   // Confirm reset action
   const confirmReset = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     form.reset({
       date: initialData ? new Date(initialData.date) : new Date(),
       courierTypeId: initialData?.courierTypeId?.toString() || "",

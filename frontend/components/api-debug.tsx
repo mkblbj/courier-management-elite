@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -15,9 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useEnvStore } from "@/lib/env-config"
 
 export function ApiDebug() {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   // 使用useEnvStore钩子获取最新状态
   const { debug } = useEnvStore()
@@ -51,16 +49,12 @@ export function ApiDebug() {
 
   // 在开发模式下且debug为true时才显示API调试工具
   // 添加NODE_ENV检查，确保在生产环境中不显示
-  if (!debug || process.env.NODE_ENV === "production") {
+  if (!debug || (process.env.NODE_ENV as string) === "production") {
     return null
   }
 
   // 快递类型API测试函数
   const testApiConnection = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setIsLoading(true)
     setError(null)
     addLog(t("测试API连接"), "GET", "/api/couriers")
@@ -71,7 +65,7 @@ export function ApiDebug() {
       addLog(t("API响应"), "GET", "/api/couriers", response)
       console.log("API响应:", response)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "API连接测试失败"
+      const errorMessage = err instanceof Error ? err.message : t("API连接测试失败")
       setError(errorMessage)
       addLog(t("API错误"), "GET", "/api/couriers", null, errorMessage)
       console.error("API连接测试失败:", err)
@@ -81,10 +75,6 @@ export function ApiDebug() {
   }
 
   const testAddCourier = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setIsLoading(true)
     setError(null)
     addLog(t("添加快递类型"), "POST", "/api/couriers", addFormData)
@@ -95,7 +85,7 @@ export function ApiDebug() {
       addLog(t("API响应"), "POST", "/api/couriers", response)
       console.log("添加成功:", response)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "添加快递类型失败"
+      const errorMessage = err instanceof Error ? err.message : t("添加快递类型失败")
       setError(errorMessage)
       addLog(t("API错误"), "POST", "/api/couriers", null, errorMessage)
       console.error("添加快递类型失败:", err)
@@ -105,10 +95,6 @@ export function ApiDebug() {
   }
 
   const testUpdateCourier = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!updateFormData.id) {
       setError(t("请输入要更新的快递类型ID"))
       return
@@ -125,7 +111,7 @@ export function ApiDebug() {
       addLog(t("API响应"), "PUT", `/api/couriers/${id}`, response)
       console.log("更新成功:", response)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "更新快递类型失败"
+      const errorMessage = err instanceof Error ? err.message : t("更新快递类型失败")
       setError(errorMessage)
       addLog(t("API错误"), "PUT", `/api/couriers/${updateFormData.id}`, null, errorMessage)
       console.error("更新快递类型失败:", err)
@@ -135,10 +121,6 @@ export function ApiDebug() {
   }
 
   const testDeleteCourier = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!deleteId) {
       setError(t("请输入要删除的快递类型ID"))
       return
@@ -150,13 +132,13 @@ export function ApiDebug() {
 
     try {
       await api.deleteCourierType(deleteId)
-      setResult({ message: "删除成功" })
-      addLog("API响应", "DELETE", `/api/couriers/${deleteId}`, { message: "删除成功" })
+      setResult({ message: t("删除成功") })
+      addLog(t("API响应"), "DELETE", `/api/couriers/${deleteId}`, { message: t("删除成功") })
       console.log("删除成功")
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "删除快递类型失败"
+      const errorMessage = err instanceof Error ? err.message : t("删除快递类型失败")
       setError(errorMessage)
-      addLog("API错误", "DELETE", `/api/couriers/${deleteId}`, null, errorMessage)
+      addLog(t("API错误"), "DELETE", `/api/couriers/${deleteId}`, null, errorMessage)
       console.error("删除快递类型失败:", err)
     } finally {
       setIsLoading(false)
@@ -164,10 +146,6 @@ export function ApiDebug() {
   }
 
   const testToggleStatus = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!toggleId) {
       setError(t("请输入要切换状态的快递类型ID"))
       return
@@ -180,12 +158,12 @@ export function ApiDebug() {
     try {
       const response = await api.toggleCourierTypeStatus(toggleId)
       setResult(response)
-      addLog("API响应", "PUT", `/api/couriers/${toggleId}/toggle`, response)
+      addLog(t("API响应"), "PUT", `/api/couriers/${toggleId}/toggle`, response)
       console.log("状态切换成功:", response)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "切换快递类型状态失败"
+      const errorMessage = err instanceof Error ? err.message : t("切换快递类型状态失败")
       setError(errorMessage)
-      addLog("API错误", "PUT", `/api/couriers/${toggleId}/toggle`, null, errorMessage)
+      addLog(t("API错误"), "PUT", `/api/couriers/${toggleId}/toggle`, null, errorMessage)
       console.error("切换快递类型状态失败:", err)
     } finally {
       setIsLoading(false)
@@ -193,10 +171,6 @@ export function ApiDebug() {
   }
 
   const testUpdateSort = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!sortData) {
       setError(t("请输入排序数据"))
       return
@@ -220,13 +194,13 @@ export function ApiDebug() {
 
     try {
       await api.updateCourierTypesOrder(parsedData)
-      setResult({ message: "排序更新成功" })
-      addLog("API响应", "POST", "/api/couriers/sort", { message: "排序更新成功" })
+      setResult({ message: t("排序更新成功") })
+      addLog(t("API响应"), "POST", "/api/couriers/sort", { message: t("排序更新成功") })
       console.log("排序更新成功")
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "更新快递类型排序失败"
+      const errorMessage = err instanceof Error ? err.message : t("更新快递类型排序失败")
       setError(errorMessage)
-      addLog("API错误", "POST", "/api/couriers/sort", null, errorMessage)
+      addLog(t("API错误"), "POST", "/api/couriers/sort", null, errorMessage)
       console.error("更新快递类型排序失败:", err)
     } finally {
       setIsLoading(false)
@@ -234,10 +208,6 @@ export function ApiDebug() {
   }
 
   const addLog = (action: string, method: string, url: string, data?: any, error?: string) => {
-    const {
-      t: t
-    } = useTranslation();
-
     const log = {
       timestamp: new Date().toISOString(),
       action,
@@ -251,51 +221,31 @@ export function ApiDebug() {
   }
 
   const clearLogs = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setRequestLogs([])
   }
 
   const handleAddFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const {
-      t: t
-    } = useTranslation();
-
     const { name, value } = e.target
     setAddFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleAddFormSwitchChange = (checked: boolean) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setAddFormData((prev) => ({ ...prev, is_active: checked }))
   }
 
   const handleUpdateFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const {
-      t: t
-    } = useTranslation();
-
     const { name, value } = e.target
     setUpdateFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleUpdateFormSwitchChange = (checked: boolean) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setUpdateFormData((prev) => ({ ...prev, is_active: checked }))
   }
 
   return (
     (<Card className="mt-4">
       <CardHeader>
-        <CardTitle>{t("API调试工具 (")}{process.env.NODE_ENV !== "production" ? "开发" : "生产"}{t("环境)")}</CardTitle>
+        <CardTitle>{t("API调试工具 (")}{(process.env.NODE_ENV as string) === "production" ? "生产" : "开发"}{t("环境)")}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
@@ -396,7 +346,7 @@ export function ApiDebug() {
                     <Switch
                       id="update-is_active"
                       checked={updateFormData.is_active}
-                      onChange={handleUpdateFormSwitchChange}
+                      onCheckedChange={handleUpdateFormSwitchChange}
                     />
                   </div>
 
@@ -528,10 +478,6 @@ export function ApiDebug() {
 
 // 根据HTTP方法返回不同的颜色类名
 function getMethodColor(method: string) {
-  const {
-    t: t
-  } = useTranslation();
-
   switch (method.toUpperCase()) {
     case "GET":
       return "bg-blue-100 text-blue-800"

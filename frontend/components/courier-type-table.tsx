@@ -66,9 +66,7 @@ function SortableRow({
   isMobile?: boolean
   index?: number
 }) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: courierType.id })
   const [isVisible, setIsVisible] = useState(false)
@@ -294,10 +292,7 @@ export function CourierTypeTable({
   error,
   searchQuery = "",
 }: CourierTypeTableProps) {
-  const {
-    t: t
-  } = useTranslation();
-
+  const { t } = useTranslation();
   const { toast } = useToast()
   const [deleteId, setDeleteId] = useState<number | string | null>(null)
   const [items, setItems] = useState(courierTypes)
@@ -342,24 +337,16 @@ export function CourierTypeTable({
 
   // 修改handleDragStart函数，保留排序模式提示
   const handleDragStart = (event: { active: { id: string | number } }) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setActiveId(event.active.id)
     toast({
-      title: "排序模式",
-      description: "拖动项目调整顺序，松开后自动保存",
+      title: t("排序模式"),
+      description: t("拖动项目调整顺序，松开后自动保存"),
       duration: 2000,
     })
   }
 
   // 修改handleDragEnd函数，简化成功提示并保留排序未变更提示
   const handleDragEnd = (event: DragEndEvent) => {
-    const {
-      t: t
-    } = useTranslation();
-
     const { active, over } = event
     setActiveId(null)
 
@@ -382,14 +369,14 @@ export function CourierTypeTable({
       setReorderedItems(updatedItems)
 
       toast({
-        title: "排序已更改",
+        title: t("排序已更改"),
         variant: "default",
         duration: 2000,
       })
     } else {
       toast({
-        title: "排序未变更",
-        description: "项目顺序保持不变",
+        title: t("排序未变更"),
+        description: t("项目顺序保持不变"),
         duration: 2000,
       })
     }
@@ -397,10 +384,6 @@ export function CourierTypeTable({
 
   // 修改toggleExpand函数，简化提示
   const toggleExpand = (id: number | string) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setExpandedItems((prev) => ({
       ...prev,
       [id]: !prev[id],
@@ -408,18 +391,10 @@ export function CourierTypeTable({
   }
 
   const handleDeleteClick = (id: number | string) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setDeleteId(id)
   }
 
   const handleDeleteConfirm = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (deleteId) {
       onDelete(deleteId)
       setDeleteId(null)

@@ -24,9 +24,7 @@ export interface ExportModalProps {
 }
 
 export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalProps) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const [open, setOpen] = useState(false)
   const [filename, setFilename] = useState(`快递数据导出_${format(new Date(), "yyyyMMdd")}`)
@@ -34,14 +32,10 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
   const shippingApi = useShippingApi()
 
   const handleExport = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!filename.trim()) {
       toast({
-        title: "错误",
-        description: "请输入有效的文件名",
+        title: t("错误"),
+        description: t("请输入有效的文件名"),
         variant: "destructive",
       })
       return
@@ -72,8 +66,8 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
 
       if (response.success) {
         toast({
-          title: "导出成功",
-          description: "数据已成功导出到Excel文件",
+          title: t("导出成功"),
+          description: t("数据已成功导出到Excel文件"),
         })
         
         // 创建下载链接（如果API返回了文件URL）
@@ -88,13 +82,13 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
         
         setOpen(false)
       } else {
-        throw new Error(response.message || "导出失败")
+        throw new Error(response.message || t("导出失败"))
       }
     } catch (error) {
       console.error("导出错误:", error)
       toast({
-        title: "导出失败",
-        description: error instanceof Error ? error.message : "无法导出数据，请稍后重试",
+        title: t("导出失败"),
+        description: error instanceof Error ? error.message : t("无法导出数据，请稍后重试"),
         variant: "destructive",
       })
     } finally {
@@ -144,7 +138,7 @@ export function ExportModal({ timeRange, courierTypeFilter = [] }: ExportModalPr
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("导出中...")}</>
             ) : (
-              "导出"
+              t("导出")
             )}
           </Button>
         </DialogFooter>
