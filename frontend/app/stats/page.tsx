@@ -124,12 +124,12 @@ export default function StatsPage() {
           </Card>
         </div>
 
-        <ExportDataDialog
+        {/* <ExportDataDialog
           open={isExportDialogOpen}
           onOpenChange={setIsExportDialogOpen}
           timeRange={timeRange}
           courierTypeFilter={courierTypeFilter}
-        />
+        /> */}
       </main>
     </div>)
   );
