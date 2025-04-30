@@ -482,7 +482,7 @@ export default function DashboardPage() {
                           "text-xs",
                           isToday ? "text-blue-600 font-semibold" : "text-gray-500"
                         )}>
-                          {format(dayDate, 'EEE')}
+                          {t(`weekday.full.${format(dayDate, 'EEEE').toLowerCase()}`)}
                         </div>
                       </div>
                     );

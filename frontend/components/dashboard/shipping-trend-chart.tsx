@@ -65,7 +65,12 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
         let currentDate = new Date(startDate)
         while (currentDate <= today) {
           const dateStr = format(currentDate, "MM-dd")
-          dateMap.set(dateStr, { date: dateStr })
+          const weekday = format(currentDate, "EEEE").toLowerCase()
+          dateMap.set(dateStr, { 
+            date: dateStr,
+            weekday: weekday, // 存储星期信息
+            fullDate: new Date(currentDate) // 存储完整日期对象以便后续使用
+          })
           
           // 获取所有快递类型名称并初始化为0
           response.details.forEach((item: any) => {
@@ -116,8 +121,26 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
 
   // 从图表数据中获取所有快递类型
   const courierTypes = chartData.length > 0 
-    ? Object.keys(chartData[0]).filter(key => key !== 'date')
+    ? Object.keys(chartData[0]).filter(key => key !== 'date' && key !== 'weekday' && key !== 'fullDate')
     : []
+
+  // 自定义X轴标签组件，显示日期和星期
+  const CustomXAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const dataItem = chartData.find(item => item.date === payload.value);
+    const weekday = dataItem?.weekday;
+    
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={0} dy={16} textAnchor="middle" fill="#666" fontSize={12}>
+          {payload.value}
+        </text>
+        <text x={0} y={0} dy={32} textAnchor="middle" fill="#666" fontSize={10}>
+          {t(`weekday.short.${weekday}`)}
+        </text>
+      </g>
+    );
+  };
 
   return (
     <div className="h-[300px] w-full">
@@ -128,11 +151,11 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
             top: 20,
             right: 30,
             left: 0,
-            bottom: 5,
+            bottom: 20, // 增加底部边距以容纳星期显示
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
+          <XAxis dataKey="date" tick={<CustomXAxisTick />} height={60} />
           <YAxis />
           <Tooltip />
           <Legend />
