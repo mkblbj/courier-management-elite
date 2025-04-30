@@ -285,6 +285,9 @@ export function RecentEntries({
                     >
                       <TableCell className="w-[120px] whitespace-nowrap">
                         {format(new Date(entry.date), "yyyy-MM-dd")}
+                        <div className="text-xs text-gray-500">
+                          {t(`weekday.full.${format(new Date(entry.date), 'EEEE').toLowerCase()}`)}
+                        </div>
                       </TableCell>
                       <TableCell className="w-[180px] font-medium">{entry.courierTypeName}</TableCell>
                       <TableCell className="w-[80px] text-center">{entry.quantity}</TableCell>

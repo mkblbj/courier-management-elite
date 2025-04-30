@@ -162,7 +162,14 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
                                 !field.value && "text-muted-foreground",
                               )}
                             >
-                              {field.value ? format(field.value, "yyyy-MM-dd") : <span>{t("选择日期")}</span>}
+                              {field.value ? (
+                                <>
+                                  {format(field.value, "yyyy-MM-dd")}
+                                  <span className="ml-1 text-gray-500">
+                                    {t(`weekday.full.${format(field.value, 'EEEE').toLowerCase()}`)}
+                                  </span>
+                                </>
+                              ) : <span>{t("选择日期")}</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>

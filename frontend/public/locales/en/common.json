@@ -379,7 +379,28 @@
   "错误:": "Error:",
   "项目顺序保持不变": "Item Order Unchanged",
   "预计剩余时间:": "Estimated Remaining Time:",
-  "预计明日总数": "Estimated Total for Tomorrow",
+  "预计明日总数": "Expected Tomorrow's Total",
   "首页": "Home",
-  "高级选项": "Advanced Options"
+  "高级选项": "Advanced Options",
+
+  "weekday": {
+    "full": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "short": {
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat",
+      "sunday": "Sun"
+    }
+  }
 }

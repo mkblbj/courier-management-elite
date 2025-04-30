@@ -380,5 +380,25 @@
   "预计剩余时间:": "予想残り時間:",
   "预计明日总数": "明日の予想合計",
   "首页": "ホーム",
-  "高级选项": "詳細オプション"
+  "高级选项": "詳細オプション",
+  "weekday": {
+    "full": {
+      "monday": "月曜日",
+      "tuesday": "火曜日",
+      "wednesday": "水曜日",
+      "thursday": "木曜日",
+      "friday": "金曜日",
+      "saturday": "土曜日",
+      "sunday": "日曜日"
+    },
+    "short": {
+      "monday": "月",
+      "tuesday": "火",
+      "wednesday": "水",
+      "thursday": "木",
+      "friday": "金",
+      "saturday": "土",
+      "sunday": "日"
+    }
+  }
 }

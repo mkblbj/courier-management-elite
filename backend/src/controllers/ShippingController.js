@@ -230,6 +230,7 @@ console.log("SQL查询选项:", JSON.stringify(options));
       const currentDate = dateUtils.getCurrentDateString();
       const tomorrowDate = dateUtils.getOffsetDateString(1);
       const monthAgoDate = dateUtils.getOffsetDateString(-30);
+      const yearAgoDate = dateUtils.getOffsetDateString(-365);
       
       if (dateUtils.compareDateStrings(req.body.date, tomorrowDate) > 0) {
         return res.status(400).json({
@@ -238,11 +239,11 @@ console.log("SQL查询选项:", JSON.stringify(options));
             date: '日期不能超过当前日期后一天'
           }
         });
-      } else if (dateUtils.compareDateStrings(req.body.date, monthAgoDate) < 0) {
+      } else if (dateUtils.compareDateStrings(req.body.date, yearAgoDate) < 0) {
         return res.status(400).json({
           success: false,
           errors: {
-            date: '日期不能早于一个月前'
+            date: '日期不能早于一年前'
           }
         });
       }
@@ -336,6 +337,7 @@ console.log("SQL查询选项:", JSON.stringify(options));
         const currentDate = dateUtils.getCurrentDateString();
         const tomorrowDate = dateUtils.getOffsetDateString(1);
         const monthAgoDate = dateUtils.getOffsetDateString(-30);
+        const yearAgoDate = dateUtils.getOffsetDateString(-365);
         
         if (dateUtils.compareDateStrings(req.body.date, tomorrowDate) > 0) {
           return res.status(400).json({
@@ -344,11 +346,11 @@ console.log("SQL查询选项:", JSON.stringify(options));
               date: '日期不能超过当前日期后一天'
             }
           });
-        } else if (dateUtils.compareDateStrings(req.body.date, monthAgoDate) < 0) {
+        } else if (dateUtils.compareDateStrings(req.body.date, yearAgoDate) < 0) {
           return res.status(400).json({
             success: false,
             errors: {
-              date: '日期不能早于一个月前'
+              date: '日期不能早于一年前'
             }
           });
         }
@@ -460,6 +462,7 @@ console.log("SQL查询选项:", JSON.stringify(options));
       const currentDate = dateUtils.getCurrentDateString();
       const tomorrowDate = dateUtils.getOffsetDateString(1);
       const monthAgoDate = dateUtils.getOffsetDateString(-30);
+      const yearAgoDate = dateUtils.getOffsetDateString(-365);
       
       if (dateUtils.compareDateStrings(req.body.date, tomorrowDate) > 0) {
         return res.status(400).json({
@@ -468,11 +471,11 @@ console.log("SQL查询选项:", JSON.stringify(options));
             date: '日期不能超过当前日期后一天'
           }
         });
-      } else if (dateUtils.compareDateStrings(req.body.date, monthAgoDate) < 0) {
+      } else if (dateUtils.compareDateStrings(req.body.date, yearAgoDate) < 0) {
         return res.status(400).json({
           success: false,
           errors: {
-            date: '日期不能早于一个月前'
+            date: '日期不能早于一年前'
           }
         });
       }
