@@ -217,7 +217,7 @@ class ShippingRecord {
   }
 
   /**
-   * 获取按快递公司分组的统计数据
+   * 获取按快递类型分组的统计数据
    * @param {Object} options 查询选项，支持时间筛选
    * @returns {Promise<Array>} 统计数据数组
    */
@@ -225,13 +225,13 @@ class ShippingRecord {
     console.log('执行getStatsByCourier查询，参数:', JSON.stringify(options));
     
     try {
-      // 首先获取所有激活状态的快递公司，确保即使没有数据也能返回所有快递类型
+      // 首先获取所有激活状态的快递类型，确保即使没有数据也能返回所有快递类型
       const allCouriersQuery = `SELECT id, name FROM couriers WHERE is_active = 1 ORDER BY sort_order ASC, name ASC`;
       const allCouriers = await db.query(allCouriersQuery);
       
       console.log(`找到 ${allCouriers.length} 个激活的快递类型`);
       
-      // 构建按快递公司分组的统计查询
+      // 构建按快递类型分组的统计查询
       let sql = `SELECT c.id as courier_id, c.name as courier_name, 
                  SUM(sr.quantity) as total, 
                  COUNT(sr.id) as record_count 
@@ -257,7 +257,7 @@ class ShippingRecord {
         params.push(options.date_to);
       }
       
-      // 按快递公司ID筛选
+      // 按快递类型ID筛选
       if (options.courier_id) {
         whereClauses.push("sr.courier_id = ?");
         params.push(parseInt(options.courier_id, 10));
@@ -268,15 +268,15 @@ class ShippingRecord {
         sql += " WHERE " + whereClauses.join(" AND ");
       }
       
-      // 按快递公司分组
+      // 按快递类型分组
       sql += " GROUP BY sr.courier_id";
       
       // 按总数排序
       sql += " ORDER BY total DESC";
       
-      console.log('执行快递公司统计SQL:', sql);
+      console.log('执行快递类型统计SQL:', sql);
       const statsResults = await db.query(sql, params);
-      console.log(`查询结果: ${statsResults.length} 个快递公司有数据`);
+      console.log(`查询结果: ${statsResults.length} 个快递类型有数据`);
       
       // 将结果转换为键值对，以便于合并
       const courierStatsMap = {};
@@ -284,7 +284,7 @@ class ShippingRecord {
         courierStatsMap[stat.courier_id] = stat;
       });
       
-      // 合并所有快递公司信息，为没有数据的快递公司添加零值
+      // 合并所有快递类型信息，为没有数据的快递类型添加零值
       const finalResults = allCouriers.map(courier => {
         return courierStatsMap[courier.id] || {
           courier_id: courier.id,
@@ -294,18 +294,18 @@ class ShippingRecord {
         };
       });
       
-      console.log(`最终结果: ${finalResults.length} 个快递公司统计数据`);
+      console.log(`最终结果: ${finalResults.length} 个快递类型统计数据`);
       
       return finalResults;
     } catch (error) {
-      console.error('获取快递公司统计数据失败:', error);
+      console.error('获取快递类型统计数据失败:', error);
       return []; // 返回空数组作为默认值
     }
   }
 
   /**
    * 获取按日期分组的统计数据
-   * @param {Object} options 查询选项，支持时间筛选和快递公司筛选
+   * @param {Object} options 查询选项，支持时间筛选和快递类型筛选
    * @returns {Promise<Array>} 统计数据数组
    */
   async getStatsByDate(options = {}) {
@@ -333,7 +333,7 @@ class ShippingRecord {
       params.push(options.date_to);
     }
     
-    // 按快递公司ID筛选
+    // 按快递类型ID筛选
     if (options.courier_id) {
       whereClauses.push("sr.courier_id = ?");
       params.push(parseInt(options.courier_id, 10));
@@ -355,7 +355,7 @@ class ShippingRecord {
   }
 
   /**
-   * 获取按日期和快递公司分组的统计数据
+   * 获取按日期和快递类型分组的统计数据
    * @param {Object} options 查询选项，支持时间筛选
    * @returns {Promise<Array>} 统计数据数组
    */
@@ -386,7 +386,7 @@ class ShippingRecord {
       params.push(options.date_to);
     }
     
-    // 按快递公司ID筛选
+    // 按快递类型ID筛选
     if (options.courier_id) {
       whereClauses.push("sr.courier_id = ?");
       params.push(parseInt(options.courier_id, 10));
@@ -397,7 +397,7 @@ class ShippingRecord {
       sql += " WHERE " + whereClauses.join(" AND ");
     }
     
-    // 按日期和快递公司分组
+    // 按日期和快递类型分组
     sql += " GROUP BY DATE(sr.date), sr.courier_id";
     
     // 按日期和总数排序
@@ -409,7 +409,7 @@ class ShippingRecord {
 
   /**
    * 获取总计统计数据
-   * @param {Object} options 查询选项，支持时间筛选和快递公司筛选
+   * @param {Object} options 查询选项，支持时间筛选和快递类型筛选
    * @returns {Promise<Object>} 统计数据对象
    */
   async getStatsTotal(options = {}) {
@@ -437,7 +437,7 @@ class ShippingRecord {
       params.push(options.date_to);
     }
     
-    // 按快递公司ID筛选
+    // 按快递类型ID筛选
     if (options.courier_id) {
       whereClauses.push("sr.courier_id = ?");
       params.push(parseInt(options.courier_id, 10));
@@ -625,15 +625,15 @@ class ShippingRecord {
   }
 
   /**
-   * 获取按快递公司统计的图表数据
+   * 获取按快递类型统计的图表数据
    * @param {Object} options 查询选项
    * @returns {Promise<Object>} 适合饼图的数据格式
    */
   async getChartDataByCourier(options = {}) {
     try {
-      console.log('正在获取按快递公司统计的饼图数据，参数:', options);
+      console.log('正在获取按快递类型统计的饼图数据，参数:', options);
       
-      // 获取按快递公司统计的数据
+      // 获取按快递类型统计的数据
       const statsByCourier = await this.getStatsByCourier(options);
       
       // 记录统计数据
@@ -641,7 +641,7 @@ class ShippingRecord {
       
       // 数据为空时处理
       if (!statsByCourier || !statsByCourier.length) {
-        console.log('没有找到快递公司统计数据，返回空数据');
+        console.log('没有找到快递类型统计数据，返回空数据');
         return {
           labels: [],
           datasets: [{
@@ -675,7 +675,7 @@ class ShippingRecord {
       console.log('处理后的饼图数据:', JSON.stringify(chartData));
       return chartData;
     } catch (error) {
-      console.error('获取按快递公司统计的图表数据失败:', error);
+      console.error('获取按快递类型统计的图表数据失败:', error);
       // 返回默认空图表数据
       return {
         labels: [],

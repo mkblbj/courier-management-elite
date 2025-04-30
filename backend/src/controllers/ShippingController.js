@@ -9,8 +9,8 @@ const dateUtils = require('../utils/dateUtils');
 const validateShippingRecord = [
   body('date').notEmpty().withMessage('日期不能为空')
     .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('日期格式不正确，应为YYYY-MM-DD'),
-  body('courier_id').notEmpty().withMessage('快递公司ID不能为空')
-    .isInt().withMessage('快递公司ID必须是整数'),
+  body('courier_id').notEmpty().withMessage('快递类型ID不能为空')
+    .isInt().withMessage('快递类型ID必须是整数'),
   body('quantity').notEmpty().withMessage('数量不能为空')
     .isInt({ min: 0, max: 10000 }).withMessage('数量必须是0-10000之间的整数'),
   body('notes').optional().isLength({ max: 500 }).withMessage('备注长度不能超过500个字符')
@@ -23,8 +23,8 @@ const validateBatchShippingRecords = [
   body('date').notEmpty().withMessage('日期不能为空')
     .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('日期格式不正确，应为YYYY-MM-DD'),
   body('records').isArray({ min: 1 }).withMessage('至少需要一条记录'),
-  body('records.*.courier_id').notEmpty().withMessage('快递公司ID不能为空')
-    .isInt().withMessage('快递公司ID必须是整数'),
+  body('records.*.courier_id').notEmpty().withMessage('快递类型ID不能为空')
+    .isInt().withMessage('快递类型ID必须是整数'),
   body('records.*.quantity').notEmpty().withMessage('数量不能为空')
     .isInt({ min: 0, max: 10000 }).withMessage('数量必须是0-10000之间的整数'),
   body('records.*.notes').optional().isLength({ max: 500 }).withMessage('备注长度不能超过500个字符')
@@ -60,7 +60,7 @@ class ShippingController {
         date
       });
       
-      // 获取多个快递公司ID筛选
+      // 获取多个快递类型ID筛选
       let courierIds = null;
       if (req.query.courier_ids) {
         courierIds = req.query.courier_ids.split(',').map(id => parseInt(id));
@@ -131,7 +131,7 @@ class ShippingController {
         notes_search: notesSearch
       };
       
-      // 添加多个快递公司ID筛选
+      // 添加多个快递类型ID筛选
       if (courierIds && courierIds.length > 0) {
         options.courier_ids = courierIds;
       }
@@ -260,7 +260,7 @@ console.log("SQL查询选项:", JSON.stringify(options));
         });
       }
       
-      // 验证快递公司是否存在且处于活跃状态
+      // 验证快递类型是否存在且处于活跃状态
       const courier = await Courier.getById(req.body.courier_id);
       
       // 创建发货记录
@@ -356,7 +356,7 @@ console.log("SQL查询选项:", JSON.stringify(options));
         }
       }
       
-      // 如果更新快递公司，验证快递公司是否存在且处于活跃状态
+      // 如果更新快递类型，验证快递类型是否存在且处于活跃状态
       if (req.body.courier_id) {
         const courier = await Courier.getById(req.body.courier_id);
       }
@@ -510,7 +510,7 @@ console.log("SQL查询选项:", JSON.stringify(options));
         });
       }
       
-      // 验证每条记录的快递公司是否存在且处于活跃状态
+      // 验证每条记录的快递类型是否存在且处于活跃状态
       for (let i = 0; i < req.body.records.length; i++) {
         const record = req.body.records[i];
         const courier = await Courier.getById(record.courier_id);

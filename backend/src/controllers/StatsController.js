@@ -120,7 +120,7 @@ class StatsController {
   }
   
   /**
-   * 获取按日期和快递公司的详细统计数据
+   * 获取按日期和快递类型的详细统计数据
    * @param {Object} req 请求对象
    * @param {Object} res 响应对象
    */
@@ -195,7 +195,7 @@ class StatsController {
       };
       
       try {
-        // 获取按日期和快递公司统计的详细数据
+        // 获取按日期和快递类型统计的详细数据
         const statsByDateAndCourier = await ShippingRecord.getStatsByDateAndCourier(options);
         const statsTotal = await ShippingRecord.getStatsTotal(options);
         
@@ -315,8 +315,8 @@ class StatsController {
         
         // 根据图表类型获取相应的数据
         if (chartType === 'pie') {
-          // 饼图数据 - 按快递公司分布
-          console.log('获取饼图数据 - 按快递公司分布');
+          // 饼图数据 - 按快递类型分布
+          console.log('获取饼图数据 - 按快递类型分布');
           chartData = await ShippingRecord.getChartDataByCourier(options);
         } else {
           // 折线图数据 - 按日期趋势

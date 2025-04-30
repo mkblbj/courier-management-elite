@@ -1,20 +1,20 @@
 # 发货数据录入 API 文档
 
-本文档描述了发货数据录入功能的API接口，包括查询、添加、修改、删除和批量添加发货记录等操作。
+本文档描述了发货数据录入功能的 API 接口，包括查询、添加、修改、删除和批量添加发货记录等操作。
 
-## 基础URL
+## 基础 URL
 
-所有API的基础URL为：`/api/shipping`
+所有 API 的基础 URL 为：`/api/shipping`
 
 ## 通用响应格式
 
-所有API接口返回JSON格式的响应，一般结构如下：
+所有 API 接口返回 JSON 格式的响应，一般结构如下：
 
 ```json
 {
-  "success": true,      // true表示成功，false表示失败
+  "success": true, // true表示成功，false表示失败
   "message": "操作结果描述",
-  "data": {}            // 返回的数据，可能是对象或数组
+  "data": {} // 返回的数据，可能是对象或数组
 }
 ```
 
@@ -26,22 +26,22 @@
 - **方法**: GET
 - **描述**: 获取系统中所有发货记录的列表，支持分页和筛选
 - **查询参数**:
-  - `page`  - 页码，默认为1
-  - `perPage`  - 每页记录数，默认为10
-  - `sortBy`  - 排序字段，默认为"date"，支持的字段有：id, date, courier_id, quantity, created_at, updated_at
-  - `sortOrder`  - 排序方向，默认为"DESC"，可选值："ASC", "DESC"
-  - `date`  - 按特定日期筛选，格式为YYYY-MM-DD
-  - `date_from`  - 按日期范围筛选起始日期，格式为YYYY-MM-DD
-  - `date_to`  - 按日期范围筛选截止日期，格式为YYYY-MM-DD
-  - `week`  - 按周筛选，值为一年中的周数(1-53)，例如 week=25
-  - `month`  - 按月筛选，值为月份(1-12)，例如 month=6
-  - `quarter`  - 按季度筛选，值为季度(1-4)，例如 quarter=2
-  - `year`  - 按年筛选，值为年份，例如 year=2023
-  - `courier_id`  - 按单个快递公司ID筛选
-  - `courier_ids`  - 按多个快递公司ID筛选，格式为逗号分隔的ID列表，如"1,2,3"
-  - `min_quantity`  - 按最小数量筛选
-  - `max_quantity`  - 按最大数量筛选
-  - `notes_search`  - 按备注关键词搜索
+  - `page` - 页码，默认为 1
+  - `perPage` - 每页记录数，默认为 10
+  - `sortBy` - 排序字段，默认为"date"，支持的字段有：id, date, courier_id, quantity, created_at, updated_at
+  - `sortOrder` - 排序方向，默认为"DESC"，可选值："ASC", "DESC"
+  - `date` - 按特定日期筛选，格式为 YYYY-MM-DD
+  - `date_from` - 按日期范围筛选起始日期，格式为 YYYY-MM-DD
+  - `date_to` - 按日期范围筛选截止日期，格式为 YYYY-MM-DD
+  - `week` - 按周筛选，值为一年中的周数(1-53)，例如 week=25
+  - `month` - 按月筛选，值为月份(1-12)，例如 month=6
+  - `quarter` - 按季度筛选，值为季度(1-4)，例如 quarter=2
+  - `year` - 按年筛选，值为年份，例如 year=2023
+  - `courier_id` - 按单个快递类型 ID 筛选
+  - `courier_ids` - 按多个快递类型 ID 筛选，格式为逗号分隔的 ID 列表，如"1,2,3"
+  - `min_quantity` - 按最小数量筛选
+  - `max_quantity` - 按最大数量筛选
+  - `notes_search` - 按备注关键词搜索
 - **成功响应** (200 OK):
 
 ```json
@@ -85,9 +85,9 @@
 
 - **URL**: `/api/shipping/{id}`
 - **方法**: GET
-- **描述**: 获取指定ID的发货记录详细信息
-- **参数**: 
-  - `id` - 发货记录ID (路径参数)
+- **描述**: 获取指定 ID 的发货记录详细信息
+- **参数**:
+  - `id` - 发货记录 ID (路径参数)
 - **成功响应** (200 OK):
 
 ```json
@@ -145,9 +145,9 @@
 
 - **URL**: `/api/shipping/{id}`
 - **方法**: PUT
-- **描述**: 更新指定ID的发货记录信息
-- **参数**: 
-  - `id` - 发货记录ID (路径参数)
+- **描述**: 更新指定 ID 的发货记录信息
+- **参数**:
+  - `id` - 发货记录 ID (路径参数)
 - **请求体**:
 
 ```json
@@ -182,9 +182,9 @@
 
 - **URL**: `/api/shipping/{id}`
 - **方法**: DELETE
-- **描述**: 删除指定ID的发货记录
-- **参数**: 
-  - `id` - 发货记录ID (路径参数)
+- **描述**: 删除指定 ID 的发货记录
+- **参数**:
+  - `id` - 发货记录 ID (路径参数)
 - **成功响应** (200 OK):
 
 ```json
@@ -270,7 +270,7 @@
 
 ## 错误响应
 
-API在发生错误时会返回适当的HTTP状态码和错误信息：
+API 在发生错误时会返回适当的 HTTP 状态码和错误信息：
 
 - **400 Bad Request** - 请求参数错误
 - **404 Not Found** - 资源不存在
@@ -283,7 +283,7 @@ API在发生错误时会返回适当的HTTP状态码和错误信息：
   "success": false,
   "errors": {
     "date": "日期不能为空",
-    "courier_id": "快递公司不存在"
+    "courier_id": "快递类型不存在"
   }
 }
 ```
@@ -304,38 +304,36 @@ API在发生错误时会返回适当的HTTP状态码和错误信息：
 1. **日期** (`date`)
    - 必填项
    - 格式必须为 YYYY-MM-DD
-   
-2. **快递公司ID** (`courier_id`)
+2. **快递类型 ID** (`courier_id`)
    - 必填项
-   - 必须是存在的快递公司ID
-   
+   - 必须是存在的快递类型 ID
 3. **数量** (`quantity`)
    - 必填项
    - 必须是非负整数
 
 ## 注意事项
 
-1. 所有请求和响应均采用JSON格式
+1. 所有请求和响应均采用 JSON 格式
 2. 请求头需要包含 `Content-Type: application/json`
 3. 批量添加记录时，所有记录必须有相同的日期
-4. 所有API都支持跨域请求
+4. 所有 API 都支持跨域请求
 
-## 统计API
+## 统计 API
 
 ### 1. 获取统计数据汇总
 
 - **URL**: `/api/shipping/stats/summary`
 - **方法**: GET
-- **描述**: 获取发货记录的统计数据汇总，包括总计数据、按快递公司统计和按日期统计
+- **描述**: 获取发货记录的统计数据汇总，包括总计数据、按快递类型统计和按日期统计
 - **查询参数**:
-  - `date`  - 按特定日期筛选，格式为YYYY-MM-DD
-  - `date_from`  - 按日期范围筛选起始日期，格式为YYYY-MM-DD
-  - `date_to`  - 按日期范围筛选截止日期，格式为YYYY-MM-DD
-  - `week`  - 按周筛选，值为一年中的周数(1-53)
-  - `month`  - 按月筛选，值为月份(1-12)
-  - `quarter`  - 按季度筛选，值为季度(1-4)
-  - `year`  - 按年筛选，值为年份
-  - `courier_id`  - 按快递公司ID筛选
+  - `date` - 按特定日期筛选，格式为 YYYY-MM-DD
+  - `date_from` - 按日期范围筛选起始日期，格式为 YYYY-MM-DD
+  - `date_to` - 按日期范围筛选截止日期，格式为 YYYY-MM-DD
+  - `week` - 按周筛选，值为一年中的周数(1-53)
+  - `month` - 按月筛选，值为月份(1-12)
+  - `quarter` - 按季度筛选，值为季度(1-4)
+  - `year` - 按年筛选，值为年份
+  - `courier_id` - 按快递类型 ID 筛选
 - **成功响应** (200 OK):
 
 ```json
@@ -360,7 +358,7 @@ API在发生错误时会返回适当的HTTP状态码和错误信息：
         "total": 35,
         "record_count": 5
       }
-      // 更多快递公司...
+      // 更多快递类型...
     ],
     "by_date": [
       {
@@ -383,16 +381,16 @@ API在发生错误时会返回适当的HTTP状态码和错误信息：
 
 - **URL**: `/api/shipping/stats/details`
 - **方法**: GET
-- **描述**: 获取按日期和快递公司分组的详细统计数据
+- **描述**: 获取按日期和快递类型分组的详细统计数据
 - **查询参数**:
-  - `date`  - 按特定日期筛选，格式为YYYY-MM-DD
-  - `date_from`  - 按日期范围筛选起始日期，格式为YYYY-MM-DD
-  - `date_to`  - 按日期范围筛选截止日期，格式为YYYY-MM-DD
-  - `week`  - 按周筛选，值为一年中的周数(1-53)
-  - `month`  - 按月筛选，值为月份(1-12)
-  - `quarter`  - 按季度筛选，值为季度(1-4)
-  - `year`  - 按年筛选，值为年份
-  - `courier_id`  - 按快递公司ID筛选
+  - `date` - 按特定日期筛选，格式为 YYYY-MM-DD
+  - `date_from` - 按日期范围筛选起始日期，格式为 YYYY-MM-DD
+  - `date_to` - 按日期范围筛选截止日期，格式为 YYYY-MM-DD
+  - `week` - 按周筛选，值为一年中的周数(1-53)
+  - `month` - 按月筛选，值为月份(1-12)
+  - `quarter` - 按季度筛选，值为季度(1-4)
+  - `year` - 按年筛选，值为年份
+  - `courier_id` - 按快递类型 ID 筛选
 - **成功响应** (200 OK):
 
 ```json
@@ -435,16 +433,17 @@ API在发生错误时会返回适当的HTTP状态码和错误信息：
 - **方法**: GET
 - **描述**: 获取用于图表展示的统计数据，支持折线图和饼图
 - **查询参数**:
-  - `date_from`  - 按日期范围筛选起始日期，格式为YYYY-MM-DD
-  - `date_to`  - 按日期范围筛选截止日期，格式为YYYY-MM-DD
-  - `week`  - 按周筛选，值为一年中的周数(1-53)
-  - `month`  - 按月筛选，值为月份(1-12)
-  - `quarter`  - 按季度筛选，值为季度(1-4)
-  - `year`  - 按年筛选，值为年份
-  - `type`  - 图表类型，可选值: line（折线图）, pie（饼图），默认为line
+  - `date_from` - 按日期范围筛选起始日期，格式为 YYYY-MM-DD
+  - `date_to` - 按日期范围筛选截止日期，格式为 YYYY-MM-DD
+  - `week` - 按周筛选，值为一年中的周数(1-53)
+  - `month` - 按月筛选，值为月份(1-12)
+  - `quarter` - 按季度筛选，值为季度(1-4)
+  - `year` - 按年筛选，值为年份
+  - `type` - 图表类型，可选值: line（折线图）, pie（饼图），默认为 line
 - **成功响应** (200 OK):
 
 折线图响应示例:
+
 ```json
 {
   "success": true,
@@ -461,6 +460,7 @@ API在发生错误时会返回适当的HTTP状态码和错误信息：
 ```
 
 饼图响应示例:
+
 ```json
 {
   "success": true,
@@ -484,21 +484,25 @@ API在发生错误时会返回适当的HTTP状态码和错误信息：
 ### 统计功能使用示例
 
 1. **获取某月的所有快递统计数据**
+
    ```
    GET /api/shipping/stats/summary?year=2023&month=6
    ```
 
 2. **获取上周的发货总数**
+
    ```
    GET /api/shipping/stats/summary?week=25&year=2023
    ```
 
-3. **获取特定快递公司在某季度的统计数据**
+3. **获取特定快递类型在某季度的统计数据**
+
    ```
    GET /api/shipping/stats/summary?quarter=2&year=2023&courier_id=1
    ```
 
 4. **获取某年每天的发货数据（用于折线图）**
+
    ```
    GET /api/shipping/stats/charts?year=2023&type=line
    ```
@@ -506,4 +510,4 @@ API在发生错误时会返回适当的HTTP状态码和错误信息：
 5. **获取当月快递类型占比（用于饼图）**
    ```
    GET /api/shipping/stats/charts?month=6&year=2023&type=pie
-   ``` 
+   ```

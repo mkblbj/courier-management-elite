@@ -2,7 +2,7 @@ const Courier = require('../models/Courier');
 const { body, validationResult } = require('express-validator');
 
 /**
- * 验证快递公司数据
+ * 验证快递类型数据
  */
 const validateCourier = [
   body('name').notEmpty().withMessage('名称不能为空')
@@ -15,7 +15,7 @@ const validateCourier = [
 
 class CourierController {
   /**
-   * 获取所有快递公司
+   * 获取所有快递类型
    */
   async getAll(req, res) {
     try {
@@ -37,16 +37,16 @@ class CourierController {
         data: couriers
       });
     } catch (error) {
-      console.error('获取快递公司列表失败:', error);
+      console.error('获取快递类型列表失败:', error);
       res.status(500).json({
         code: 500,
-        message: '获取快递公司列表失败'
+        message: '获取快递类型列表失败'
       });
     }
   }
 
   /**
-   * 获取单个快递公司
+   * 获取单个快递类型
    */
   async getById(req, res) {
     try {
@@ -56,7 +56,7 @@ class CourierController {
       if (!courier) {
         return res.status(404).json({
           code: 404,
-          message: '快递公司不存在'
+          message: '快递类型不存在'
         });
       }
       
@@ -66,16 +66,16 @@ class CourierController {
         data: courier
       });
     } catch (error) {
-      console.error('获取快递公司详情失败:', error);
+      console.error('获取快递类型详情失败:', error);
       res.status(500).json({
         code: 500,
-        message: '获取快递公司详情失败'
+        message: '获取快递类型详情失败'
       });
     }
   }
 
   /**
-   * 创建快递公司
+   * 创建快递类型
    */
   async create(req, res) {
     try {
@@ -96,21 +96,21 @@ class CourierController {
       if (nameExists) {
         return res.status(400).json({
           code: 400,
-          message: '快递公司名称已存在'
+          message: '快递类型名称已存在'
         });
       }
       
-      // 创建快递公司
+      // 创建快递类型
       const id = await Courier.add(req.body);
       
       if (!id) {
         return res.status(500).json({
           code: 500,
-          message: '创建快递公司失败'
+          message: '创建快递类型失败'
         });
       }
       
-      // 获取新创建的快递公司
+      // 获取新创建的快递类型
       const newCourier = await Courier.getById(id);
       
       res.status(201).json({
@@ -119,16 +119,16 @@ class CourierController {
         data: newCourier
       });
     } catch (error) {
-      console.error('创建快递公司失败:', error);
+      console.error('创建快递类型失败:', error);
       res.status(500).json({
         code: 500,
-        message: '创建快递公司失败'
+        message: '创建快递类型失败'
       });
     }
   }
 
   /**
-   * 更新快递公司
+   * 更新快递类型
    */
   async update(req, res) {
     try {
@@ -144,12 +144,12 @@ class CourierController {
         });
       }
       
-      // 检查快递公司是否存在
+      // 检查快递类型是否存在
       const courier = await Courier.getById(id);
       if (!courier) {
         return res.status(404).json({
           code: 404,
-          message: '快递公司不存在'
+          message: '快递类型不存在'
         });
       }
       
@@ -161,22 +161,22 @@ class CourierController {
         if (nameExists) {
           return res.status(400).json({
             code: 400,
-            message: '快递公司名称已存在'
+            message: '快递类型名称已存在'
           });
         }
       }
       
-      // 更新快递公司
+      // 更新快递类型
       const updated = await Courier.update(id, req.body);
       
       if (!updated) {
         return res.status(500).json({
           code: 500,
-          message: '更新快递公司失败'
+          message: '更新快递类型失败'
         });
       }
       
-      // 获取更新后的快递公司
+      // 获取更新后的快递类型
       const updatedCourier = await Courier.getById(id);
       
       res.status(200).json({
@@ -185,40 +185,40 @@ class CourierController {
         data: updatedCourier
       });
     } catch (error) {
-      console.error('更新快递公司失败:', error);
+      console.error('更新快递类型失败:', error);
       res.status(500).json({
         code: 500,
-        message: '更新快递公司失败'
+        message: '更新快递类型失败'
       });
     }
   }
 
   /**
-   * 删除快递公司
+   * 删除快递类型
    */
   async delete(req, res) {
     try {
       const id = parseInt(req.params.id);
       
-      // 检查快递公司是否存在
+      // 检查快递类型是否存在
       const courier = await Courier.getById(id);
       if (!courier) {
         return res.status(404).json({
           code: 404,
-          message: '快递公司不存在'
+          message: '快递类型不存在'
         });
       }
       
       // TODO: 这里应该检查是否有关联的发货记录，如有则不允许删除
       // 暂时不实现，后续需要时可添加
       
-      // 删除快递公司
+      // 删除快递类型
       const deleted = await Courier.delete(id);
       
       if (!deleted) {
         return res.status(500).json({
           code: 500,
-          message: '删除快递公司失败'
+          message: '删除快递类型失败'
         });
       }
       
@@ -227,27 +227,27 @@ class CourierController {
         message: '删除成功'
       });
     } catch (error) {
-      console.error('删除快递公司失败:', error);
+      console.error('删除快递类型失败:', error);
       res.status(500).json({
         code: 500,
-        message: '删除快递公司失败'
+        message: '删除快递类型失败'
       });
     }
   }
 
   /**
-   * 切换快递公司状态
+   * 切换快递类型状态
    */
   async toggleStatus(req, res) {
     try {
       const id = parseInt(req.params.id);
       
-      // 检查快递公司是否存在
+      // 检查快递类型是否存在
       const courier = await Courier.getById(id);
       if (!courier) {
         return res.status(404).json({
           code: 404,
-          message: '快递公司不存在'
+          message: '快递类型不存在'
         });
       }
       
@@ -273,7 +273,7 @@ class CourierController {
         }
       });
     } catch (error) {
-      console.error('更新快递公司状态失败:', error);
+      console.error('更新快递类型状态失败:', error);
       res.status(500).json({
         code: 500,
         message: '更新状态失败'
@@ -282,7 +282,7 @@ class CourierController {
   }
 
   /**
-   * 重新排序快递公司
+   * 重新排序快递类型
    */
   async reorder(req, res) {
     try {
@@ -310,7 +310,7 @@ class CourierController {
         message: '排序更新成功'
       });
     } catch (error) {
-      console.error('更新快递公司排序失败:', error);
+      console.error('更新快递类型排序失败:', error);
       res.status(500).json({
         code: 500,
         message: '更新排序失败'

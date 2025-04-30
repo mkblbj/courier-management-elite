@@ -6,7 +6,7 @@ class Courier {
   }
 
   /**
-   * 获取所有快递公司
+   * 获取所有快递类型
    * @param {Object} options 过滤和排序选项
    * @returns {Promise<Array>} 
    */
@@ -43,8 +43,8 @@ class Courier {
   }
 
   /**
-   * 根据ID获取快递公司
-   * @param {number} id 快递公司ID
+   * 根据ID获取快递类型
+   * @param {number} id 快递类型ID
    * @returns {Promise<Object|null>}
    */
   async getById(id) {
@@ -54,8 +54,8 @@ class Courier {
   }
 
   /**
-   * 添加快递公司
-   * @param {Object} data 快递公司数据
+   * 添加快递类型
+   * @param {Object} data 快递类型数据
    * @returns {Promise<number>} 新创建的ID
    */
   async add(data) {
@@ -77,8 +77,8 @@ class Courier {
   }
 
   /**
-   * 更新快递公司
-   * @param {number} id 快递公司ID
+   * 更新快递类型
+   * @param {number} id 快递类型ID
    * @param {Object} data 更新的数据
    * @returns {Promise<boolean>} 是否更新成功
    */
@@ -127,8 +127,8 @@ class Courier {
   }
 
   /**
-   * 删除快递公司
-   * @param {number} id 快递公司ID
+   * 删除快递类型
+   * @param {number} id 快递类型ID
    * @returns {Promise<boolean>} 是否删除成功
    */
   async delete(id) {
@@ -138,8 +138,8 @@ class Courier {
   }
 
   /**
-   * 切换快递公司启用状态
-   * @param {number} id 快递公司ID
+   * 切换快递类型启用状态
+   * @param {number} id 快递类型ID
    * @returns {Promise<boolean>} 是否成功
    */
   async toggleActive(id) {

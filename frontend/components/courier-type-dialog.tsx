@@ -242,7 +242,7 @@ export function CourierTypeDialog({
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-4 py-2">
-              {/* 快递公司名称 */}
+              {/* 快递类型名称 */}
               <div className="space-y-2">
                 <Label htmlFor="name">
                   {t('courier:courier_name')} <span className="text-red-500">*</span>
@@ -260,7 +260,7 @@ export function CourierTypeDialog({
                 {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
               </div>
 
-              {/* 快递公司代码 */}
+              {/* 快递类型代码 */}
               <div className="space-y-2">
                 <Label htmlFor="code">
                   {t('courier:courier_code')} <span className="text-red-500">*</span>

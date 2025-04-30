@@ -13,7 +13,7 @@ router.get('/', (req, res) => {
   });
 });
 
-// 快递公司API路由
+// 快递类型API路由
 router.use('/couriers', courierRoutes);
 
 // 发货记录API路由
@@ -25,17 +25,17 @@ router.get('/docs', (req, res) => {
     message: 'API文档',
     apis: [
       {
-        name: '快递公司API',
-        description: '快递公司的CRUD操作',
+        name: '快递类型API',
+        description: '快递类型的CRUD操作',
         basePath: '/api/couriers',
         endpoints: [
-          { method: 'GET', path: '/', description: '获取所有快递公司' },
-          { method: 'GET', path: '/:id', description: '获取单个快递公司详情' },
-          { method: 'POST', path: '/', description: '创建快递公司' },
-          { method: 'PUT', path: '/:id', description: '更新快递公司' },
-          { method: 'DELETE', path: '/:id', description: '删除快递公司' },
-          { method: 'PUT', path: '/:id/toggle', description: '切换快递公司状态' },
-          { method: 'POST', path: '/sort', description: '更新快递公司排序' }
+          { method: 'GET', path: '/', description: '获取所有快递类型' },
+          { method: 'GET', path: '/:id', description: '获取单个快递类型详情' },
+          { method: 'POST', path: '/', description: '创建快递类型' },
+          { method: 'PUT', path: '/:id', description: '更新快递类型' },
+          { method: 'DELETE', path: '/:id', description: '删除快递类型' },
+          { method: 'PUT', path: '/:id/toggle', description: '切换快递类型状态' },
+          { method: 'POST', path: '/sort', description: '更新快递类型排序' }
         ]
       },
       {
