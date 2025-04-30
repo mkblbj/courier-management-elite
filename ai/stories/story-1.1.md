@@ -21,7 +21,7 @@
 - 确保添加适当的外键约束
 - 编写数据库迁移脚本
 
-**具体实现:**
+**具体实现例子:**
 
 ```sql
 -- 在快递类型表中添加parent_id字段，建立自引用关系
@@ -35,11 +35,11 @@ CREATE INDEX idx_couriers_parent_id ON couriers(parent_id);
 
 ### 子任务 2: 快递类型模型更新
 
-- 更新 CourierType 模型，添加对 parent_id 字段的支持
+- 更新 Courier 模型，添加对 parent_id 字段的支持
 - 实现获取子类型的方法
 - 实现计算子类型总和的方法
 
-**具体实现:**
+**具体实现例子:**
 
 ```javascript
 // backend/src/models/courierTypeModel.js
@@ -173,7 +173,7 @@ module.exports = CourierType;
 - 为新添加的方法编写单元测试
 - 测试母子类型关系和数据统计功能
 
-**具体实现:**
+**具体实现例子:**
 
 ```javascript
 // backend/src/tests/models/courierTypeModel.test.js
