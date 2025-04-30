@@ -17,7 +17,7 @@
 
 ### 子任务 1: 数据库模式更新
 
-- 在快递类型表(courier_types)中添加 parent_id 字段，建立自引用关系
+- 在快递类型表(couries)中添加 parent_id 字段，建立自引用关系
 - 确保添加适当的外键约束
 - 编写数据库迁移脚本
 
@@ -25,12 +25,12 @@
 
 ```sql
 -- 在快递类型表中添加parent_id字段，建立自引用关系
-ALTER TABLE courier_types
+ALTER TABLE couriers
 ADD COLUMN parent_id INT NULL,
-ADD FOREIGN KEY (parent_id) REFERENCES courier_types(id);
+ADD FOREIGN KEY (parent_id) REFERENCES couriers(id);
 
 -- 为parent_id创建索引以提高查询性能
-CREATE INDEX idx_courier_types_parent_id ON courier_types(parent_id);
+CREATE INDEX idx_couriers_parent_id ON couriers(parent_id);
 ```
 
 ### 子任务 2: 快递类型模型更新
@@ -49,7 +49,7 @@ class CourierType {
   // 获取所有母类型(parent_id为null的类型)
   static async getParentTypes() {
     const query = `
-      SELECT * FROM courier_types 
+      SELECT * FROM couriers 
       WHERE parent_id IS NULL 
       ORDER BY name ASC
     `;
@@ -59,7 +59,7 @@ class CourierType {
   // 获取特定母类型的所有子类型
   static async getChildren(parentId) {
     const query = `
-      SELECT * FROM courier_types 
+      SELECT * FROM couriers 
       WHERE parent_id = ? 
       ORDER BY name ASC
     `;
@@ -70,7 +70,7 @@ class CourierType {
   static async getChildrenSum(parentId) {
     const query = `
       SELECT SUM(count) as total 
-      FROM courier_types 
+      FROM couriers 
       WHERE parent_id = ?
     `;
     const result = await db.query(query, [parentId]);
@@ -82,7 +82,7 @@ class CourierType {
     const { name, parent_id, count = 0, ...otherData } = data;
 
     const query = `
-      INSERT INTO courier_types (name, parent_id, count, created_at, updated_at) 
+      INSERT INTO couriers (name, parent_id, count, created_at, updated_at) 
       VALUES (?, ?, ?, NOW(), NOW())
     `;
 
@@ -114,7 +114,7 @@ class CourierType {
     values.push(id);
 
     const query = `
-      UPDATE courier_types 
+      UPDATE couriers 
       SET ${fields.join(", ")} 
       WHERE id = ?
     `;
@@ -131,13 +131,13 @@ class CourierType {
       throw new Error("不能删除有子类型的母类型");
     }
 
-    const query = "DELETE FROM courier_types WHERE id = ?";
+    const query = "DELETE FROM couriers WHERE id = ?";
     return db.query(query, [id]);
   }
 
   // 获取单个快递类型
   static async findById(id) {
-    const query = "SELECT * FROM courier_types WHERE id = ?";
+    const query = "SELECT * FROM couriers WHERE id = ?";
     const result = await db.query(query, [id]);
     return result[0] || null;
   }
