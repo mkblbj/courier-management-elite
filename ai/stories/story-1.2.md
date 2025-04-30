@@ -1,6 +1,6 @@
 # 母子快递类型管理 - Epic 1：后端实现 - 故事 2：API 端点实现
 
-## 状态: 草稿
+## 状态: 已完成
 
 ## 简介
 
@@ -23,7 +23,7 @@
 - 实现创建、更新和删除子类型的控制器方法
 - 添加适当的错误处理和验证
 
-**具体实现:**
+**具体实现例子:**
 
 ```javascript
 // backend/src/controllers/courierTypeController.js
@@ -178,7 +178,7 @@ exports.deleteCourierType = async (req, res) => {
 - 定义创建、更新和删除子类型的路由
 - 添加请求验证中间件
 
-**具体实现:**
+**具体实现例子:**
 
 ```javascript
 // backend/src/routes/courierTypeRoutes.js
@@ -234,7 +234,7 @@ module.exports = router;
 - 将路由集成到 Express 应用程序中
 - 确保正确处理 JSON 请求体
 
-**具体实现:**
+**具体实现例子:**
 
 ```javascript
 // backend/src/index.js
@@ -274,7 +274,7 @@ module.exports = app;
 - 测试 API 端点的功能
 - 验证响应状态码和数据格式
 
-**具体实现:**
+**具体实现例子:**
 
 ```javascript
 // backend/src/tests/integration/courierTypeRoutes.test.js
@@ -400,7 +400,7 @@ describe("快递类型API端点", () => {
 
 返回所有母类型及其子类型的层级结构，包括子类型总和。
 
-**响应格式:**
+**响应格式例子:**
 
 ```json
 [

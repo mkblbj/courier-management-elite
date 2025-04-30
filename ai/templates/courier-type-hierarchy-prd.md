@@ -175,7 +175,7 @@ types/
 ### 数据库更新
 
 ```sql
-ALTER TABLE courier_types
+ALTER TABLE courier
 ADD COLUMN parent_id INT,
 ADD FOREIGN KEY (parent_id) REFERENCES courier_types(id);
 ```

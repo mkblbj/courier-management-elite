@@ -6,6 +6,12 @@ const router = express.Router();
 // 获取所有快递类型
 router.get('/', CourierController.getAll.bind(CourierController));
 
+// 获取快递类型层级结构
+router.get('/hierarchy', CourierController.getTypeHierarchy.bind(CourierController));
+
+// 获取特定母类型的所有子类型
+router.get('/:parentId/children', CourierController.getChildTypes.bind(CourierController));
+
 // 获取单个快递类型详情
 router.get('/:id', CourierController.getById.bind(CourierController));
 

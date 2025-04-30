@@ -30,6 +30,8 @@ router.get('/docs', (req, res) => {
         basePath: '/api/couriers',
         endpoints: [
           { method: 'GET', path: '/', description: '获取所有快递类型' },
+          { method: 'GET', path: '/hierarchy', description: '获取快递类型层级结构(母子类型)' },
+          { method: 'GET', path: '/:parentId/children', description: '获取特定母类型的所有子类型' },
           { method: 'GET', path: '/:id', description: '获取单个快递类型详情' },
           { method: 'POST', path: '/', description: '创建快递类型' },
           { method: 'PUT', path: '/:id', description: '更新快递类型' },
