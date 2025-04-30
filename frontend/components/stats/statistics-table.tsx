@@ -8,6 +8,7 @@ import { ApiError } from "@/components/api-error"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { format } from "date-fns"
 import type { StatisticsData } from "@/hooks/use-statistics-data"
+import React from "react"
 
 interface StatisticsTableProps {
   data: StatisticsData | null
@@ -128,9 +129,14 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
             </TableHeader>
             <TableBody>
               {data.byDate.map((dateItem) => (
-                <>
-                  <TableRow key={dateItem.date}>
-                    <TableCell className="font-medium">{format(new Date(dateItem.date), "yyyy-MM-dd")}</TableCell>
+                <React.Fragment key={dateItem.date}>
+                  <TableRow key={`row-${dateItem.date}`}>
+                    <TableCell className="font-medium">
+                      {format(new Date(dateItem.date), "yyyy-MM-dd")}
+                      <div className="text-xs text-gray-500">
+                        {t(`weekday.full.${format(new Date(dateItem.date), 'EEEE').toLowerCase()}`)}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">{dateItem.total}</TableCell>
                     <TableCell className="text-right">
                       {data.summary.total > 0 ? `${((dateItem.total / data.summary.total) * 100).toFixed(2)}%` : "0%"}
@@ -151,7 +157,7 @@ export function StatisticsTable({ data, isLoading, error, onRetry }: StatisticsT
                         <TableCell className="text-right text-sm">1</TableCell>
                       </TableRow>
                     ))}
-                </>
+                </React.Fragment>
               ))}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-bold">{t("总计")}</TableCell>

@@ -73,8 +73,11 @@ export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsC
 
   // 准备柱状图数据
   const barData = data.byDate.map((item) => {
+    const dateObj = new Date(item.date);
     const result: any = {
-      date: format(new Date(item.date), "MM-dd"),
+      date: format(dateObj, "MM-dd"),
+      weekday: format(dateObj, "EEEE").toLowerCase(),
+      fullDate: dateObj, // 存储完整日期对象以便后续使用
     }
 
     // 为每个快递类型添加数据
@@ -89,6 +92,24 @@ export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsC
 
   // 获取所有快递类型名称（用于柱状图图例）
   const courierNames = data.byCourier.map((item) => item.courierName)
+
+  // 自定义X轴标签组件，显示日期和星期
+  const CustomXAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const dataItem = barData.find(item => item.date === payload.value);
+    const weekday = dataItem?.weekday;
+    
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={0} dy={16} textAnchor="middle" fill="#666" fontSize={12}>
+          {payload.value}
+        </text>
+        <text x={0} y={0} dy={32} textAnchor="middle" fill="#666" fontSize={10}>
+          {t(`weekday.short.${weekday}`)}
+        </text>
+      </g>
+    );
+  };
 
   return (
     (<div className="space-y-6">
@@ -144,11 +165,11 @@ export function StatisticsChart({ data, isLoading, error, onRetry }: StatisticsC
                       top: 20,
                       right: 30,
                       left: 20,
-                      bottom: 5,
+                      bottom: 20, // 增加底部边距以容纳星期显示
                     }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
+                    <XAxis dataKey="date" tick={<CustomXAxisTick />} height={60} />
                     <YAxis />
                     <Tooltip />
                     <Legend />
