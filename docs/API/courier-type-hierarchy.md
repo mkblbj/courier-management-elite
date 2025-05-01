@@ -274,3 +274,188 @@ export function useCourierTypeHierarchy() {
   return { hierarchy, loading, error };
 }
 ```
+
+## 发货记录母子类型汇总 API
+
+本节描述发货记录 API 对快递类型母子关系的支持，以及数据汇总功能。
+
+### 获取发货记录（包含母子类型层级）
+
+获取发货记录列表，同时支持母子类型数据汇总。
+
+**请求**:
+
+```
+GET /api/shipping/hierarchy
+```
+
+**查询参数**:
+
+| 参数名           | 类型    | 必需 | 描述                                                                    |
+| ---------------- | ------- | ---- | ----------------------------------------------------------------------- |
+| includeHierarchy | boolean | 否   | 是否包含层级汇总数据，true 表示返回带层级的数据，false 表示返回普通列表 |
+| date             | string  | 否   | 筛选特定日期的记录，格式为 YYYY-MM-DD                                   |
+| date_from        | string  | 否   | 起始日期，格式为 YYYY-MM-DD                                             |
+| date_to          | string  | 否   | 结束日期，格式为 YYYY-MM-DD                                             |
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": [
+    {
+      "id": 1,
+      "name": "ゆうパケット",
+      "parent_id": null,
+      "children": [
+        {
+          "id": 3,
+          "name": "ゆうパケット (1CM)",
+          "parent_id": 1
+        }
+      ],
+      "shipping": {
+        "own": [
+          {
+            "id": 1,
+            "courier_id": 1,
+            "courier_name": "ゆうパケット",
+            "quantity": 10,
+            "date": "2023-07-15"
+          }
+        ],
+        "children": [
+          {
+            "id": 2,
+            "courier_id": 3,
+            "courier_name": "ゆうパケット (1CM)",
+            "quantity": 5,
+            "date": "2023-07-15"
+          }
+        ],
+        "total": [
+          {
+            "id": 1,
+            "courier_id": 1,
+            "courier_name": "ゆうパケット",
+            "quantity": 10,
+            "date": "2023-07-15"
+          },
+          {
+            "id": 2,
+            "courier_id": 3,
+            "courier_name": "ゆうパケット (1CM)",
+            "quantity": 5,
+            "date": "2023-07-15"
+          }
+        ]
+      }
+    }
+    // 更多母类型记录...
+  ]
+}
+```
+
+### 获取特定母类型的发货统计
+
+获取指定母类型 ID 的发货统计数据，包括其自身和子类型的发货记录。
+
+**请求**:
+
+```
+GET /api/shipping/stats/parent/:id
+```
+
+**URL 参数**:
+
+| 参数名 | 类型    | 必需 | 描述      |
+| ------ | ------- | ---- | --------- |
+| id     | integer | 是   | 母类型 ID |
+
+**查询参数**:
+
+| 参数名    | 类型   | 必需 | 描述                                  |
+| --------- | ------ | ---- | ------------------------------------- |
+| date      | string | 否   | 筛选特定日期的记录，格式为 YYYY-MM-DD |
+| date_from | string | 否   | 起始日期，格式为 YYYY-MM-DD           |
+| date_to   | string | 否   | 结束日期，格式为 YYYY-MM-DD           |
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": {
+    "courierType": {
+      "id": 1,
+      "name": "ゆうパケット",
+      "parent_id": null
+    },
+    "children": [
+      {
+        "id": 3,
+        "name": "ゆうパケット (1CM)",
+        "parent_id": 1
+      },
+      {
+        "id": 4,
+        "name": "ゆうパケット (2CM)",
+        "parent_id": 1
+      }
+    ],
+    "shipping": {
+      "own": [
+        {
+          "id": 1,
+          "courier_id": 1,
+          "courier_name": "ゆうパケット",
+          "quantity": 10,
+          "date": "2023-07-15"
+        }
+      ],
+      "children": [
+        {
+          "id": 2,
+          "courier_id": 3,
+          "courier_name": "ゆうパケット (1CM)",
+          "quantity": 5,
+          "date": "2023-07-15"
+        },
+        {
+          "id": 3,
+          "courier_id": 4,
+          "courier_name": "ゆうパケット (2CM)",
+          "quantity": 8,
+          "date": "2023-07-15"
+        }
+      ],
+      "total": [
+        {
+          "id": 1,
+          "courier_id": 1,
+          "courier_name": "ゆうパケット",
+          "quantity": 10,
+          "date": "2023-07-15"
+        },
+        {
+          "id": 2,
+          "courier_id": 3,
+          "courier_name": "ゆうパケット (1CM)",
+          "quantity": 5,
+          "date": "2023-07-15"
+        },
+        {
+          "id": 3,
+          "courier_id": 4,
+          "courier_name": "ゆうパケット (2CM)",
+          "quantity": 8,
+          "date": "2023-07-15"
+        }
+      ]
+    }
+  }
+}
+```
