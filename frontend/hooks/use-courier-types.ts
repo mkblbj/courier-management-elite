@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { api, type CourierType, type FilterParams } from "@/services/api"
+import { api, type CourierType, type FilterParams, type CourierTypeHierarchyItem, type ChildTypesResult } from "@/services/api"
 import { useToast } from "@/components/ui/use-toast"
 import { debugLog, debugError } from "@/lib/env-config"
 
@@ -13,6 +13,11 @@ export function useCourierTypes() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
   const [debugInfo, setDebugInfo] = useState<any>(null)
+  
+  // 新增层级结构状态
+  const [courierTypeHierarchy, setCourierTypeHierarchy] = useState<CourierTypeHierarchyItem[]>([])
+  const [hierarchyLoading, setHierarchyLoading] = useState(false)
+  const [hierarchyError, setHierarchyError] = useState<string | null>(null)
 
   // 加载数据的函数
   const fetchCourierTypes = async (params?: FilterParams) => {
@@ -68,6 +73,64 @@ export function useCourierTypes() {
     }
   }
 
+  // 新增：获取层级结构数据
+  const fetchCourierTypeHierarchy = async () => {
+    setHierarchyLoading(true)
+    setHierarchyError(null)
+
+    try {
+      debugLog("🔍 获取快递类型层级结构")
+
+      const startTime = performance.now()
+      const data = await api.getCourierTypeHierarchy()
+      const endTime = performance.now()
+
+      debugLog(`⏱️ 层级结构API请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      debugLog("📦 获取到的层级结构数据:", data)
+
+      // 设置层级数据
+      setCourierTypeHierarchy(data)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "获取层级结构失败"
+      setHierarchyError(errorMessage)
+      debugError("❌ 获取快递类型层级结构失败:", err)
+
+      toast({
+        title: "加载层级结构失败",
+        variant: "destructive",
+      })
+    } finally {
+      setHierarchyLoading(false)
+    }
+  }
+
+  // 新增：获取特定母类型的子类型
+  const getChildTypes = async (parentId: number | string) => {
+    try {
+      debugLog(`🔍 获取母类型(ID: ${parentId})的子类型`)
+
+      const startTime = performance.now()
+      const data = await api.getChildTypes(parentId)
+      const endTime = performance.now()
+
+      debugLog(`⏱️ 子类型API请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
+      debugLog("📦 获取到的子类型数据:", data)
+
+      return data
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "获取子类型失败"
+      debugError(`❌ 获取母类型(ID: ${parentId})的子类型失败:`, err)
+
+      toast({
+        title: "获取子类型失败",
+        description: errorMessage,
+        variant: "destructive",
+      })
+
+      throw err
+    }
+  }
+
   // 初始加载数据
   useEffect(() => {
     fetchCourierTypes()
@@ -106,6 +169,7 @@ export function useCourierTypes() {
     code: string
     remark?: string
     is_active: boolean
+    parent_id?: number | string
   }) => {
     try {
       setIsLoading(true)
@@ -120,6 +184,12 @@ export function useCourierTypes() {
 
       // 重新获取列表以确保数据同步
       await fetchCourierTypes()
+      
+      // 如果添加的是子类型，刷新层级结构
+      if (courierType.parent_id) {
+        await fetchCourierTypeHierarchy()
+      }
+      
       return newCourierType
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "添加快递类型失败"
@@ -153,6 +223,10 @@ export function useCourierTypes() {
 
       // 重新获取列表以确保数据同步
       await fetchCourierTypes()
+      
+      // 更新完成后，刷新层级结构
+      await fetchCourierTypeHierarchy()
+      
       return result
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "更新快递类型失败"
@@ -179,6 +253,9 @@ export function useCourierTypes() {
 
       // 重新获取列表以确保数据同步
       await fetchCourierTypes()
+      
+      // 删除完成后，刷新层级结构
+      await fetchCourierTypeHierarchy()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "删除快递类型失败"
       setError(errorMessage)
@@ -254,21 +331,54 @@ export function useCourierTypes() {
     }
   }
 
+  // 新增：计算母类型总数
+  const getParentTypeCount = (parentId: number | string): number => {
+    // 查找层级结构中的对应母类型
+    const parent = courierTypeHierarchy.find(item => item.id === parentId)
+    return parent?.totalCount || 0
+  }
+
+  // 新增：检查类型是否为母类型
+  const isParentType = (id: number | string): boolean => {
+    return courierTypeHierarchy.some(item => item.id === id)
+  }
+
+  // 新增：检查类型是否为子类型
+  const isChildType = (courierType: CourierType): boolean => {
+    return courierType.parent_id != null
+  }
+
+  // 新增：获取类型的全部子类型
+  const getAllChildTypes = (parentId: number | string): CourierType[] => {
+    const parent = courierTypeHierarchy.find(item => item.id === parentId)
+    return parent?.children || []
+  }
+
   return {
     courierTypes,
     filteredCourierTypes,
     isLoading,
     error,
     searchQuery,
-    statusFilter,
-    debugInfo,
     setSearchQuery,
+    statusFilter,
     setStatusFilter,
+    fetchCourierTypes,
     addCourierType,
     updateCourierType,
     deleteCourierType,
     toggleCourierTypeStatus,
     reorderCourierTypes,
-    refetch: fetchCourierTypes,
+    debugInfo,
+    // 新增返回的方法和状态
+    courierTypeHierarchy,
+    hierarchyLoading,
+    hierarchyError,
+    fetchCourierTypeHierarchy,
+    getChildTypes,
+    getParentTypeCount,
+    isParentType,
+    isChildType,
+    getAllChildTypes,
   }
 }

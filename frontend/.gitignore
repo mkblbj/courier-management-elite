@@ -38,3 +38,7 @@ next-env.d.ts
 
 # 网页logo
 favicon.ico
+
+# 测试文件
+/__test_i18n__/
+/__test_hooks__/

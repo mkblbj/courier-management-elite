@@ -32,6 +32,22 @@
 ✅ 更新了 API 文档，添加发货记录母子类型数据汇总的相关端点说明
 ✅ 创建了测试数据，验证发货记录母子类型汇总功能
 
+## 故事 2.1：数据管理 Hooks 更新 (已完成)
+
+已完成:
+✅ 更新了`api.ts`，添加了层级结构相关的类型定义（CourierTypeHierarchyItem, ChildCourierType 等）
+✅ 添加了发货记录层级相关的类型定义（ShippingHierarchyItem, ParentTypeShippingStats 等）
+✅ 实现了新的 API 方法（getCourierTypeHierarchy, getChildTypes, getShippingHierarchy 等）
+✅ 更新了`use-courier-types.ts`钩子，添加了层级结构状态和获取方法
+✅ 实现了获取子类型列表功能
+✅ 更新了添加快递类型功能，支持创建子类型
+✅ 添加了计算母类型总数的方法
+✅ 提供了类型判断辅助方法
+✅ 创建了新的`use-shipping-hierarchy.ts`钩子，实现了获取带层级的发货记录数据功能
+✅ 实现了获取特定母类型的发货统计功能
+✅ 添加了数据缓存和优化逻辑
+✅ 编写了单元测试，测试通过后已清理测试代码
+
 ## 问题及解决方案
 
 1. **问题**: 测试依赖问题 - `Cannot find module 'supertest'`
