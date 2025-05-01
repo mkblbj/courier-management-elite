@@ -49,8 +49,8 @@ function createEnvConfig(env: Environment = getEnvironment()): EnvConfig {
     }
   }
 
-  // 调试模式只在开发环境启用
-  const debug = isDev && process.env.NODE_ENV !== "production"
+  // 调试模式只在开发环境启用，并且需要手动设置环境变量来开启
+  const debug = isDev && process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_DEBUG === "true"
 
   return {
     apiBaseUrl,

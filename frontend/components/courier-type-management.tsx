@@ -62,7 +62,7 @@ export function CourierTypeManagement() {
     }
     
     loadInitialData()
-  }, [fetchCourierTypes, fetchCourierTypeHierarchy])
+  }, [])
 
   const handleAddClick = () => {
     setEditingCourierType(null)
