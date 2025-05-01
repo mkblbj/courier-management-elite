@@ -225,7 +225,7 @@ class Courier {
    */
   async getChildrenSum(parentId) {
     const sql = `
-      SELECT SUM(count) as total 
+      SELECT COUNT(*) as total 
       FROM ${this.table} 
       WHERE parent_id = ?
     `;
