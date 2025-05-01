@@ -24,5 +24,13 @@
   "enter_remark": "请输入备注信息（可选）",
   "code_description": "只能包含字母和数字，最多10个字符",
   "add_courier_description": "填写以下信息来创建快递类型",
-  "edit_courier_description": "填写以下信息来更新快递类型"
+  "edit_courier_description": "填写以下信息来更新快递类型",
+  "code_format_description": "只能包含字母和数字，不能超过10个字符",
+  "is_active": "是否启用",
+  "parent_type": "父类型",
+  "select_parent_type": "选择父类型",
+  "no_parent": "无父类型",
+  "parent_type_hint": "选择父类型将创建子类型层级关系",
+  "sub_type_added_successfully": "子类型添加成功",
+  "sub_type_add_failed": "子类型添加失败"
 }

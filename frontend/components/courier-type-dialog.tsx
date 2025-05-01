@@ -28,6 +28,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import type { CourierType } from "@/services/api"
 import { useTranslation } from "react-i18next"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface CourierTypeDialogProps {
   open: boolean
@@ -38,8 +45,10 @@ interface CourierTypeDialogProps {
     code: string
     remark?: string
     is_active: boolean
+    parent_id?: number | string | null
   }) => void
   existingCourierTypes: CourierType[]
+  availableParentTypes?: CourierType[]
 }
 
 export function CourierTypeDialog({
@@ -48,6 +57,7 @@ export function CourierTypeDialog({
   courierType,
   onSave,
   existingCourierTypes,
+  availableParentTypes = [],
 }: CourierTypeDialogProps) {
   const { t } = useTranslation(['common', 'courier'])
   
@@ -57,11 +67,13 @@ export function CourierTypeDialog({
     code: string
     remark?: string
     is_active: boolean
+    parent_id?: number | string | null
   }>({
     name: "",
     code: "",
     remark: "",
     is_active: true,
+    parent_id: null,
   })
 
   // 其他状态
@@ -88,6 +100,7 @@ export function CourierTypeDialog({
           code: courierType.code,
           remark: courierType.remark || "",
           is_active: Boolean(courierType.is_active),
+          parent_id: courierType.parent_id || null,
         })
       } else {
         setFormData({
@@ -95,6 +108,7 @@ export function CourierTypeDialog({
           code: "",
           remark: "",
           is_active: true,
+          parent_id: null,
         })
       }
       setErrors({})
@@ -122,6 +136,14 @@ export function CourierTypeDialog({
     setFormData((prev) => ({ ...prev, is_active: checked }))
   }
 
+  // 处理父类型选择变化
+  const handleParentChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      parent_id: value === "none" ? null : value,
+    }))
+  }
+
   // 重置表单函数
   const resetForm = () => {
     if (courierType) {
@@ -130,6 +152,7 @@ export function CourierTypeDialog({
         code: courierType.code,
         remark: courierType.remark || "",
         is_active: Boolean(courierType.is_active),
+        parent_id: courierType.parent_id || null,
       })
     } else {
       setFormData({
@@ -137,6 +160,7 @@ export function CourierTypeDialog({
         code: "",
         remark: "",
         is_active: true,
+        parent_id: null,
       })
     }
     setErrors({})
@@ -191,6 +215,7 @@ export function CourierTypeDialog({
         code: formData.code,
         remark: formData.remark,
         is_active: formData.is_active,
+        parent_id: formData.parent_id,
       })
     } catch (error) {
       console.error("保存失败:", error)
@@ -208,7 +233,8 @@ export function CourierTypeDialog({
       (formData.name !== courierType.name ||
         formData.code !== courierType.code ||
         formData.remark !== (courierType.remark || "") ||
-        Boolean(formData.is_active) !== Boolean(courierType.is_active))
+        Boolean(formData.is_active) !== Boolean(courierType.is_active) ||
+        formData.parent_id !== courierType.parent_id)
 
     // 如果有更改或是新建记录（没有courierType），则显示确认对话框
     if (hasChanges || !courierType) {
@@ -242,6 +268,30 @@ export function CourierTypeDialog({
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-4 py-2">
+              {/* 父类型选择器 */}
+              {availableParentTypes.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="parent_id">{t('courier:parent_type')}</Label>
+                  <Select
+                    value={formData.parent_id?.toString() || "none"}
+                    onValueChange={handleParentChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('courier:select_parent_type')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t('courier:no_parent')}</SelectItem>
+                      {availableParentTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id.toString()}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">{t('courier:parent_type_hint')}</p>
+                </div>
+              )}
+              
               {/* 快递类型名称 */}
               <div className="space-y-2">
                 <Label htmlFor="name">
