@@ -21,7 +21,7 @@
 - 创建或更新 API 服务函数，用于与后端 API 交互
 - 实现获取层级结构、创建子类型等功能
 
-**具体实现:**
+**具体实现例子（需根据实际情况修改）**
 
 ```typescript
 // frontend/services/courier-type-api.ts
@@ -72,7 +72,7 @@ export const deleteCourierType = async (id: number): Promise<void> => {
 - 更新 TypeScript 类型定义，支持母子类型关系
 - 添加层级结构和统计相关的类型
 
-**具体实现:**
+**具体实现例子（需根据实际情况修改）**
 
 ```typescript
 // frontend/types/courier-type.ts
@@ -105,7 +105,7 @@ export interface CourierTypeFormData {
 - 实现获取层级结构的逻辑
 - 实现创建子类型和更新的逻辑
 
-**具体实现:**
+**具体实现例子（需根据实际情况修改）**
 
 ```typescript
 // frontend/hooks/use-courier-types.ts
@@ -409,7 +409,7 @@ export function useCourierTypes() {
 - 为钩子添加单元测试
 - 验证数据获取和操作的正确性
 
-**具体实现:**
+**具体实现例子（需根据实际情况修改）**
 
 ```typescript
 // frontend/hooks/use-courier-types.test.ts
