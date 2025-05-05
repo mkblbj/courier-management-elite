@@ -28,16 +28,10 @@ export function StatisticsFilter({
   onReset,
   isLoading,
 }: StatisticsFilterProps) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   // 处理快递类型选择变化
   const handleCourierTypeChange = (value: string | number | undefined) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!value) {
       // 如果选择"全部"，则清空筛选
       onCourierTypeFilterChange([])
@@ -49,16 +43,12 @@ export function StatisticsFilter({
 
   // 处理重置功能
   const handleReset = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     const today = new Date();
-    const sevenDaysAgo = subDays(today, 6);
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // 重置日期范围为默认的最近7天
+    // 重置日期范围为默认的当月（从本月1日到今天）
     onTimeRangeChange({
-      from: sevenDaysAgo,
+      from: firstDayOfMonth,
       to: today,
     });
 

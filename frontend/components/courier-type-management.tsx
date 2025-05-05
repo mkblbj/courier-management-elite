@@ -44,11 +44,25 @@ export function CourierTypeManagement() {
     deleteCourierType,
     toggleCourierTypeStatus,
     reorderCourierTypes,
-    refetch,
+    fetchCourierTypes,
+    getParentTypeCount,
+    isParentType,
+    getAllChildTypes,
+    courierTypeHierarchy,
+    fetchCourierTypeHierarchy,
   } = useCourierTypes()
 
   const [open, setOpen] = useState(false)
   const [editingCourierType, setEditingCourierType] = useState<CourierType | null>(null)
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      await fetchCourierTypes()
+      await fetchCourierTypeHierarchy()
+    }
+    
+    loadInitialData()
+  }, [])
 
   const handleAddClick = () => {
     setEditingCourierType(null)
@@ -60,12 +74,12 @@ export function CourierTypeManagement() {
     setOpen(true)
   }
 
-  // 修改handleSave函数中的toast提示
   const handleSave = async (courierType: {
     name: string
     code: string
     remark?: string
     is_active: boolean
+    parent_id?: number | string | null
   }) => {
     try {
       if (editingCourierType) {
@@ -85,6 +99,8 @@ export function CourierTypeManagement() {
         })
       }
       setOpen(false)
+      
+      fetchCourierTypeHierarchy()
     } catch (err) {
       toast({
         title: t('common:operation_failed'),
@@ -93,7 +109,6 @@ export function CourierTypeManagement() {
     }
   }
 
-  // 修改handleDelete函数中的toast提示
   const handleDelete = async (id: number | string) => {
     try {
       await deleteCourierType(id)
@@ -109,7 +124,6 @@ export function CourierTypeManagement() {
     }
   }
 
-  // 修改handleStatusChange函数中的toast提示
   const handleStatusChange = async (id: number | string, active: boolean) => {
     try {
       await toggleCourierTypeStatus(id)
@@ -127,7 +141,6 @@ export function CourierTypeManagement() {
     }
   }
 
-  // 修改handleReorder函数中的toast提示
   const handleReorder = async (reorderedTypes: CourierType[]) => {
     try {
       await reorderCourierTypes(reorderedTypes)
@@ -143,19 +156,15 @@ export function CourierTypeManagement() {
     }
   }
 
-  // 修改handleRefresh函数，简化通知
   const handleRefresh = () => {
-    // 显示刷新中和结果通知
     try {
-      refetch();
-      // 刷新成功提示
+      fetchCourierTypes();
       toast({
         title: t('common:refresh') + t('common:success'),
         description: t('common:data_updated'),
         variant: "default",
       });
     } catch (error) {
-      // 刷新失败提示
       toast({
         title: t('common:refresh') + t('common:failed'),
         description: error instanceof Error ? error.message : t('common:data_fetch_failed'),
@@ -164,7 +173,6 @@ export function CourierTypeManagement() {
     }
   }
 
-  // 修改testToast函数
   const testToast = () => {
     toast({
       title: "测试提示",
@@ -188,10 +196,17 @@ export function CourierTypeManagement() {
     }, 2000)
   }
 
-  // 状态筛选处理器
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value as "all" | "active" | "inactive");
   };
+
+  const getChildCount = (id: number | string): number => {
+    return getParentTypeCount(id)
+  }
+
+  const getAvailableParentTypes = () => {
+    return courierTypes.filter(type => !type.parent_id)
+  }
 
   return (
     <>
@@ -209,7 +224,6 @@ export function CourierTypeManagement() {
             )}
           >
             <div className="flex-1 flex flex-col gap-2 sm:flex-row items-start sm:items-center">
-              {/* 搜索输入框 */}
               <div className="relative max-w-sm w-full">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
@@ -220,7 +234,6 @@ export function CourierTypeManagement() {
                   className="pl-8 bg-white text-black"
                 />
               </div>
-              {/* 状态筛选 */}
               <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder={t('courier:courier_status')} />
@@ -233,7 +246,6 @@ export function CourierTypeManagement() {
               </Select>
             </div>
             <div className="flex items-center gap-2">
-              {/* 刷新按钮 */}
               <Button
                 variant="outline"
                 size="icon"
@@ -243,7 +255,6 @@ export function CourierTypeManagement() {
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              {/* 添加按钮 */}
               <Button onClick={handleAddClick}>
                 <Plus className="mr-2 h-4 w-4" />
                 {t('courier:add_courier')}
@@ -251,14 +262,18 @@ export function CourierTypeManagement() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <CourierTypeTable
             courierTypes={filteredCourierTypes}
-            onDelete={handleDelete}
-            onEdit={handleEditClick}
-            onStatusChange={handleStatusChange}
-            onReorder={handleReorder}
             isLoading={isLoading}
+            onEdit={handleEditClick}
+            onDelete={handleDelete}
+            onReorder={handleReorder}
+            onStatusChange={handleStatusChange}
+            onRetry={handleRefresh}
+            error={error}
+            searchQuery={searchQuery}
+            getChildCount={getChildCount}
           />
         </CardContent>
         <CardFooter className="pb-6 pt-3 flex justify-between items-center">
@@ -284,6 +299,7 @@ export function CourierTypeManagement() {
         courierType={editingCourierType}
         onSave={handleSave}
         existingCourierTypes={courierTypes}
+        availableParentTypes={getAvailableParentTypes()}
       />
     </>
   )

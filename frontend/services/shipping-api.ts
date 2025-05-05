@@ -71,10 +71,10 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
         if (errorData.errors && Object.keys(errorData.errors).length > 0) {
           // 要过滤掉的技术性错误消息
           const technicalErrors = [
-            "快递公司ID必须是整数",
+            "快递类型ID必须是整数",
             "ID为",
-            "快递公司不存在",
-            "快递公司已停用"
+            "快递类型不存在",
+            "快递类型已停用"
           ];
           
           // 先检查是否有包含"已存在"的错误消息
@@ -297,10 +297,16 @@ export const shippingApi = {
 
   // 获取发货统计数据详情
   async getShippingStatsDetails(params?: ShippingFilterParams): Promise<any> {
-    const SHIPPING_ENDPOINT = getShippingEndpoint()
+    const SHIPPING_API_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
+    return fetchWithErrorHandling<any>(`${SHIPPING_API_ENDPOINT}/stats/details${queryString}`)
+  },
 
-    return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/stats/details${queryString}`)
+  // 获取层级统计数据
+  async getHierarchicalStats(params?: ShippingFilterParams): Promise<any> {
+    const SHIPPING_API_ENDPOINT = getShippingEndpoint()
+    const queryString = buildQueryString(params)
+    return fetchWithErrorHandling<any>(`${SHIPPING_API_ENDPOINT}/stats/hierarchical${queryString}`)
   },
 
   // 导出数据

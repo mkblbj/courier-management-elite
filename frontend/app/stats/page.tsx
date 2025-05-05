@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PieChart, BarChart2, Download, FileText } from "lucide-react"
+import { PieChart, BarChart2, Download, FileText, HelpCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { StatisticsTable } from "@/components/stats/statistics-table"
 import { StatisticsChart } from "@/components/stats/statistics-chart"
@@ -16,6 +16,7 @@ import { useStatisticsData } from "@/hooks/use-statistics-data"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { subDays } from "date-fns"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function StatsPage() {
   const { t } = useTranslation();
@@ -29,9 +30,14 @@ export default function StatsPage() {
     isLoading, 
     error, 
     timeRange, 
-    courierTypeFilter, 
+    courierTypeFilter,
+    viewMode,
+    expandedItems,
     setTimeRange, 
-    setCourierTypeFilter, 
+    setCourierTypeFilter,
+    setViewMode,
+    toggleItemExpanded,
+    toggleAllExpanded,
     refetch 
   } = useStatisticsData()
 
@@ -45,16 +51,19 @@ export default function StatsPage() {
 
   // 重置函数 - 将所有筛选条件重置为默认值
   const handleReset = () => {
-    // 重置为最近7天
+    // 重置为当月
     const today = new Date()
-    const sevenDaysAgo = subDays(today, 6)
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
     setTimeRange({
-      from: sevenDaysAgo,
+      from: firstDayOfMonth,
       to: today,
     })
 
     // 重置快递类型筛选
     setCourierTypeFilter([])
+
+    // 重置视图模式为平铺视图
+    setViewMode("flat")
 
     // 重新加载数据
     refetch()
@@ -87,7 +96,21 @@ export default function StatsPage() {
           <Card className="border max-w-5xl mx-auto">
             <CardHeader className="pb-3">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <CardTitle className="text-lg font-medium">{t("发货数据统计")}</CardTitle>
+                <div className="flex items-center">
+                  <CardTitle className="text-lg font-medium">{t("发货数据统计")}</CardTitle>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 ml-1">
+                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm">
+                        <p>{t("母类型数据包含其自身数据和子类型数据之和。切换到层级视图以查看更详细的层级统计。")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <StatisticsFilter
                   timeRange={timeRange}
                   courierTypeFilter={courierTypeFilter}
@@ -113,23 +136,40 @@ export default function StatsPage() {
                 </TabsList>
 
                 <TabsContent value="table" className="animate-fade-in">
-                  <StatisticsTable data={data} isLoading={isLoading} error={error} onRetry={refetch} />
+                  <StatisticsTable 
+                    data={data} 
+                    isLoading={isLoading} 
+                    error={error} 
+                    onRetry={refetch}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    expandedItems={expandedItems}
+                    onToggleExpanded={toggleItemExpanded}
+                    onToggleAllExpanded={toggleAllExpanded}
+                  />
                 </TabsContent>
 
                 <TabsContent value="chart" className="animate-fade-in">
-                  <StatisticsChart data={data} isLoading={isLoading} error={error} onRetry={refetch} />
+                  <StatisticsChart 
+                    data={data} 
+                    isLoading={isLoading} 
+                    error={error} 
+                    onRetry={refetch} 
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                  />
                 </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
         </div>
 
-        {/* <ExportDataDialog
+        <ExportDataDialog
           open={isExportDialogOpen}
           onOpenChange={setIsExportDialogOpen}
           timeRange={timeRange}
           courierTypeFilter={courierTypeFilter}
-        /> */}
+        />
       </main>
     </div>)
   );

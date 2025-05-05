@@ -26,7 +26,7 @@ async function initializeDatabase() {
     // 创建必要的表
     console.log('创建所需的数据表...');
 
-    // 快递公司表
+    // 快递类型表
     await connection.query(`
       CREATE TABLE IF NOT EXISTS couriers (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -39,7 +39,7 @@ async function initializeDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-    console.log('快递公司表 couriers 创建成功');
+    console.log('快递类型表 couriers 创建成功');
 
     // 发货记录表
     await connection.query(`
@@ -86,17 +86,17 @@ async function initializeDatabase() {
     if (courierRows[0].count === 0) {
       console.log('添加测试数据...');
       
-      // 添加测试快递公司
+      // 添加测试快递类型
       const couriersSql = `
         INSERT INTO couriers (name, code, remark, is_active, sort_order) VALUES
-        ('ゆうパケット (1CM)', 'up1', '国内知名快递公司，速度快，价格较高', 1, 1),
-        ('ゆうパケット (2CM)', 'up2', '全国性快递公司，性价比高', 1, 2),
+        ('ゆうパケット (1CM)', 'up1', '国内知名快递类型，速度快，价格较高', 1, 1),
+        ('ゆうパケット (2CM)', 'up2', '全国性快递类型，性价比高', 1, 2),
         ('ゆうパケットパフ', 'ypp', '电商自营物流，配送稳定', 1, 3),
         ('クリップポスト (3CM)', 'cp3', '全国连锁快递企业', 1, 4),
         ('ゆうパック', 'upk', '全国性快递企业，服务范围广', 1, 5)
       `;
       await connection.query(couriersSql);
-      console.log('测试快递公司数据添加成功');
+      console.log('测试快递类型数据添加成功');
       
       // 添加测试发货记录
       const today = new Date().toISOString().slice(0, 10);

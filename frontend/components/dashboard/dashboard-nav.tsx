@@ -53,8 +53,8 @@ export function DashboardNav() {
 
   return (
     <nav className="bg-white border-b">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-center">
+      <div className="max-w-screen-xl mx-auto px-4 flex justify-center">
+        <div className="flex items-center">
           {navItems.map((item, index) => (
             <Link
               key={item.href}

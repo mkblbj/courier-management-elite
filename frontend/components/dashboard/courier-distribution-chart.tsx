@@ -79,7 +79,7 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
           type: "pie",
         }
 
-        console.log("饼图请求参数:", params)
+        console.log("饼图请求参数:", JSON.stringify(params))
 
         // 获取图表数据
         const response = await shippingApi.getChartData(params)

@@ -17,20 +17,20 @@
 
 ### 前端
 
-- **Next.js** - React框架，用于构建用户界面
-- **TypeScript** - 提供类型安全的JavaScript超集
-- **Tailwind CSS** - 高度可定制的CSS框架
-- **shadcn/ui** - 基于Radix UI的高质量组件库
+- **Next.js** - React 框架，用于构建用户界面
+- **TypeScript** - 提供类型安全的 JavaScript 超集
+- **Tailwind CSS** - 高度可定制的 CSS 框架
+- **shadcn/ui** - 基于 Radix UI 的高质量组件库
 - **React Hook Form** - 表单处理和验证
 - **date-fns** - 日期处理工具库
-- **Zod** - TypeScript优先的验证库
+- **Zod** - TypeScript 优先的验证库
 
 ### 后端
 
-- **Node.js** - JavaScript运行环境
-- **Express** - Web应用框架
+- **Node.js** - JavaScript 运行环境
+- **Express** - Web 应用框架
 - **MySQL** - 关系型数据库
-- **TypeORM** - ORM库，用于数据库操作
+- **TypeORM** - ORM 库，用于数据库操作
 - **JWT** - 用户认证
 
 ## 📁 项目结构
@@ -104,7 +104,7 @@ npm run dev
 5. 访问应用
 
 前端：http://localhost:3000
-后端API：http://localhost:5000/api
+后端 API：http://localhost:5000/api
 
 ## 📖 使用指南
 
@@ -130,8 +130,8 @@ npm run dev
 
 ## 📞 问题和支持
 
-如有任何问题或需要支持，请提交issue或联系项目维护者。
+如有任何问题或需要支持，请提交 issue 或联系项目维护者。
 
 ## 🔒 许可证
 
-[MIT License](LICENSE) 
+[MIT License](LICENSE)

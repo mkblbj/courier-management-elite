@@ -6,7 +6,7 @@ class Courier {
   }
 
   /**
-   * 获取所有快递公司
+   * 获取所有快递类型
    * @param {Object} options 过滤和排序选项
    * @returns {Promise<Array>} 
    */
@@ -26,6 +26,17 @@ class Courier {
       const searchTerm = `%${options.search}%`;
       params.push(searchTerm, searchTerm, searchTerm);
     }
+    
+    // 添加母类型过滤 - 如果parent_id为null，则为母类型
+    if (options.parent_only) {
+      whereClauses.push('parent_id IS NULL');
+    }
+    
+    // 添加子类型过滤 - 根据parent_id过滤
+    if (options.parent_id !== undefined) {
+      whereClauses.push('parent_id = ?');
+      params.push(options.parent_id);
+    }
 
     // 添加WHERE子句
     if (whereClauses.length > 0) {
@@ -43,8 +54,8 @@ class Courier {
   }
 
   /**
-   * 根据ID获取快递公司
-   * @param {number} id 快递公司ID
+   * 根据ID获取快递类型
+   * @param {number} id 快递类型ID
    * @returns {Promise<Object|null>}
    */
   async getById(id) {
@@ -54,31 +65,33 @@ class Courier {
   }
 
   /**
-   * 添加快递公司
-   * @param {Object} data 快递公司数据
+   * 添加快递类型
+   * @param {Object} data 快递类型数据
    * @returns {Promise<number>} 新创建的ID
    */
   async add(data) {
-    const sql = `INSERT INTO ${this.table} (name, code, remark, is_active, sort_order) VALUES (?, ?, ?, ?, ?)`;
+    const sql = `INSERT INTO ${this.table} (name, code, remark, is_active, sort_order, parent_id) VALUES (?, ?, ?, ?, ?, ?)`;
     
     const isActive = data.is_active !== undefined ? data.is_active : true;
     const sortOrder = data.sort_order !== undefined ? data.sort_order : 0;
     const remark = data.remark || null;
+    const parentId = data.parent_id || null;
 
     const result = await db.query(sql, [
       data.name,
       data.code,
       remark,
       isActive ? 1 : 0,
-      sortOrder
+      sortOrder,
+      parentId
     ]);
 
     return result.insertId;
   }
 
   /**
-   * 更新快递公司
-   * @param {number} id 快递公司ID
+   * 更新快递类型
+   * @param {number} id 快递类型ID
    * @param {Object} data 更新的数据
    * @returns {Promise<boolean>} 是否更新成功
    */
@@ -127,19 +140,25 @@ class Courier {
   }
 
   /**
-   * 删除快递公司
-   * @param {number} id 快递公司ID
+   * 删除快递类型
+   * @param {number} id 快递类型ID
    * @returns {Promise<boolean>} 是否删除成功
    */
   async delete(id) {
+    // 先检查是否有子类型
+    const hasChildren = await this.hasChildren(id);
+    if (hasChildren) {
+      throw new Error('不能删除有子类型的母类型');
+    }
+    
     const sql = `DELETE FROM ${this.table} WHERE id = ?`;
     const result = await db.query(sql, [id]);
     return result.affectedRows > 0;
   }
 
   /**
-   * 切换快递公司启用状态
-   * @param {number} id 快递公司ID
+   * 切换快递类型启用状态
+   * @param {number} id 快递类型ID
    * @returns {Promise<boolean>} 是否成功
    */
   async toggleActive(id) {
@@ -170,6 +189,74 @@ class Courier {
       
       return true;
     });
+  }
+  
+  /**
+   * 获取所有母类型(parent_id为null的类型)
+   * @returns {Promise<Array>} 母类型列表
+   */
+  async getParentTypes() {
+    return await this.getAll({ parent_only: true });
+  }
+  
+  /**
+   * 获取特定母类型的所有子类型
+   * @param {number} parentId 母类型ID
+   * @returns {Promise<Array>} 子类型列表
+   */
+  async getChildren(parentId) {
+    return await this.getAll({ parent_id: parentId });
+  }
+  
+  /**
+   * 检查是否有子类型
+   * @param {number} parentId 母类型ID
+   * @returns {Promise<boolean>} 是否有子类型
+   */
+  async hasChildren(parentId) {
+    const children = await this.getChildren(parentId);
+    return children.length > 0;
+  }
+  
+  /**
+   * 计算子类型的统计总和
+   * @param {number} parentId 母类型ID
+   * @returns {Promise<number>} 子类型数量总和
+   */
+  async getChildrenSum(parentId) {
+    const sql = `
+      SELECT COUNT(*) as total 
+      FROM ${this.table} 
+      WHERE parent_id = ?
+    `;
+    const result = await db.query(sql, [parentId]);
+    return result[0] && result[0].total ? Number(result[0].total) : 0;
+  }
+  
+  /**
+   * 获取带有层级关系的完整类型列表
+   * @returns {Promise<Array>} 带有层级关系的类型列表
+   */
+  async getTypeHierarchy() {
+    // 获取所有母类型
+    const parentTypes = await this.getParentTypes();
+    
+    // 为每个母类型获取子类型和统计数据
+    const result = await Promise.all(
+      parentTypes.map(async (parent) => {
+        const children = await this.getChildren(parent.id);
+        // 获取总和，确保为数字
+        const totalCount = await this.getChildrenSum(parent.id);
+        
+        return {
+          ...parent,
+          children,
+          totalCount
+        };
+      })
+    );
+    
+    return result;
   }
 }
 

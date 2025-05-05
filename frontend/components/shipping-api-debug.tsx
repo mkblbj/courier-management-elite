@@ -128,7 +128,7 @@ export function ShippingApiDebug() {
       return
     }
     if (!shippingFormData.courier_id) {
-      setError(t("请输入快递公司ID"))
+      setError(t("请输入快递类型ID"))
       return
     }
 
@@ -168,7 +168,7 @@ export function ShippingApiDebug() {
       return
     }
     if (!shippingUpdateFormData.courier_id) {
-      setError(t("请输入快递公司ID"))
+      setError(t("请输入快递类型ID"))
       return
     }
 
@@ -343,13 +343,13 @@ export function ShippingApiDebug() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-courier-id">{t("快递公司ID")}</Label>
+                <Label htmlFor="shipping-courier-id">{t("快递类型ID")}</Label>
                 <Input
                   id="shipping-courier-id"
                   name="courier_id"
                   value={shippingFormData.courier_id}
                   onChange={handleShippingFormChange}
-                  placeholder={t("输入快递公司ID")}
+                  placeholder={t("输入快递类型ID")}
                 />
               </div>
 
@@ -427,13 +427,13 @@ export function ShippingApiDebug() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="shipping-update-courier-id">{t("快递公司ID")}</Label>
+                <Label htmlFor="shipping-update-courier-id">{t("快递类型ID")}</Label>
                 <Input
                   id="shipping-update-courier-id"
                   name="courier_id"
                   value={shippingUpdateFormData.courier_id}
                   onChange={handleShippingUpdateFormChange}
-                  placeholder={t("输入快递公司ID")}
+                  placeholder={t("输入快递类型ID")}
                 />
               </div>
 
