@@ -24,7 +24,6 @@ class ShippingRecord {
       // 使用DATE函数比较日期，忽略时区影响
       whereClauses.push("DATE(sr.date) = DATE(?)");
       params.push(options.date);
-      console.log(`日期查询 (${options.date})`);
     }
 
     // 按日期范围筛选
@@ -89,9 +88,7 @@ class ShippingRecord {
       sql += ` LIMIT ${offset}, ${perPage}`;
     }
 
-    console.log("执行SQL:", sql, "参数:", JSON.stringify(params));
     const results = await db.query(sql, params);
-    console.log("查询结果数量:", results.length);
     return results;
   }
 
@@ -232,14 +229,10 @@ class ShippingRecord {
    * @returns {Promise<Array>} 统计数据数组
    */
   async getStatsByCourier(options = {}) {
-    console.log('执行getStatsByCourier查询，参数:', JSON.stringify(options));
-
     try {
       // 首先获取所有激活状态的快递类型，确保即使没有数据也能返回所有快递类型
       const allCouriersQuery = `SELECT id, name FROM couriers WHERE is_active = 1 ORDER BY sort_order ASC, name ASC`;
       const allCouriers = await db.query(allCouriersQuery);
-
-      console.log(`找到 ${allCouriers.length} 个激活的快递类型`);
 
       // 构建按快递类型分组的统计查询
       let sql = `SELECT c.id as courier_id, c.name as courier_name, 
@@ -284,9 +277,7 @@ class ShippingRecord {
       // 按总数排序
       sql += " ORDER BY total DESC";
 
-      console.log('执行快递类型统计SQL:', sql);
       const statsResults = await db.query(sql, params);
-      console.log(`查询结果: ${statsResults.length} 个快递类型有数据`);
 
       // 将结果转换为键值对，以便于合并
       const courierStatsMap = {};
@@ -303,8 +294,6 @@ class ShippingRecord {
           record_count: 0
         };
       });
-
-      console.log(`最终结果: ${finalResults.length} 个快递类型统计数据`);
 
       return finalResults;
     } catch (error) {
@@ -858,10 +847,138 @@ class ShippingRecord {
       throw error;
     }
   }
+
+  /**
+   * 获取层级结构的统计数据
+   * @param {Object} options 筛选选项
+   * @returns {Promise<Array>} 层级结构统计数据
+   */
+  static async getHierarchicalStats(options = {}) {
+    try {
+      // 基础SQL查询获取发货记录总量
+      let sql = `
+        SELECT 
+          c.id AS courier_id,
+          c.name AS courier_name,
+          c.parent_id,
+          SUM(sr.quantity) AS total,
+          COUNT(sr.id) AS record_count
+        FROM 
+          shipping_records sr
+        INNER JOIN 
+          couriers c ON sr.courier_id = c.id
+        WHERE 1=1
+      `;
+      
+      // 参数数组
+      const params = [];
+      
+      // 添加日期筛选
+      if (options.date) {
+        sql += ' AND DATE(sr.date) = DATE(?)';
+        params.push(options.date);
+      } else if (options.date_from && options.date_to) {
+        sql += ' AND DATE(sr.date) BETWEEN DATE(?) AND DATE(?)';
+        params.push(options.date_from, options.date_to);
+      }
+      
+      // 按快递类型分组
+      sql += ' GROUP BY c.id';
+      
+      // 执行查询
+      const records = await db.query(sql, params);
+      
+      // 获取所有快递类型，包括层级关系
+      const courierTypes = await db.query('SELECT id, name, parent_id FROM couriers');
+      
+      // 创建父子关系映射
+      const parentChildMap = new Map();
+      courierTypes.forEach(ct => {
+        if (ct.parent_id) {
+          if (!parentChildMap.has(ct.parent_id)) {
+            parentChildMap.set(ct.parent_id, []);
+          }
+          parentChildMap.get(ct.parent_id).push(ct.id);
+        }
+      });
+      
+      // 创建ID到快递类型的映射
+      const courierMap = new Map();
+      courierTypes.forEach(ct => {
+        courierMap.set(ct.id, {
+          id: ct.id,
+          name: ct.name,
+          parent_id: ct.parent_id,
+          total: 0,
+          record_count: 0,
+          children: []
+        });
+      });
+      
+      // 填充统计数据
+      records.forEach(record => {
+        const courier = courierMap.get(record.courier_id);
+        if (courier) {
+          courier.total = Number(record.total) || 0;
+          courier.record_count = Number(record.record_count) || 0;
+        }
+      });
+      
+      // 构建层级结构
+      const result = [];
+      
+      // 递归计算子类型的统计数据之和
+      function calculateTotals(courier) {
+        let childrenTotal = 0;
+        let childrenRecordCount = 0;
+        
+        // 获取所有子类型
+        const childIds = parentChildMap.get(courier.id) || [];
+        
+        for (const childId of childIds) {
+          const child = courierMap.get(childId);
+          if (child) {
+            // 递归计算子类型的统计数据
+            calculateTotals(child);
+            
+            // 累加子类型的统计数据
+            childrenTotal += child.total;
+            childrenRecordCount += child.record_count;
+            
+            // 添加到父类型的children数组
+            courier.children.push(child);
+          }
+        }
+        
+        // 设置统计数据字段
+        courier.own_total = courier.total;
+        courier.own_record_count = courier.record_count;
+        courier.children_total = childrenTotal;
+        courier.children_record_count = childrenRecordCount;
+        courier.total_with_children = courier.total + childrenTotal;
+        courier.record_count_with_children = courier.record_count + childrenRecordCount;
+      }
+      
+      // 获取所有母类型（parent_id为null的类型）
+      courierTypes.forEach(ct => {
+        if (!ct.parent_id) {
+          const courier = courierMap.get(ct.id);
+          if (courier) {
+            calculateTotals(courier);
+            result.push(courier);
+          }
+        }
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('获取层级统计数据错误:', error);
+      throw error;
+    }
+  }
 }
 
 // 修改导出方式，同时支持实例方法和静态方法
 const instance = new ShippingRecord();
-const shippingRecordClass = ShippingRecord;
-shippingRecordClass.instance = instance;
-module.exports = shippingRecordClass; 
+module.exports = ShippingRecord;
+module.exports.instance = instance; 

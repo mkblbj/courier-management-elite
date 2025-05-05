@@ -297,10 +297,16 @@ export const shippingApi = {
 
   // 获取发货统计数据详情
   async getShippingStatsDetails(params?: ShippingFilterParams): Promise<any> {
-    const SHIPPING_ENDPOINT = getShippingEndpoint()
+    const SHIPPING_API_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
+    return fetchWithErrorHandling<any>(`${SHIPPING_API_ENDPOINT}/stats/details${queryString}`)
+  },
 
-    return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/stats/details${queryString}`)
+  // 获取层级统计数据
+  async getHierarchicalStats(params?: ShippingFilterParams): Promise<any> {
+    const SHIPPING_API_ENDPOINT = getShippingEndpoint()
+    const queryString = buildQueryString(params)
+    return fetchWithErrorHandling<any>(`${SHIPPING_API_ENDPOINT}/stats/hierarchical${queryString}`)
   },
 
   // 导出数据

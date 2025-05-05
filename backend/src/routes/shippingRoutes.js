@@ -12,6 +12,9 @@ const router = express.Router();
 // 获取统计数据 - 摘要
 router.get('/stats/summary', StatsController.getStats);
 
+// 添加层级统计数据路由
+router.get('/stats/hierarchical', StatsController.getHierarchicalStats);
+
 // 添加兼容路由处理前端/api/shipping/stats的请求
 router.get('/stats', StatsController.getStats);
 

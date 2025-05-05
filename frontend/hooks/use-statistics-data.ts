@@ -28,6 +28,18 @@ export interface StatisticsData {
       total: number
     }[]
   }[]
+  hierarchical?: {
+    id: number | string
+    name: string
+    parent_id: number | string | null
+    own_total: number
+    own_record_count: number
+    children_total: number
+    children_record_count: number
+    total_with_children: number
+    record_count_with_children: number
+    children: any[]
+  }[]
 }
 
 export function useStatisticsData() {
@@ -36,16 +48,60 @@ export function useStatisticsData() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // 默认时间范围：最近7天
+  // 默认时间范围：本月（从本月1日到今天）
   const today = new Date()
-  const sevenDaysAgo = subDays(today, 6)
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+  
   const [timeRange, setTimeRange] = useState<DateRange>({
-    from: sevenDaysAgo,
+    from: firstDayOfMonth,
     to: today,
   })
 
   // 默认快递类型筛选：全部
   const [courierTypeFilter, setCourierTypeFilter] = useState<string[]>([])
+
+  // 添加视图模式状态 - "flat"平铺视图, "hierarchical"层级视图
+  const [viewMode, setViewMode] = useState<"flat" | "hierarchical">("flat")
+  
+  // 添加展开状态管理
+  const [expandedItems, setExpandedItems] = useState<Set<string | number>>(new Set())
+  
+  // 切换所有项目的展开/折叠状态
+  const toggleAllExpanded = (expand: boolean) => {
+    if (expand) {
+      // 展开所有项
+      const allIds = new Set<string | number>()
+      if (data?.hierarchical) {
+        // 递归获取所有ID
+        const collectIds = (items: any[]) => {
+          items.forEach(item => {
+            allIds.add(item.id)
+            if (item.children && item.children.length > 0) {
+              collectIds(item.children)
+            }
+          })
+        }
+        collectIds(data.hierarchical)
+      }
+      setExpandedItems(allIds)
+    } else {
+      // 折叠所有项
+      setExpandedItems(new Set())
+    }
+  }
+
+  // 切换单个项目的展开/折叠状态
+  const toggleItemExpanded = (id: string | number) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
+  }
 
   const fetchStatisticsData = async () => {
     if (!timeRange.from || !timeRange.to) return
@@ -68,6 +124,9 @@ export function useStatisticsData() {
       // 获取统计数据
       const summaryResponse = await shippingApi.getShippingStats(params)
       const detailsResponse = await shippingApi.getShippingStatsDetails(params)
+      
+      // 获取层级统计数据
+      const hierarchicalResponse = await shippingApi.getHierarchicalStats(params)
 
       // 处理数据格式
       const formattedData: StatisticsData = {
@@ -83,14 +142,15 @@ export function useStatisticsData() {
           recordCount: Number(item.record_count) || 0,
         })) : [],
         byDate: [],
+        hierarchical: hierarchicalResponse?.hierarchical || []
       }
 
       // 处理按日期的数据
       const dateMap = new Map<string, any>()
 
       // 先按日期分组
-      if (detailsResponse && detailsResponse.details && Array.isArray(detailsResponse.details)) {
-        detailsResponse.details.forEach((item: any) => {
+      if (detailsResponse && detailsResponse.by_date_and_courier && Array.isArray(detailsResponse.by_date_and_courier)) {
+        detailsResponse.by_date_and_courier.forEach((item: any) => {
           if (!dateMap.has(item.date)) {
             dateMap.set(item.date, {
               date: item.date,
@@ -148,8 +208,13 @@ export function useStatisticsData() {
     error,
     timeRange,
     courierTypeFilter,
+    viewMode,
+    expandedItems,
     setTimeRange,
     setCourierTypeFilter,
+    setViewMode,
+    toggleItemExpanded,
+    toggleAllExpanded,
     refetch: fetchStatisticsData,
   }
 }
