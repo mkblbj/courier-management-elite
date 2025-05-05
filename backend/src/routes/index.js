@@ -1,6 +1,10 @@
 const express = require('express');
 const courierRoutes = require('./courierRoutes');
 const shippingRoutes = require('./shippingRoutes');
+const shopRoutes = require('./shopRoutes');
+const shopOutputRoutes = require('./shopOutputRoutes');
+const statsRoutes = require('./statsRoutes');
+const dashboardRoutes = require('./dashboardRoutes');
 
 const router = express.Router();
 
@@ -18,6 +22,18 @@ router.use('/couriers', courierRoutes);
 
 // 发货记录API路由
 router.use('/shipping', shippingRoutes);
+
+// 店铺API路由
+router.use('/shops', shopRoutes);
+
+// 店铺出力数据API路由
+router.use('/shop-outputs', shopOutputRoutes);
+
+// 统计分析API路由
+router.use('/stats', statsRoutes);
+
+// 仪表盘API路由
+router.use('/dashboard', dashboardRoutes);
 
 // API文档路由 (可选)
 router.get('/docs', (req, res) => {
@@ -51,6 +67,54 @@ router.get('/docs', (req, res) => {
           { method: 'PUT', path: '/:id', description: '更新发货记录' },
           { method: 'DELETE', path: '/:id', description: '删除发货记录' },
           { method: 'POST', path: '/batch', description: '批量添加发货记录' }
+        ]
+      },
+      {
+        name: '店铺API',
+        description: '店铺的CRUD操作',
+        basePath: '/api/shops',
+        endpoints: [
+          { method: 'GET', path: '/', description: '获取店铺列表' },
+          { method: 'GET', path: '/:id', description: '获取单个店铺详情' },
+          { method: 'POST', path: '/', description: '创建店铺' },
+          { method: 'PUT', path: '/:id', description: '更新店铺' },
+          { method: 'DELETE', path: '/:id', description: '删除店铺' },
+          { method: 'POST', path: '/:id/toggle', description: '切换店铺状态' },
+          { method: 'POST', path: '/sort', description: '更新店铺排序' }
+        ]
+      },
+      {
+        name: '店铺出力API',
+        description: '店铺出力数据的CRUD操作',
+        basePath: '/api/shop-outputs',
+        endpoints: [
+          { method: 'GET', path: '/', description: '获取出力数据列表' },
+          { method: 'GET', path: '/recent', description: '获取最近录入数据' },
+          { method: 'GET', path: '/today', description: '获取今日出力数据' },
+          { method: 'GET', path: '/:id', description: '获取单条出力记录' },
+          { method: 'POST', path: '/', description: '创建出力记录' },
+          { method: 'PUT', path: '/:id', description: '更新出力记录' },
+          { method: 'DELETE', path: '/:id', description: '删除出力记录' }
+        ]
+      },
+      {
+        name: '统计分析API',
+        description: '店铺出力数据的统计分析',
+        basePath: '/api/stats',
+        endpoints: [
+          { method: 'GET', path: '/shop-outputs/shops', description: '按店铺统计' },
+          { method: 'GET', path: '/shop-outputs/couriers', description: '按快递类型统计' },
+          { method: 'GET', path: '/shop-outputs/dates', description: '按日期统计' },
+          { method: 'GET', path: '/shop-outputs/total', description: '获取总计数据' }
+        ]
+      },
+      {
+        name: '仪表盘API',
+        description: '数据仪表盘',
+        basePath: '/api/dashboard',
+        endpoints: [
+          { method: 'GET', path: '/shop-outputs/today', description: '获取今日出力概览' },
+          { method: 'GET', path: '/shop-outputs/tomorrow', description: '获取明日出力预测' }
         ]
       }
     ]

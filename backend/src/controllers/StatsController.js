@@ -1,4 +1,5 @@
 const ShippingRecord = require('../models/ShippingRecord');
+const ShopOutput = require('../models/ShopOutput');
 const dateUtils = require('../utils/dateUtils');
 
 // 创建ShippingRecord实例用于访问实例方法
@@ -457,6 +458,304 @@ class StatsController {
         }
       });
     }
+  }
+
+  /**
+   * 获取店铺出力数据按店铺统计
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async getShopOutputsByShop(req, res) {
+    try {
+      // 解析请求参数
+      const dateFrom = req.query.date_from || null;
+      const dateTo = req.query.date_to || null;
+      
+      // 创建一个自定义SQL查询来按店铺统计出力数据
+      const db = require('../db');
+      
+      let sql = `
+        SELECT 
+          s.id as shop_id, 
+          s.name as shop_name, 
+          SUM(so.quantity) as total_quantity,
+          COUNT(DISTINCT so.output_date) as days_count
+        FROM 
+          shop_outputs so
+        JOIN 
+          shops s ON so.shop_id = s.id
+        WHERE 
+          1=1
+      `;
+      
+      const params = [];
+      
+      if (dateFrom) {
+        sql += ` AND so.output_date >= ?`;
+        params.push(dateFrom);
+      }
+      
+      if (dateTo) {
+        sql += ` AND so.output_date <= ?`;
+        params.push(dateTo);
+      }
+      
+      sql += `
+        GROUP BY 
+          s.id, s.name
+        ORDER BY 
+          total_quantity DESC
+      `;
+      
+      const results = await db.query(sql, params);
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data: results
+      });
+    } catch (error) {
+      console.error('按店铺统计出力数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '统计数据查询失败'
+      });
+    }
+  }
+
+  /**
+   * 获取店铺出力数据按快递类型统计
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async getShopOutputsByCourier(req, res) {
+    try {
+      // 解析请求参数
+      const dateFrom = req.query.date_from || null;
+      const dateTo = req.query.date_to || null;
+      const shopId = req.query.shop_id ? parseInt(req.query.shop_id) : null;
+      
+      // 创建一个自定义SQL查询来按快递类型统计出力数据
+      const db = require('../db');
+      
+      let sql = `
+        SELECT 
+          c.id as courier_id, 
+          c.name as courier_name, 
+          c.parent_id,
+          SUM(so.quantity) as total_quantity,
+          COUNT(DISTINCT so.output_date) as days_count
+        FROM 
+          shop_outputs so
+        JOIN 
+          couriers c ON so.courier_id = c.id
+        WHERE 
+          1=1
+      `;
+      
+      const params = [];
+      
+      if (shopId) {
+        sql += ` AND so.shop_id = ?`;
+        params.push(shopId);
+      }
+      
+      if (dateFrom) {
+        sql += ` AND so.output_date >= ?`;
+        params.push(dateFrom);
+      }
+      
+      if (dateTo) {
+        sql += ` AND so.output_date <= ?`;
+        params.push(dateTo);
+      }
+      
+      sql += `
+        GROUP BY 
+          c.id, c.name, c.parent_id
+        ORDER BY 
+          total_quantity DESC
+      `;
+      
+      const results = await db.query(sql, params);
+      
+      // 处理层级结构，如果需要
+      const hierarchyResults = this.processHierarchy(results);
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data: hierarchyResults
+      });
+    } catch (error) {
+      console.error('按快递类型统计出力数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '统计数据查询失败'
+      });
+    }
+  }
+
+  /**
+   * 获取店铺出力数据按日期统计
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async getShopOutputsByDate(req, res) {
+    try {
+      // 解析请求参数
+      const dateFrom = req.query.date_from || null;
+      const dateTo = req.query.date_to || null;
+      const shopId = req.query.shop_id ? parseInt(req.query.shop_id) : null;
+      const courierId = req.query.courier_id ? parseInt(req.query.courier_id) : null;
+      
+      // 创建一个自定义SQL查询来按日期统计出力数据
+      const db = require('../db');
+      
+      let sql = `
+        SELECT 
+          so.output_date, 
+          SUM(so.quantity) as total_quantity,
+          COUNT(DISTINCT so.shop_id) as shops_count
+        FROM 
+          shop_outputs so
+        WHERE 
+          1=1
+      `;
+      
+      const params = [];
+      
+      if (shopId) {
+        sql += ` AND so.shop_id = ?`;
+        params.push(shopId);
+      }
+      
+      if (courierId) {
+        sql += ` AND so.courier_id = ?`;
+        params.push(courierId);
+      }
+      
+      if (dateFrom) {
+        sql += ` AND so.output_date >= ?`;
+        params.push(dateFrom);
+      }
+      
+      if (dateTo) {
+        sql += ` AND so.output_date <= ?`;
+        params.push(dateTo);
+      }
+      
+      sql += `
+        GROUP BY 
+          so.output_date
+        ORDER BY 
+          so.output_date DESC
+      `;
+      
+      const results = await db.query(sql, params);
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data: results
+      });
+    } catch (error) {
+      console.error('按日期统计出力数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '统计数据查询失败'
+      });
+    }
+  }
+
+  /**
+   * 获取店铺出力数据总计
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async getShopOutputsTotal(req, res) {
+    try {
+      // 解析请求参数
+      const dateFrom = req.query.date_from || null;
+      const dateTo = req.query.date_to || null;
+      const shopId = req.query.shop_id ? parseInt(req.query.shop_id) : null;
+      const courierId = req.query.courier_id ? parseInt(req.query.courier_id) : null;
+      
+      // 创建一个自定义SQL查询来获取总计数据
+      const db = require('../db');
+      
+      let sql = `
+        SELECT 
+          SUM(so.quantity) as total_quantity,
+          COUNT(DISTINCT so.id) as total_records,
+          COUNT(DISTINCT so.shop_id) as total_shops,
+          COUNT(DISTINCT so.courier_id) as total_couriers,
+          COUNT(DISTINCT so.output_date) as total_days,
+          MIN(so.output_date) as earliest_date,
+          MAX(so.output_date) as latest_date,
+          AVG(so.quantity) as average_quantity
+        FROM 
+          shop_outputs so
+        WHERE 
+          1=1
+      `;
+      
+      const params = [];
+      
+      if (shopId) {
+        sql += ` AND so.shop_id = ?`;
+        params.push(shopId);
+      }
+      
+      if (courierId) {
+        sql += ` AND so.courier_id = ?`;
+        params.push(courierId);
+      }
+      
+      if (dateFrom) {
+        sql += ` AND so.output_date >= ?`;
+        params.push(dateFrom);
+      }
+      
+      if (dateTo) {
+        sql += ` AND so.output_date <= ?`;
+        params.push(dateTo);
+      }
+      
+      const results = await db.query(sql, params);
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data: results[0] || {
+          total_quantity: 0,
+          total_records: 0,
+          total_shops: 0,
+          total_couriers: 0,
+          total_days: 0,
+          earliest_date: null,
+          latest_date: null,
+          average_quantity: 0
+        }
+      });
+    } catch (error) {
+      console.error('获取出力数据总计失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '统计数据查询失败'
+      });
+    }
+  }
+  
+  /**
+   * 处理层级结构
+   * @param {Array} results 结果数组
+   * @returns {Array} 处理后的数组
+   */
+  processHierarchy(results) {
+    // 这里简化处理，只返回原始数据
+    // 实际项目中可能需要根据parent_id构建层级结构
+    return results;
   }
 }
 
