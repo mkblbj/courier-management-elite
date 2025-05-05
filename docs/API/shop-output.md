@@ -474,7 +474,7 @@
 获取当前日期的所有出力数据。
 
 **请求方法**: GET  
-**URL**: `/shop-outputs/recent`
+**URL**: `/shop-outputs/recent`(此 API 疑似重复，后续要删除)
 
 **响应示例**:
 
