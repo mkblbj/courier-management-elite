@@ -5,11 +5,9 @@ import { format } from "date-fns";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -18,239 +16,109 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DateRangeSelector } from "@/components/shop-output/DateSelector";
-import { ShopOutputStats, ShopOutputTotal } from "@/lib/types/shop-output";
-import {
-  getShopStats,
-  getCourierStats,
-  getDateStats,
-  getTotalStats,
-} from "@/lib/api/shop-output";
+import { getShopOutputs } from "@/lib/api/shop-output";
+import { ShopOutput } from "@/lib/types/shop-output";
 import { DATE_FORMAT } from "@/lib/constants";
 
 export default function OutputSummary() {
-  const [activeTab, setActiveTab] = useState("total");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [todayOutputs, setTodayOutputs] = useState<ShopOutput[]>([]);
   
-  const [shopStats, setShopStats] = useState<ShopOutputStats[]>([]);
-  const [courierStats, setCourierStats] = useState<ShopOutputStats[]>([]);
-  const [dateStats, setDateStats] = useState<ShopOutputStats[]>([]);
-  const [totalStats, setTotalStats] = useState<ShopOutputTotal | null>(null);
+  // 计算今天的日期
+  const today = format(new Date(), DATE_FORMAT);
 
   useEffect(() => {
-    fetchData();
-  }, [dateFrom, dateTo]);
+    fetchTodayData();
+  }, []);
 
-  const fetchData = async () => {
+  const fetchTodayData = async () => {
     setLoading(true);
     setError(null);
 
-    const dateFromStr = dateFrom ? format(dateFrom, DATE_FORMAT.replace(/Y/g, "y")) : undefined;
-    const dateToStr = dateTo ? format(dateTo, DATE_FORMAT.replace(/Y/g, "y")) : undefined;
-
     try {
-      // 并行获取各种统计数据
-      const [shopData, courierData, dateData, totalData] = await Promise.all([
-        getShopStats(dateFromStr, dateToStr),
-        getCourierStats(dateFromStr, dateToStr),
-        getDateStats(dateFromStr, dateToStr),
-        getTotalStats(dateFromStr, dateToStr),
-      ]);
-
-      setShopStats(shopData);
-      setCourierStats(courierData);
-      setDateStats(dateData);
-      setTotalStats(totalData);
+      // 获取今日的出力数据
+      const data = await getShopOutputs({ date_from: today, date_to: today });
+      setTodayOutputs(data);
     } catch (err) {
-      console.error("Failed to fetch stats:", err);
-      setError("获取统计数据失败，请重试");
+      console.error("Failed to fetch today's outputs:", err);
+      setError("获取今日出力数据失败，请重试");
     } finally {
       setLoading(false);
     }
   };
 
-  const renderTotalStats = () => {
-    if (!totalStats) return <div className="text-center py-12 text-muted-foreground">无统计数据</div>;
+  // 按店铺和快递类型分组汇总数据
+  const summaryData = todayOutputs.reduce((acc, item) => {
+    const key = `${item.shop_id}-${item.courier_id}`;
     
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>总出力数量</CardDescription>
-            <CardTitle className="text-3xl">{totalStats.total_quantity}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>日均出力</CardDescription>
-            <CardTitle className="text-3xl">{totalStats.average_daily.toFixed(2)}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>涵盖天数</CardDescription>
-            <CardTitle className="text-3xl">{totalStats.days_count}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>店铺数量</CardDescription>
-            <CardTitle className="text-3xl">{totalStats.shops_count}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  };
+    if (!acc[key]) {
+      acc[key] = {
+        shop_id: item.shop_id,
+        shop_name: item.shop_name,
+        courier_id: item.courier_id,
+        courier_name: item.courier_name,
+        total_quantity: 0
+      };
+    }
+    
+    acc[key].total_quantity += item.quantity;
+    return acc;
+  }, {} as Record<string, {
+    shop_id: number;
+    shop_name: string;
+    courier_id: number;
+    courier_name: string;
+    total_quantity: number;
+  }>);
+
+  // 转换为数组便于渲染
+  const summaryArray = Object.values(summaryData);
+
+  // 计算总出力量
+  const totalQuantity = summaryArray.reduce((sum, item) => sum + item.total_quantity, 0);
 
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle>出力数据汇总</CardTitle>
-        <CardDescription>查看各维度的出力数据统计</CardDescription>
+        <CardTitle>当日数据汇总</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-6">
-          <DateRangeSelector
-            dateFrom={dateFrom}
-            dateTo={dateTo}
-            onDateFromChange={setDateFrom}
-            onDateToChange={setDateTo}
-          />
-        </div>
-
         {loading ? (
-          <div className="text-center py-12">加载中...</div>
+          <div className="text-center py-8">加载中...</div>
         ) : error ? (
-          <div className="text-center py-12 text-red-500">{error}</div>
+          <div className="text-center py-8 text-red-500">{error}</div>
+        ) : todayOutputs.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">今日暂无数据</div>
         ) : (
-          <Tabs defaultValue="total" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="total">总览</TabsTrigger>
-              <TabsTrigger value="date">按日期</TabsTrigger>
-              <TabsTrigger value="shop">按店铺</TabsTrigger>
-              <TabsTrigger value="courier">按快递类型</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="total">{renderTotalStats()}</TabsContent>
-
-            <TabsContent value="date">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>日期</TableHead>
-                      <TableHead className="text-right">出力数量</TableHead>
-                      <TableHead className="text-right">店铺数</TableHead>
-                      <TableHead className="text-right">快递类型数</TableHead>
+          <div>
+            <div className="text-xl font-medium mb-4">
+              总出力量：{totalQuantity}
+            </div>
+            
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>店铺</TableHead>
+                    <TableHead>快递类型</TableHead>
+                    <TableHead className="text-right">出力数量</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {summaryArray.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{item.shop_name}</TableCell>
+                      <TableCell>{item.courier_name}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {item.total_quantity}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dateStats.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8">
-                          暂无数据
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      dateStats.map((stat) => (
-                        <TableRow key={stat.output_date}>
-                          <TableCell>{stat.output_date}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            {stat.total_quantity}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {stat.shops_count}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {stat.couriers_count}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="shop">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>店铺</TableHead>
-                      <TableHead className="text-right">总出力数量</TableHead>
-                      <TableHead className="text-right">天数</TableHead>
-                      <TableHead className="text-right">日均出力</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {shopStats.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8">
-                          暂无数据
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      shopStats.map((stat) => (
-                        <TableRow key={stat.shop_id}>
-                          <TableCell>{stat.shop_name}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            {stat.total_quantity}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {stat.days_count}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {stat.days_count && stat.days_count > 0
-                              ? (stat.total_quantity / stat.days_count).toFixed(2)
-                              : "-"}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="courier">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>快递类型</TableHead>
-                      <TableHead className="text-right">总出力数量</TableHead>
-                      <TableHead className="text-right">店铺数</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {courierStats.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center py-8">
-                          暂无数据
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      courierStats.map((stat) => (
-                        <TableRow key={stat.courier_id}>
-                          <TableCell>{stat.courier_name}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            {stat.total_quantity}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {stat.shops_count}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-          </Tabs>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

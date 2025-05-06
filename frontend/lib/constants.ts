@@ -11,7 +11,7 @@ export const DEFAULT_PAGE_SIZE = 10;
 /**
  * 日期格式
  */
-export const DATE_FORMAT = 'YYYY-MM-DD';
+export const DATE_FORMAT = 'yyyy-MM-dd';
 
 /**
  * 响应成功代码

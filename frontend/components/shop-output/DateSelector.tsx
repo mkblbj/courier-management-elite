@@ -45,7 +45,7 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, DATE_FORMAT.replace(/Y/g, "y")) : (placeholder || defaultPlaceholder)}
+            {date ? format(date, DATE_FORMAT) : (placeholder || defaultPlaceholder)}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

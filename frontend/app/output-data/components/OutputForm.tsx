@@ -69,7 +69,7 @@ export default function OutputForm({
     defaultValues: {
       shop_id: initialData?.shop_id || undefined,
       courier_id: initialData?.courier_id || 1, // 快递类型暂时硬编码为1
-      output_date: initialData?.output_date || format(new Date(), DATE_FORMAT.replace(/Y/g, "y")),
+      output_date: initialData?.output_date || format(new Date(), DATE_FORMAT),
       quantity: initialData?.quantity || undefined,
       notes: initialData?.notes || "",
     },
@@ -152,7 +152,7 @@ export default function OutputForm({
                 <DateSelector
                   date={field.value ? new Date(field.value) : undefined}
                   onDateChange={(date) => 
-                    field.onChange(date ? format(date, DATE_FORMAT.replace(/Y/g, "y")) : undefined)
+                    field.onChange(date ? format(date, DATE_FORMAT) : undefined)
                   }
                 />
               </FormControl>
@@ -237,7 +237,7 @@ export default function OutputForm({
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle>添加出力数据</CardTitle>
+        <CardTitle>数据录入</CardTitle>
       </CardHeader>
       <CardContent>
         {formContent}

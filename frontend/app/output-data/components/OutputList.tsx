@@ -99,7 +99,7 @@ export default function OutputList({ filter = {} }: OutputListProps) {
     <>
       <Card className="shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle>{t('shop:output_data_list')}</CardTitle>
+          <CardTitle>{t('shop:recent_output_data')}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (

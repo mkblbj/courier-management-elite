@@ -45,9 +45,10 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
       setLoading(true);
       try {
         const data = await getShops(onlyActive);
-        setShops(data);
+        setShops(data || []);
       } catch (error) {
         console.error("Failed to fetch shops:", error);
+        setShops([]);
       } finally {
         setLoading(false);
       }
@@ -140,9 +141,10 @@ export const MultiShopSelector: React.FC<MultiShopSelectorProps> = ({
       setLoading(true);
       try {
         const data = await getShops(onlyActive);
-        setShops(data);
+        setShops(data || []);
       } catch (error) {
         console.error("Failed to fetch shops:", error);
+        setShops([]);
       } finally {
         setLoading(false);
       }

@@ -1,8 +1,10 @@
 {
   "shop_management": "ショップ管理",
   "shop_output_management": "ショップ出力データ管理",
+  "output_data": "出力データ",
   "output_data_list": "出力データリスト",
   "add_output_data": "出力データ追加",
+  "recent_output_data": "最近の出力データ",
   "data_summary": "データ概要",
   "shop": "ショップ",
   "courier_type": "配送タイプ",

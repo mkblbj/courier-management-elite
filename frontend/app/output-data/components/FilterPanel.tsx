@@ -39,11 +39,11 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
     }
 
     if (dateFrom) {
-      filter.date_from = format(dateFrom, DATE_FORMAT.replace(/Y/g, "y"));
+      filter.date_from = format(dateFrom, DATE_FORMAT);
     }
 
     if (dateTo) {
-      filter.date_to = format(dateTo, DATE_FORMAT.replace(/Y/g, "y"));
+      filter.date_to = format(dateTo, DATE_FORMAT);
     }
 
     if (searchTerm) {

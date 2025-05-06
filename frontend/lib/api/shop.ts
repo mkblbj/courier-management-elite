@@ -12,17 +12,21 @@ interface ApiResponse<T> {
 /**
  * 获取店铺列表
  * @param isActive 是否只获取启用的店铺
- * @param search 搜索关键词
- * @param sort 排序字段
- * @param order 排序方向
+ * @param params 其他查询参数
  */
-export const getShops = async (params?: {
-  is_active?: boolean;
-  search?: string;
-  sort?: string;
-  order?: 'asc' | 'desc';
-}): Promise<ApiResponse<Shop[]>> => {
+export const getShops = async (
+  isActive?: boolean,
+  params?: {
+    search?: string;
+    sort?: string;
+    order?: 'asc' | 'desc';
+  }
+): Promise<Shop[]> => {
   const url = new URL(API_URL, window.location.origin);
+  
+  if (isActive !== undefined) {
+    url.searchParams.append('is_active', String(isActive));
+  }
   
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -32,8 +36,20 @@ export const getShops = async (params?: {
     });
   }
   
-  const response = await fetch(url.toString());
-  return await response.json();
+  try {
+    const response = await fetch(url.toString());
+    const result = await response.json();
+    
+    if (result && result.code === 0 && Array.isArray(result.data)) {
+      return result.data;
+    } else {
+      console.error("Error in getShops:", result);
+      return [];
+    }
+  } catch (error) {
+    console.error("Exception in getShops:", error);
+    return [];
+  }
 };
 
 /**

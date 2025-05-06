@@ -1,8 +1,10 @@
 {
   "shop_management": "店铺管理",
   "shop_output_management": "店铺出力数据管理",
+  "output_data": "出力数据",
   "output_data_list": "出力数据列表",
   "add_output_data": "添加出力数据",
+  "recent_output_data": "最近录入数据",
   "data_summary": "数据汇总",
   "shop": "店铺",
   "courier_type": "快递类型",

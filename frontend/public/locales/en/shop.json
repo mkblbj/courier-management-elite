@@ -1,8 +1,10 @@
 {
   "shop_management": "Shop Management",
   "shop_output_management": "Shop Output Management",
+  "output_data": "Output Data",
   "output_data_list": "Output Data List",
   "add_output_data": "Add Output Data",
+  "recent_output_data": "Recent Output Data",
   "data_summary": "Data Summary",
   "shop": "Shop",
   "courier_type": "Courier Type",

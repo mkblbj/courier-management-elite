@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { BarChart, FileInput, Package, PieChart, Settings } from "lucide-react"
+import { BarChart, FileInput, Package, PieChart, Settings, BarChart2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -11,7 +11,7 @@ export function DashboardNav() {
   const pathname = usePathname()
   const [isVisible, setIsVisible] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const { t, i18n } = useTranslation('common')
+  const { t, i18n } = useTranslation(['common', 'shop'])
 
   const navItems = [
     {
@@ -25,14 +25,19 @@ export function DashboardNav() {
       icon: <FileInput className="h-4 w-4" />,
     },
     {
-      title: mounted ? t('courier_types') : '',
-      href: "/courier-types",
-      icon: <Package className="h-4 w-4" />,
+      title: mounted ? t('shop:output_data') : '',
+      href: "/output-data",
+      icon: <BarChart2 className="h-4 w-4" />,
     },
     {
       title: mounted ? t('stats') : '',
       href: "/stats",
       icon: <PieChart className="h-4 w-4" />,
+    },
+    {
+      title: mounted ? t('courier_types') : '',
+      href: "/courier-types",
+      icon: <Package className="h-4 w-4" />,
     },
     {
       title: mounted ? t('settings') : '',
