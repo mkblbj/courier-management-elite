@@ -17,6 +17,7 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { subDays } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import OutputSummary from "@/app/output-data/components/OutputSummary"
 
 export default function StatsPage() {
   const { t } = useTranslation();
@@ -170,6 +171,21 @@ export default function StatsPage() {
           timeRange={timeRange}
           courierTypeFilter={courierTypeFilter}
         />
+
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="general">一般统计</TabsTrigger>
+            <TabsTrigger value="shop-output">出力统计</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="general">
+            <div className="text-center p-12 text-muted-foreground">一般统计内容</div>
+          </TabsContent>
+
+          <TabsContent value="shop-output">
+            <OutputSummary />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>)
   );

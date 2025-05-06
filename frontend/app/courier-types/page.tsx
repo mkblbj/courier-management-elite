@@ -13,6 +13,8 @@ import { useEnvStore } from "@/lib/env-config"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { useTranslation } from "react-i18next"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import ShopList from "@/components/shop/ShopList"
 
 export default function CourierTypesPage() {
   const { debug } = useEnvStore()
@@ -52,9 +54,25 @@ export default function CourierTypesPage() {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
           )}
         >
+          <Tabs defaultValue="courier-types" className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="courier-types">快递类型</TabsTrigger>
+              <TabsTrigger value="shops">店铺管理</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="courier-types">
           <Suspense fallback={<CourierTypesSkeleton />}>
             <CourierTypeManagement />
           </Suspense>
+            </TabsContent>
+
+            <TabsContent value="shops">
+              <ShopList 
+                shops={[]} 
+                loading={true}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
         {/* 添加API调试组件 - 只在开发模式下显示 */}
         {debug && process.env.NODE_ENV !== "production" && (
