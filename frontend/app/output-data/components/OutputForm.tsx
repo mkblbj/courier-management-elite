@@ -271,57 +271,59 @@ export default function OutputForm({
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="quantity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>出力数量</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="请输入出力数量"
-                  {...field}
-                  ref={quantityInputRef}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    field.onChange(value === "" ? undefined : parseInt(value, 10));
-                  }}
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <FormField
+            control={form.control}
+            name="quantity"
+            render={({ field }) => (
+              <FormItem className="md:col-span-1">
+                <FormLabel>出力数量</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="请输入出力数量"
+                    {...field}
+                    ref={quantityInputRef}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? undefined : parseInt(value, 10));
+                    }}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>备注</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="请输入备注信息（可选）"
-                  className="resize-none"
-                  {...field}
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem className="md:col-span-4">
+                <FormLabel>备注</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="请输入备注信息（可选）"
+                    className="resize-none h-[38px] min-h-[38px]"
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {error && (
           <div className="text-red-500 text-sm">{error}</div>
         )}
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1">
-            <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-1 rounded-md border border-gray-200">
-              小提示：Alt+S 提交  ·  Alt+R 重置
+          <div>
+            <span className="text-xs text-gray-500">
+              小提示：Alt+S 提交  Alt+R 重置
             </span>
           </div>
           <div className="flex space-x-2">
@@ -330,7 +332,15 @@ export default function OutputForm({
                 取消
               </Button>
             )}
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => form.reset()}
+              className="text-gray-700 hover:bg-gray-100"
+            >
+              重置
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
               {isSubmitting ? "提交中..." : isEditMode ? "更新" : "添加"}
             </Button>
           </div>
