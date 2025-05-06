@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, KeyboardEvent, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -30,6 +30,7 @@ import { createShopOutput, updateShopOutput } from "@/lib/api/shop-output";
 import { DATE_FORMAT } from "@/lib/constants";
 import CourierSelector from "@/components/shop-output/CourierSelector";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 const outputFormSchema = z.object({
   shop_id: z.number({
@@ -43,7 +44,7 @@ const outputFormSchema = z.object({
   }),
   quantity: z.number({
     required_error: "出力数量不能为空",
-  }).int().positive(),
+  }).int("请输入整数").positive("请输入正整数"),
   notes: z.string().optional(),
 });
 
@@ -75,6 +76,7 @@ export default function OutputForm({
   const { t } = useTranslation(['common', 'shop']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const quantityInputRef = useRef<HTMLInputElement>(null);
 
   const isEditMode = !!initialData;
   const isModal = !!onClose;
@@ -122,15 +124,30 @@ export default function OutputForm({
 
       if (isEditMode && initialData) {
         await updateShopOutput(initialData.id, outputData);
+        toast.success(t('shop:output_updated'));
       } else {
         await createShopOutput(outputData);
+        toast.success(t('shop:output_created'));
       }
       
-      form.reset();
+      form.reset({
+        shop_id: values.shop_id,
+        courier_id: values.courier_id,
+        output_date: values.output_date,
+        quantity: undefined,
+        notes: "",
+      });
+      
+      // 成功后聚焦数量输入框，方便继续录入
+      if (!isModal && quantityInputRef.current) {
+        quantityInputRef.current.focus();
+      }
+      
       onSuccess?.();
     } catch (err) {
       console.error("Failed to submit output data:", err);
       setError(`${isEditMode ? '更新' : '添加'}出力数据失败，请重试`);
+      toast.error(t('shop:output_save_failed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -175,9 +192,29 @@ export default function OutputForm({
     }
   };
 
+  // 处理键盘快捷键
+  const handleKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
+    // Alt+S 提交表单
+    if (e.altKey && e.key === 's') {
+      e.preventDefault();
+      form.handleSubmit(onSubmit)();
+    }
+    
+    // Alt+R 重置表单
+    if (e.altKey && e.key === 'r') {
+      e.preventDefault();
+      form.reset();
+    }
+  };
+
   const formContent = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form 
+        onSubmit={form.handleSubmit(onSubmit)} 
+        className="space-y-6" 
+        onKeyDown={handleKeyDown}
+        noValidate
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
@@ -245,6 +282,7 @@ export default function OutputForm({
                   type="number"
                   placeholder="请输入出力数量"
                   {...field}
+                  ref={quantityInputRef}
                   onChange={(e) => {
                     const value = e.target.value;
                     field.onChange(value === "" ? undefined : parseInt(value, 10));
@@ -280,15 +318,22 @@ export default function OutputForm({
           <div className="text-red-500 text-sm">{error}</div>
         )}
 
-        <div className="flex justify-end space-x-2">
-          {isModal && (
-            <Button type="button" variant="outline" onClick={onClose}>
-              取消
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-1">
+            <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-1 rounded-md border border-gray-200">
+              小提示：Alt+S 提交  ·  Alt+R 重置
+            </span>
+          </div>
+          <div className="flex space-x-2">
+            {isModal && (
+              <Button type="button" variant="outline" onClick={onClose}>
+                取消
+              </Button>
+            )}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "提交中..." : isEditMode ? "更新" : "添加"}
             </Button>
-          )}
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "提交中..." : isEditMode ? "更新" : "添加"}
-          </Button>
+          </div>
         </div>
       </form>
     </Form>

@@ -96,5 +96,9 @@
   "no_courier_found": "未找到快递类型",
   "today": "今天",
   "tomorrow": "明天",
-  "selection_panel_title": "日期与店铺选择"
+  "selection_panel_title": "日期与店铺选择",
+  "output_created": "出力数据添加成功",
+  "output_updated": "出力数据更新成功",
+  "output_save_failed": "保存出力数据失败",
+  "total_record": "共 {{count}} 条记录"
 } 

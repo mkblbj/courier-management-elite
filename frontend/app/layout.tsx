@@ -8,6 +8,7 @@ import { EnvSwitcher } from "@/components/env-switcher";
 import { DebugLogger } from "@/components/debug-logger";
 import { EnvInitializer } from "@/components/env-initializer";
 import { I18nProvider } from "@/components/i18n-provider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "UOcourier",
@@ -29,6 +30,7 @@ export default function RootLayout({
           <RouteChangeLoading />
           {children}
           <ToastProvider />
+          <Toaster richColors position="top-right" />
           <EnvSwitcher />
           <DebugLogger />
         </I18nProvider>
