@@ -90,5 +90,11 @@
   "sort_shops": "店铺排序",
   "saving": "保存中...",
   "shop_added_success": "店铺添加成功",
-  "shop_add_error": "添加店铺失败，请重试"
+  "shop_add_error": "添加店铺失败，请重试",
+  "select_courier": "选择快递类型",
+  "search_courier": "搜索快递类型",
+  "no_courier_found": "未找到快递类型",
+  "today": "今天",
+  "tomorrow": "明天",
+  "selection_panel_title": "日期与店铺选择"
 } 

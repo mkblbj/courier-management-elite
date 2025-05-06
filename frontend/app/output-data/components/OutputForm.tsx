@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -28,6 +28,8 @@ import {
 import { ShopOutput, ShopOutputFormData } from "@/lib/types/shop-output";
 import { createShopOutput, updateShopOutput } from "@/lib/api/shop-output";
 import { DATE_FORMAT } from "@/lib/constants";
+import CourierSelector from "@/components/shop-output/CourierSelector";
+import { useTranslation } from "react-i18next";
 
 const outputFormSchema = z.object({
   shop_id: z.number({
@@ -35,7 +37,7 @@ const outputFormSchema = z.object({
   }),
   courier_id: z.number({
     required_error: "快递类型不能为空",
-  }).default(1), // 快递类型暂时硬编码为1
+  }),
   output_date: z.string({
     required_error: "日期不能为空",
   }),
@@ -50,30 +52,60 @@ type OutputFormProps = {
   isOpen?: boolean;
   onClose?: () => void;
   onSuccess?: () => void;
+  onSelectionChange?: (selection: {
+    date: Date | undefined;
+    shopId: number | undefined;
+    courierId: number | undefined;
+  }) => void;
+  selection?: {
+    date: Date | undefined;
+    shopId: number | undefined;
+    courierId: number | undefined;
+  };
 };
 
 export default function OutputForm({ 
   initialData, 
   isOpen, 
   onClose, 
-  onSuccess 
+  onSuccess,
+  onSelectionChange,
+  selection
 }: OutputFormProps) {
+  const { t } = useTranslation(['common', 'shop']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isEditMode = !!initialData;
   const isModal = !!onClose;
 
+  // 使用selection值作为初始值
   const form = useForm<z.infer<typeof outputFormSchema>>({
     resolver: zodResolver(outputFormSchema),
     defaultValues: {
-      shop_id: initialData?.shop_id || undefined,
-      courier_id: initialData?.courier_id || 1, // 快递类型暂时硬编码为1
-      output_date: initialData?.output_date || format(new Date(), DATE_FORMAT),
+      shop_id: initialData?.shop_id || selection?.shopId || undefined,
+      courier_id: initialData?.courier_id || selection?.courierId || undefined,
+      output_date: initialData?.output_date || 
+        (selection?.date ? format(selection.date, DATE_FORMAT) : format(new Date(), DATE_FORMAT)),
       quantity: initialData?.quantity || undefined,
       notes: initialData?.notes || "",
     },
   });
+
+  // 当selection变化时更新表单值
+  useEffect(() => {
+    if (selection) {
+      if (selection.shopId !== undefined) {
+        form.setValue('shop_id', selection.shopId);
+      }
+      if (selection.courierId !== undefined) {
+        form.setValue('courier_id', selection.courierId);
+      }
+      if (selection.date) {
+        form.setValue('output_date', format(selection.date, DATE_FORMAT));
+      }
+    }
+  }, [selection, form]);
 
   const onSubmit = async (values: z.infer<typeof outputFormSchema>) => {
     setIsSubmitting(true);
@@ -104,62 +136,103 @@ export default function OutputForm({
     }
   };
 
+  // 处理日期变化
+  const handleDateChange = (date: Date | undefined) => {
+    form.setValue('output_date', date ? format(date, DATE_FORMAT) : '');
+    
+    if (onSelectionChange) {
+      onSelectionChange({
+        date,
+        shopId: form.getValues().shop_id,
+        courierId: form.getValues().courier_id
+      });
+    }
+  };
+
+  // 处理店铺变化
+  const handleShopChange = (shopId: number | undefined) => {
+    form.setValue('shop_id', shopId || 0);
+    
+    if (onSelectionChange) {
+      onSelectionChange({
+        date: form.getValues().output_date ? new Date(form.getValues().output_date) : undefined,
+        shopId,
+        courierId: form.getValues().courier_id
+      });
+    }
+  };
+
+  // 处理快递类型变化
+  const handleCourierChange = (courierId: number | undefined) => {
+    form.setValue('courier_id', courierId || 0);
+    
+    if (onSelectionChange) {
+      onSelectionChange({
+        date: form.getValues().output_date ? new Date(form.getValues().output_date) : undefined,
+        shopId: form.getValues().shop_id,
+        courierId
+      });
+    }
+  };
+
   const formContent = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="shop_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>店铺</FormLabel>
-              <FormControl>
-                <ShopSelector
-                  selectedShopId={field.value}
-                  onSelectShop={(shopId) => field.onChange(shopId)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="output_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('shop:date')}</FormLabel>
+                <FormControl>
+                  <DateSelector
+                    date={field.value ? new Date(field.value) : undefined}
+                    onDateChange={handleDateChange}
+                    className="w-full"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* 快递类型暂时硬编码，后续需要替换为选择器 */}
-        <FormField
-          control={form.control}
-          name="courier_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>快递类型</FormLabel>
-              <FormControl>
-                <Input
-                  value="顺丰速运"
-                  disabled
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="shop_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('shop:shop')}</FormLabel>
+                <FormControl>
+                  <ShopSelector
+                    selectedShopId={field.value}
+                    onSelectShop={handleShopChange}
+                    className="w-full"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="output_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>日期</FormLabel>
-              <FormControl>
-                <DateSelector
-                  date={field.value ? new Date(field.value) : undefined}
-                  onDateChange={(date) => 
-                    field.onChange(date ? format(date, DATE_FORMAT) : undefined)
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="courier_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('shop:courier')}</FormLabel>
+                <FormControl>
+                  <CourierSelector
+                    selectedCourierId={field.value}
+                    onSelectCourier={handleCourierChange}
+                    className="w-full"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}

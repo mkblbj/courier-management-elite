@@ -58,21 +58,16 @@ export default function CourierTypesPage() {
   const loadShops = async () => {
     try {
       setLoading(true)
-      const response = await getShops({ search: searchTerm });
+      const data = await getShops(undefined, { search: searchTerm });
+      setShops(Array.isArray(data) ? data : []);
       
-      // 确保response.data是一个数组
-      if (response.code === 0 && Array.isArray(response.data)) {
-        setShops(response.data);
-      } else {
-        setShops([]);
-        console.error("API返回的数据不是预期的数组格式:", response);
-        if (response.code !== 0) {
-          toast({
-            title: t('common:error'),
-            description: response.message || t('shop:error_loading_shops'),
-            variant: "destructive",
-          });
-        }
+      if (!Array.isArray(data)) {
+        console.error("API返回的数据不是预期的数组格式:", data);
+        toast({
+          title: t('common:error'),
+          description: t('shop:error_loading_shops'),
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error loading shops:", error)

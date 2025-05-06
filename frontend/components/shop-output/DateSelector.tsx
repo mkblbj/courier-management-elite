@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
+import { format, addDays, isAfter, startOfDay, isSameDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { DATE_FORMAT } from "@/lib/constants";
@@ -19,6 +19,7 @@ interface DateSelectorProps {
   label?: string;
   placeholder?: string;
   className?: string;
+  showQuickButtons?: boolean;
 }
 
 export const DateSelector: React.FC<DateSelectorProps> = ({
@@ -27,15 +28,34 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
   label,
   placeholder,
   className,
+  showQuickButtons = true,
 }) => {
   const { t, i18n } = useTranslation(['common', 'shop']);
   const defaultLabel = t('shop:select_date');
   const defaultPlaceholder = t('shop:select_date_placeholder');
+  const [open, setOpen] = React.useState(false);
+
+  const today = startOfDay(new Date());
+  const tomorrow = addDays(today, 1);
+
+  const handleSelectToday = () => {
+    onDateChange(today);
+    setOpen(false);
+  };
+
+  const handleSelectTomorrow = () => {
+    onDateChange(tomorrow);
+    setOpen(false);
+  };
+
+  const isDateDisabled = (date: Date) => {
+    return isAfter(today, date) && !isSameDay(today, date);
+  };
 
   return (
     <div className={cn("flex flex-col space-y-1", className)}>
       {label && <span className="text-sm font-medium">{label || defaultLabel}</span>}
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -49,12 +69,34 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
+          {showQuickButtons && (
+            <div className="flex border-b p-2 gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={handleSelectToday}
+              >
+                {t('shop:today')}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={handleSelectTomorrow}
+              >
+                {t('shop:tomorrow')}
+              </Button>
+            </div>
+          )}
           <Calendar
             mode="single"
             selected={date}
             onSelect={onDateChange}
             initialFocus
             locale={i18n.language === 'zh-CN' ? zhCN : undefined}
+            disabled={isDateDisabled}
+            defaultMonth={date || today}
           />
         </PopoverContent>
       </Popover>
@@ -93,6 +135,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
         label={labelFrom || t('shop:from_date')}
         placeholder={placeholder}
         className="w-full"
+        showQuickButtons={false}
       />
       <DateSelector
         date={dateTo}
@@ -100,6 +143,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
         label={labelTo || t('shop:to_date')}
         placeholder={placeholder}
         className="w-full"
+        showQuickButtons={false}
       />
     </div>
   );

@@ -16,6 +16,11 @@ export default function OutputDataPage() {
   const { t } = useTranslation(['common', 'shop']);
   const [filter, setFilter] = useState<ShopOutputFilter>({});
   const [isVisible, setIsVisible] = useState(false);
+  const [selection, setSelection] = useState({
+    date: new Date(),
+    shopId: undefined as number | undefined,
+    courierId: undefined as number | undefined,
+  });
 
   const handleFilterChange = (newFilter: ShopOutputFilter) => {
     setFilter(newFilter);
@@ -23,6 +28,14 @@ export default function OutputDataPage() {
 
   const handleFormSuccess = () => {
     // 表单提交成功后刷新列表
+  };
+
+  const handleSelectionChange = (selection: {
+    date: Date | undefined;
+    shopId: number | undefined;
+    courierId: number | undefined;
+  }) => {
+    setSelection(selection);
   };
 
   useEffect(() => {
@@ -45,20 +58,30 @@ export default function OutputDataPage() {
           className="w-full"
         />
 
+        <div className="flex justify-between items-center">
+          {/* 可以添加更多页面级操作按钮 */}
+        </div>
+
         <div className={cn(
           "grid grid-cols-1 gap-6 transition-all duration-500",
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
         )}>
-          {/* 数据录入区域 */}
+          {/* 数据录入区域 - 已合并日期与店铺选择 */}
           <div>
-            <OutputForm onSuccess={handleFormSuccess} />
+            <OutputForm 
+              onSuccess={handleFormSuccess} 
+              onSelectionChange={handleSelectionChange}
+              selection={selection}
+            />
           </div>
 
           {/* 最近录入数据区域 */}
-          <div>
-            <FilterPanel onFilterChange={handleFilterChange} />
-            <div className="mt-4">
-              <OutputList filter={filter} />
+          <div className="space-y-0">
+            <div className="flex flex-col">
+              <FilterPanel onFilterChange={handleFilterChange} />
+              <div className="mt-[-1px]">
+                <OutputList filter={filter} />
+              </div>
             </div>
           </div>
 

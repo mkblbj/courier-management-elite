@@ -25,7 +25,7 @@ export const getShops = async (
   const url = new URL(API_URL, window.location.origin);
   
   if (isActive !== undefined) {
-    url.searchParams.append('is_active', String(isActive));
+    url.searchParams.append('status', isActive ? 'active' : 'inactive');
   }
   
   if (params) {
