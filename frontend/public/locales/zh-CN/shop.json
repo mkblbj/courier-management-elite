@@ -59,6 +59,7 @@
   "data_fetch_failed": "获取数据失败，请重试",
   
   "add_shop": "添加店铺",
+  "add_shop_description": "请填写以下信息创建一个新的店铺",
   "edit_shop": "编辑店铺",
   "shop_created": "店铺创建成功",
   "shop_created_success": "店铺已成功创建",
@@ -85,5 +86,7 @@
   "remark": "备注",
   "no_shops_found": "未找到店铺",
   "sort_shops": "店铺排序",
-  "saving": "保存中..."
+  "saving": "保存中...",
+  "shop_added_success": "店铺添加成功",
+  "shop_add_error": "添加店铺失败，请重试"
 } 

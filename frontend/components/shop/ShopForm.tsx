@@ -23,11 +23,6 @@ const shopFormSchema = z.object({
     .min(1, { message: "店铺名称不能为空" })
     .max(100, { message: "店铺名称不能超过100个字符" }),
   is_active: z.boolean(),
-  sort_order: z
-    .number()
-    .int({ message: "排序号必须是整数" })
-    .nonnegative({ message: "排序号必须是非负数" })
-    .optional(),
   remark: z.string().max(500, { message: "备注不能超过500个字符" }).optional(),
 });
 
@@ -50,7 +45,6 @@ export const ShopForm: React.FC<ShopFormProps> = ({
     defaultValues: {
       name: initialData?.name || "",
       is_active: initialData ? !!initialData.is_active : true,
-      sort_order: initialData?.sort_order || 0,
       remark: initialData?.remark || "",
     },
   });
@@ -92,28 +86,6 @@ export const ShopForm: React.FC<ShopFormProps> = ({
 
         <FormField
           control={form.control}
-          name="sort_order"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>排序顺序</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="请输入排序顺序"
-                  {...field}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    field.onChange(value === "" ? undefined : parseInt(value, 10));
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="remark"
           render={({ field }) => (
             <FormItem>
@@ -132,7 +104,14 @@ export const ShopForm: React.FC<ShopFormProps> = ({
         />
 
         <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={onCancel}>
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault(); // 防止表单提交
+              onCancel();
+            }}
+            type="button" // 明确指定为button类型，防止触发表单提交
+          >
             取消
           </Button>
           <Button type="submit" disabled={isSubmitting}>

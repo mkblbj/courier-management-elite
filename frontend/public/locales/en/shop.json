@@ -59,6 +59,7 @@
   "data_fetch_failed": "Failed to fetch data, please try again",
   
   "add_shop": "Add Shop",
+  "add_shop_description": "Please fill in the following information to create a new shop",
   "edit_shop": "Edit Shop",
   "shop_created": "Shop Created",
   "shop_created_success": "Shop has been created successfully",
@@ -85,5 +86,7 @@
   "remark": "Remark",
   "no_shops_found": "No shops found",
   "sort_shops": "Sort Shops",
-  "saving": "Saving..."
+  "saving": "Saving...",
+  "shop_added_success": "Shop added successfully",
+  "shop_add_error": "Failed to add shop, please try again"
 } 

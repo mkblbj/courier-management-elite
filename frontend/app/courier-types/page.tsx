@@ -251,22 +251,6 @@ export default function CourierTypesPage() {
             </TabsContent>
 
             <TabsContent value="shops">
-              <div className="mb-4 flex justify-between items-center">
-                <Button
-                  onClick={handleAddShop}
-                  className="bg-blue-600 hover:bg-blue-700 transition-all duration-300"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t('shop:add_shop')}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setSortModalOpen(true)}
-                  disabled={shops.length < 2}
-                >
-                  {t('shop:adjust_sort')}
-                </Button>
-              </div>
               <ShopList 
                 shops={shops} 
                 loading={loading}
@@ -275,6 +259,8 @@ export default function CourierTypesPage() {
                 onDelete={handleDeleteClick}
                 onSearch={setSearchTerm}
                 searchTerm={searchTerm}
+                onSort={() => setSortModalOpen(true)}
+                onRefresh={loadShops}
               />
             </TabsContent>
           </Tabs>

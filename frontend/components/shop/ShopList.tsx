@@ -11,8 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Plus, Pencil, Trash } from "lucide-react";
 import { Shop } from "@/lib/types/shop";
+import AddShopDialog from './AddShopDialog';
 
 interface ShopListProps {
   shops: Shop[];
@@ -20,6 +21,7 @@ interface ShopListProps {
   onEdit?: (shop: Shop) => void;
   onDelete?: (id: number) => void;
   onSort?: () => void;
+  onRefresh?: () => void;
   loading?: boolean;
   searchTerm?: string;
   onSearch?: (term: string) => void;
@@ -31,6 +33,7 @@ export const ShopList: React.FC<ShopListProps> = ({
   onEdit,
   onDelete,
   onSort,
+  onRefresh,
   loading = false,
   searchTerm = '',
   onSearch,
@@ -38,6 +41,7 @@ export const ShopList: React.FC<ShopListProps> = ({
   const { t } = useTranslation(['common', 'shop']);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const [filteredShops, setFilteredShops] = useState<Shop[]>(shops);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,6 +84,13 @@ export const ShopList: React.FC<ShopListProps> = ({
     setCurrentPage(page);
   };
   
+  // 处理添加店铺成功
+  const handleAddSuccess = () => {
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
+
   // 生成分页组件
   const renderPagination = () => {
     const totalPages = Math.ceil(filteredShops.length / itemsPerPage);
@@ -183,14 +194,23 @@ export const ShopList: React.FC<ShopListProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div className="relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t('shop:search_shop')}
-            className="pl-8"
-            value={localSearchTerm}
-            onChange={handleSearch}
-          />
+        <div className="flex gap-4">
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('shop:search_shop')}
+              className="pl-8"
+              value={localSearchTerm}
+              onChange={handleSearch}
+            />
+          </div>
+          <Button 
+            onClick={() => setShowAddDialog(true)}
+            className="flex items-center gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            {t('shop:add_shop')}
+          </Button>
         </div>
         <Button variant="outline" onClick={onSort}>
           {t('shop:sort_shops')}
@@ -235,18 +255,24 @@ export const ShopList: React.FC<ShopListProps> = ({
                   <TableCell>{shop.remark}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onEdit?.(shop)}
+                      className="h-8 w-8"
+                      title={t('common:edit')}
                     >
-                      {t('common:edit')}
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">{t('common:edit')}</span>
                     </Button>
                     <Button
-                      variant="destructive"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onDelete?.(shop.id)}
+                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      title={t('common:delete')}
                     >
-                      {t('common:delete')}
+                      <Trash className="h-4 w-4" />
+                      <span className="sr-only">{t('common:delete')}</span>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -256,8 +282,13 @@ export const ShopList: React.FC<ShopListProps> = ({
         </Table>
       </div>
 
-      {/* 分页组件 */}
-      {!loading && filteredShops.length > 0 && renderPagination()}
+      {renderPagination()}
+      
+      <AddShopDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onSuccess={handleAddSuccess}
+      />
     </div>
   );
 };
