@@ -169,14 +169,21 @@ export function useCourierTypes() {
     code: string
     remark?: string
     is_active: boolean
-    parent_id?: number | string
+    parent_id?: number | string | null
   }) => {
     try {
       setIsLoading(true)
       debugLog("➕ 添加快递类型:", courierType)
 
+      // 准备API请求数据
+      // 如果parent_id为null或undefined，则从请求中排除该字段
+      const requestData = { ...courierType }
+      if (requestData.parent_id === null || requestData.parent_id === undefined) {
+        delete requestData.parent_id
+      }
+
       const startTime = performance.now()
-      const newCourierType = await api.createCourierType(courierType)
+      const newCourierType = await api.createCourierType(requestData)
       const endTime = performance.now()
 
       debugLog(`⏱️ 添加请求耗时: ${(endTime - startTime).toFixed(2)}ms`)
