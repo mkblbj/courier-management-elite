@@ -23,6 +23,7 @@ import { Shop, ShopFormData, ShopSortItem } from "@/lib/types/shop"
 import { getShops, createShop, updateShop, deleteShop, toggleShopStatus, updateShopSort } from "@/lib/api/shop"
 import { useSearchParams, useRouter } from "next/navigation"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import EditShopDialog from "@/components/shop/EditShopDialog"
 
 export default function CourierTypesPage() {
   const { debug } = useEnvStore()
@@ -57,10 +58,25 @@ export default function CourierTypesPage() {
   const loadShops = async () => {
     try {
       setLoading(true)
-      const data = await getShops(undefined, searchTerm)
-      setShops(data)
+      const response = await getShops({ search: searchTerm });
+      
+      // 确保response.data是一个数组
+      if (response.code === 0 && Array.isArray(response.data)) {
+        setShops(response.data);
+      } else {
+        setShops([]);
+        console.error("API返回的数据不是预期的数组格式:", response);
+        if (response.code !== 0) {
+          toast({
+            title: t('common:error'),
+            description: response.message || t('shop:error_loading_shops'),
+            variant: "destructive",
+          });
+        }
+      }
     } catch (error) {
       console.error("Error loading shops:", error)
+      setShops([]);
       toast({
         title: t('common:error'),
         description: t('shop:error_loading_shops'),
@@ -278,22 +294,13 @@ export default function CourierTypesPage() {
         )}
       </main>
 
-      {/* 店铺表单对话框 */}
-      <Dialog open={shopFormOpen} onOpenChange={setShopFormOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {currentShop ? t('shop:edit_shop') : t('shop:add_shop')}
-            </DialogTitle>
-          </DialogHeader>
-          <ShopForm
-            initialData={currentShop}
-            onSubmit={handleShopFormSubmit}
-            onCancel={() => setShopFormOpen(false)}
-            isSubmitting={isSubmitting}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* 店铺编辑对话框 */}
+      <EditShopDialog
+        open={shopFormOpen}
+        onOpenChange={setShopFormOpen}
+        shop={currentShop}
+        onSuccess={loadShops}
+      />
 
       {/* 排序对话框 */}
       <ShopSortModal

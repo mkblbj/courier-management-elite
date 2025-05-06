@@ -94,13 +94,13 @@ export const ShopSortModal: React.FC<ShopSortModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-describedby="shop-sort-description">
         <DialogHeader>
           <DialogTitle>店铺排序</DialogTitle>
         </DialogHeader>
         
         <div className="py-4">
-          <p className="text-sm text-muted-foreground mb-4">
+          <p id="shop-sort-description" className="text-sm text-muted-foreground mb-4">
             拖拽店铺项目来调整显示顺序，排序将影响所有店铺列表的显示顺序。
           </p>
           

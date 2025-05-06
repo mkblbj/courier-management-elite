@@ -40,7 +40,7 @@ export const ShopList: React.FC<ShopListProps> = ({
 }) => {
   const { t } = useTranslation(['common', 'shop']);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const [filteredShops, setFilteredShops] = useState<Shop[]>(shops);
+  const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   
   // 分页状态
@@ -55,9 +55,11 @@ export const ShopList: React.FC<ShopListProps> = ({
 
   // 根据搜索词过滤店铺
   useEffect(() => {
+    // 确保shops是数组再调用filter
+    const shopsArray = Array.isArray(shops) ? shops : [];
     setFilteredShops(
-      shops.filter(shop => 
-        shop.name.toLowerCase().includes(localSearchTerm.toLowerCase())
+      shopsArray.filter(shop => 
+        shop && shop.name && shop.name.toLowerCase().includes(localSearchTerm.toLowerCase())
       )
     );
     setCurrentPage(1); // 重置到第一页
@@ -88,6 +90,13 @@ export const ShopList: React.FC<ShopListProps> = ({
   const handleAddSuccess = () => {
     if (onRefresh) {
       onRefresh();
+    }
+  };
+
+  // 处理编辑按钮点击
+  const handleEditClick = (shop: Shop) => {
+    if (onEdit) {
+      onEdit(shop);
     }
   };
 
@@ -257,7 +266,7 @@ export const ShopList: React.FC<ShopListProps> = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onEdit?.(shop)}
+                      onClick={() => handleEditClick(shop)}
                       className="h-8 w-8"
                       title={t('common:edit')}
                     >

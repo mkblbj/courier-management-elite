@@ -16,195 +16,102 @@ interface ApiResponse<T> {
  * @param sort 排序字段
  * @param order 排序方向
  */
-export async function getShops(
-  isActive?: boolean,
-  search?: string,
-  sort: string = "sort_order",
-  order: string = "ASC"
-): Promise<Shop[]> {
-  let url = API_URL;
-  const params = new URLSearchParams();
-
-  if (isActive !== undefined) {
-    params.append("is_active", isActive ? "1" : "0");
-  }
-  if (search) {
-    params.append("search", search);
-  }
-  params.append("sort", sort);
-  params.append("order", order);
-
-  const paramStr = params.toString();
-  if (paramStr) {
-    url += `?${paramStr}`;
-  }
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`获取店铺列表失败: ${response.status}`);
-  }
-
-  const result: ApiResponse<Shop[]> = await response.json();
+export const getShops = async (params?: {
+  is_active?: boolean;
+  search?: string;
+  sort?: string;
+  order?: 'asc' | 'desc';
+}): Promise<ApiResponse<Shop[]>> => {
+  const url = new URL(API_URL, window.location.origin);
   
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        url.searchParams.append(key, String(value));
+      }
+    });
   }
   
-  return result.data;
-}
+  const response = await fetch(url.toString());
+  return await response.json();
+};
 
 /**
  * 获取单个店铺信息
  * @param id 店铺ID
  */
-export async function getShop(id: number): Promise<Shop> {
-  const response = await fetch(`${API_URL}/${id}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`获取店铺信息失败: ${response.status}`);
-  }
-
-  const result: ApiResponse<Shop> = await response.json();
-  
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
-  }
-  
-  return result.data;
-}
+export const getShop = async (id: number): Promise<ApiResponse<Shop>> => {
+  const response = await fetch(`${API_URL}/${id}`);
+  return await response.json();
+};
 
 /**
  * 创建店铺
  * @param shopData 店铺数据
  */
-export async function createShop(shopData: ShopFormData): Promise<Shop> {
+export const createShop = async (data: ShopFormData): Promise<ApiResponse<Shop>> => {
   const response = await fetch(API_URL, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(shopData),
+    body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    throw new Error(`创建店铺失败: ${response.status}`);
-  }
-
-  const result: ApiResponse<Shop> = await response.json();
-  
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
-  }
-  
-  return result.data;
-}
+  return await response.json();
+};
 
 /**
  * 更新店铺
  * @param id 店铺ID
  * @param shopData 店铺数据
  */
-export async function updateShop(id: number, shopData: Partial<ShopFormData>): Promise<Shop> {
+export const updateShop = async (id: number, data: ShopFormData): Promise<ApiResponse<Shop>> => {
   const response = await fetch(`${API_URL}/${id}`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(shopData),
+    body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    throw new Error(`更新店铺失败: ${response.status}`);
-  }
-
-  const result: ApiResponse<Shop> = await response.json();
-  
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
-  }
-  
-  return result.data;
-}
+  return await response.json();
+};
 
 /**
  * 删除店铺
  * @param id 店铺ID
  */
-export async function deleteShop(id: number): Promise<void> {
+export const deleteShop = async (id: number): Promise<ApiResponse<null>> => {
   const response = await fetch(`${API_URL}/${id}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    method: 'DELETE',
   });
-
-  if (!response.ok) {
-    throw new Error(`删除店铺失败: ${response.status}`);
-  }
-
-  const result: ApiResponse<null> = await response.json();
-  
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
-  }
-}
+  return await response.json();
+};
 
 /**
  * 切换店铺状态
  * @param id 店铺ID
  */
-export async function toggleShopStatus(id: number): Promise<Shop> {
+export const toggleShopStatus = async (id: number): Promise<ApiResponse<{id: number, is_active: number, name: string}>> => {
   const response = await fetch(`${API_URL}/${id}/toggle`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    method: 'POST',
   });
-
-  if (!response.ok) {
-    throw new Error(`切换店铺状态失败: ${response.status}`);
-  }
-
-  const result: ApiResponse<Shop> = await response.json();
-  
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
-  }
-  
-  return result.data;
-}
+  return await response.json();
+};
 
 /**
  * 更新店铺排序
  * @param items 排序项目列表
  */
-export async function updateShopSort(items: ShopSortItem[]): Promise<void> {
+export const updateShopsSortOrder = async (items: ShopSortItem[]): Promise<ApiResponse<null>> => {
   const response = await fetch(`${API_URL}/sort`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(items),
   });
+  return await response.json();
+};
 
-  if (!response.ok) {
-    throw new Error(`更新店铺排序失败: ${response.status}`);
-  }
-
-  const result: ApiResponse<null> = await response.json();
-  
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
-  }
-} 
+// 为兼容性添加别名
+export const updateShopSort = updateShopsSortOrder; 
