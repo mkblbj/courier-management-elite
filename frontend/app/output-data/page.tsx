@@ -15,6 +15,7 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { toast } from "@/components/ui/use-toast";
 import { createShopOutput } from "@/lib/api/shop-output";
+import { Loader2 } from "lucide-react";
 
 export default function OutputDataPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -23,6 +24,7 @@ export default function OutputDataPage() {
   const [quantity, setQuantity] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
 
   const handleAddRecord = async () => {
     if (!selectedDate || !selectedShopId || !selectedCourierId || !quantity || parseInt(quantity) <= 0) {
@@ -44,9 +46,10 @@ export default function OutputDataPage() {
         notes: notes || undefined,
       });
 
-      // 重置表单
       setQuantity("");
       setNotes("");
+
+      setRefreshKey(prev => prev + 1);
 
       toast({
         title: "添加成功",
@@ -64,6 +67,18 @@ export default function OutputDataPage() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
+      const activeElement = document.activeElement;
+      const isTextarea = activeElement instanceof HTMLTextAreaElement;
+
+      if (!isTextarea || !activeElement?.textContent?.includes('\n')) {
+        e.preventDefault();
+        handleAddRecord();
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
@@ -71,11 +86,12 @@ export default function OutputDataPage() {
       <main className="container mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold tracking-tight mb-6">出力数据</h1>
 
-        {/* 数据录入表单区域 */}
         <Card className="mb-6">
+          <CardHeader className="px-6 py-4 border-b">
+            <CardTitle className="text-xl">录入出力数据</CardTitle>
+          </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              {/* 第一行：日期选择和店铺选择并排 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <DateSelector
@@ -97,7 +113,6 @@ export default function OutputDataPage() {
                 </div>
               </div>
 
-              {/* 第二行：快递选择和数量 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <CourierSelector
@@ -115,12 +130,13 @@ export default function OutputDataPage() {
                     placeholder="请输入数量"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    min="1"
                     className="w-full"
                   />
                 </div>
               </div>
 
-              {/* 第三行：备注 */}
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">备注</label>
@@ -133,42 +149,47 @@ export default function OutputDataPage() {
                 </div>
               </div>
 
-              {/* 添加按钮 */}
-              <div className="flex justify-end">
+              <div className="flex justify-end mt-4">
                 <Button
                   onClick={handleAddRecord}
                   className="bg-blue-600 hover:bg-blue-700"
                   disabled={isLoading}
                 >
-                  {isLoading ? "添加中..." : "添加记录"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      添加中...
+                    </>
+                  ) : "添加记录"}
                 </Button>
+              </div>
+
+              <div className="text-xs text-muted-foreground mt-2 text-right">
+                提示：按Enter键可快速提交表单
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* 下部区域容器 - 响应式布局 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* 最近录入数据区域 */}
           <Card className="lg:col-span-1">
             <CardHeader className="px-6 py-4">
               <CardTitle className="text-xl">最近录入数据</CardTitle>
             </CardHeader>
             <CardContent className="px-6 pb-6">
               <Suspense fallback={<ListSkeleton />}>
-                <OutputList selectedDate={selectedDate} />
+                <OutputList selectedDate={selectedDate} key={`list-${refreshKey}`} />
               </Suspense>
             </CardContent>
           </Card>
 
-          {/* 当日数据汇总区域 */}
           <Card className="lg:col-span-1">
             <CardHeader className="px-6 py-4">
               <CardTitle className="text-xl">当日数据汇总</CardTitle>
             </CardHeader>
             <CardContent className="px-6 pb-6">
               <Suspense fallback={<ListSkeleton />}>
-                <OutputSummary selectedDate={selectedDate} />
+                <OutputSummary selectedDate={selectedDate} key={`summary-${refreshKey}`} />
               </Suspense>
             </CardContent>
           </Card>

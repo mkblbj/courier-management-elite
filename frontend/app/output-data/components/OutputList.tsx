@@ -29,7 +29,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ShopOutput, ShopOutputFilter } from "@/lib/types/shop-output";
 import { getShopOutputs, deleteShopOutput } from "@/lib/api/shop-output";
-import OutputForm from "./OutputForm";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -89,8 +88,14 @@ export default function OutputList({ filter = {}, selectedDate }: OutputListProp
   }, []);
 
   const handleEdit = (output: ShopOutput) => {
-    setSelectedOutput(output);
-    setIsEditModalOpen(true);
+    // 临时禁用编辑功能
+    toast({
+      title: "编辑功能暂时不可用",
+      description: "该功能正在重新实现中",
+      variant: "destructive",
+    });
+    // setSelectedOutput(output);
+    // setIsEditModalOpen(true);
   };
 
   const handleDelete = (output: ShopOutput) => {
@@ -118,11 +123,6 @@ export default function OutputList({ filter = {}, selectedDate }: OutputListProp
     } finally {
       setIsDeleting(false);
     }
-  };
-
-  const handleEditSuccess = () => {
-    setIsEditModalOpen(false);
-    fetchOutputs(); // 重新加载数据
   };
 
   const handleRefresh = () => {
@@ -270,15 +270,6 @@ export default function OutputList({ filter = {}, selectedDate }: OutputListProp
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {selectedOutput && (
-        <OutputForm
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSuccess={handleEditSuccess}
-          initialData={selectedOutput}
-        />
-      )}
     </TooltipProvider>
   );
 } 
