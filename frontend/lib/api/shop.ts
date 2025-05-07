@@ -128,6 +128,12 @@ export const deleteShop = async (id: number): Promise<ApiResponse<null>> => {
   
   if (!response.ok) {
     const error = await response.json();
+    
+    // 特别处理 404 错误（店铺不存在的情况）
+    if (response.status === 404 || error.message?.includes('不存在')) {
+      throw new Error('店铺不存在');
+    }
+    
     throw new Error(error.message || '删除店铺失败');
   }
   

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
       AlertDialog,
       AlertDialogAction,
@@ -10,46 +10,36 @@ import {
       AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { deleteShop } from "@/lib/api/shop";
-import { useToast } from "@/components/ui/use-toast";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { Shop } from "@/lib/types/shop";
 
 interface DeleteShopDialogProps {
       shop: Shop | null;
       isOpen: boolean;
-      onClose: () => void;
+      onOpenChange: (open: boolean) => void;
       onDeleted: () => void;
 }
 
 export function DeleteShopDialog({
       shop,
       isOpen,
-      onClose,
+      onOpenChange,
       onDeleted,
 }: DeleteShopDialogProps) {
       const [isDeleting, setIsDeleting] = useState(false);
-      const { toast } = useToast();
 
       const handleDelete = async () => {
             if (!shop) return;
 
             setIsDeleting(true);
             try {
-                  await deleteShop(shop.id);
-                  toast({
-                        title: "删除成功",
-                        description: `店铺 "${shop.name}" 已成功删除`,
-                  });
-                  onDeleted();
-                  onClose();
+                  // 调用父组件的删除回调
+                  await onDeleted();
+                  // 关闭对话框
+                  onOpenChange(false);
             } catch (error) {
                   console.error("删除店铺失败:", error);
-                  toast({
-                        title: "删除失败",
-                        description: "无法删除店铺，请稍后重试",
-                        variant: "destructive",
-                  });
+                  // 错误处理已在父组件完成
             } finally {
                   setIsDeleting(false);
             }
@@ -58,16 +48,18 @@ export function DeleteShopDialog({
       if (!shop) return null;
 
       return (
-            <AlertDialog open={isOpen} onOpenChange={onClose}>
+            <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
                   <AlertDialogContent>
                         <AlertDialogHeader>
                               <AlertDialogTitle>确认删除店铺</AlertDialogTitle>
                               <AlertDialogDescription>
                                     您确定要删除店铺 <strong>{shop.name}</strong> 吗？此操作不可逆。
-                                    <p className="mt-2 text-destructive flex items-center">
-                                          <AlertTriangle className="h-4 w-4 mr-1" />
-                                          警告：该店铺已有关联的出力数据，删除后相关数据也将一并删除。
-                                    </p>
+                                    {shop.hasRelatedData && (
+                                          <p className="mt-2 text-destructive flex items-center">
+                                                <AlertTriangle className="h-4 w-4 mr-1" />
+                                                警告：该店铺已有关联的出力数据，删除后相关数据也将一并删除。
+                                          </p>
+                                    )}
                               </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

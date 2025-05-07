@@ -19,7 +19,8 @@ import {
   Pencil,
   Trash,
   Store,
-  Filter
+  Filter,
+  Loader2
 } from "lucide-react";
 import { Shop, ShopCategory, ShopFormData } from "@/lib/types/shop";
 import AddShopDialog from './AddShopDialog';
@@ -33,6 +34,7 @@ interface ShopListProps {
   isLoading?: boolean;
   onAdd?: (shop: ShopFormData) => Promise<void>;
   onEdit?: (id: number, shop: ShopFormData) => Promise<void>;
+  onDelete?: (id: number) => Promise<void>;
   onRefresh?: () => Promise<void>;
   onToggleStatus?: (id: number) => Promise<void>;
   onSort?: () => void;
@@ -44,6 +46,7 @@ export const ShopList: React.FC<ShopListProps> = ({
   isLoading = false,
   onAdd,
   onEdit,
+  onDelete,
   onRefresh,
   onToggleStatus,
   onSort,
@@ -55,6 +58,7 @@ export const ShopList: React.FC<ShopListProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedShop, setSelectedShop] = useState<Shop | undefined>(undefined);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  const [toggleStatusLoading, setToggleStatusLoading] = useState<number | null>(null);
 
   // 将店铺按类别分组
   const groupedShops = useMemo(() => {
@@ -89,9 +93,16 @@ export const ShopList: React.FC<ShopListProps> = ({
   };
 
   // 处理状态切换
-  const handleToggleStatus = (id: number) => {
+  const handleToggleStatus = async (id: number) => {
     if (onToggleStatus) {
-      onToggleStatus(id);
+      try {
+        setToggleStatusLoading(id);
+        await onToggleStatus(id);
+      } catch (error) {
+        console.error('状态切换失败:', error);
+      } finally {
+        setToggleStatusLoading(null);
+      }
     }
   };
 
@@ -101,10 +112,12 @@ export const ShopList: React.FC<ShopListProps> = ({
   };
 
   // 获取类别名称
-  const getCategoryName = (categoryId: number | string | undefined) => {
-    if (!categoryId) return t('shop:uncategorized');
-    const category = categories.find(c => c.id.toString() === categoryId.toString());
-    return category ? category.name : t('shop:uncategorized');
+  const getCategoryName = (categoryId: string) => {
+    if (categoryId === 'uncategorized') {
+      return t('shop:uncategorized');
+    }
+    const category = categories.find(c => c.id.toString() === categoryId);
+    return category ? category.name : t('shop:unknown_category');
   };
 
   // 计算店铺总数
@@ -124,11 +137,15 @@ export const ShopList: React.FC<ShopListProps> = ({
   };
 
   // 处理添加店铺成功
-  const handleAddSuccess = async (data: ShopFormData): Promise<void> => {
+  const handleAddShop = async (data: ShopFormData) => {
     if (onAdd) {
-      return onAdd(data);
+      try {
+        await onAdd(data);
+        setShowAddDialog(false);
+      } catch (error) {
+        // 错误处理已在父组件完成
+      }
     }
-    return Promise.resolve();
   };
 
   // 处理编辑店铺按钮点击
@@ -138,17 +155,15 @@ export const ShopList: React.FC<ShopListProps> = ({
   };
 
   // 处理编辑成功
-  const handleEditSuccess = async (data: ShopFormData) => {
-    if (selectedShop && onEdit) {
+  const handleEditShop = async (data: ShopFormData) => {
+    if (onEdit && selectedShop) {
       try {
         await onEdit(selectedShop.id, data);
+        setShowEditDialog(false);
       } catch (error) {
-        // 错误会在onEdit内部处理
-        console.error('编辑店铺出错:', error);
+        // 错误处理已在父组件完成
       }
     }
-    setShowEditDialog(false);
-    setSelectedShop(undefined);
   };
 
   // 处理删除店铺按钮点击
@@ -158,14 +173,14 @@ export const ShopList: React.FC<ShopListProps> = ({
   };
 
   // 处理删除成功
-  const handleDeleteSuccess = () => {
-    // 关闭删除对话框
-    setShowDeleteDialog(false);
-    // 重置选中的店铺
-    setSelectedShop(null);
-    // 刷新列表
-    if (onRefresh) {
-      onRefresh();
+  const handleDeleteSuccess = async () => {
+    if (onDelete && selectedShop) {
+      try {
+        await onDelete(selectedShop.id);
+      } catch (error) {
+        // 错误处理已在父组件完成
+        console.error('删除处理失败：', error);
+      }
     }
   };
 
@@ -254,15 +269,19 @@ export const ShopList: React.FC<ShopListProps> = ({
                       {shops.map((shop) => (
                         <TableRow
                           key={shop.id}
-                          className="hover:bg-muted/50 transition-colors"
+                          className={`hover:bg-muted/50 transition-colors ${!shop.is_active ? 'bg-gray-50 opacity-60' : ''}`}
                         >
                           <TableCell className="w-1/4 font-medium">{shop.name}</TableCell>
                           <TableCell className="w-1/6 text-center">
                             <div className="flex justify-center">
-                              <Switch
-                                checked={Boolean(shop.is_active)}
-                                onCheckedChange={() => handleToggleStatus(shop.id)}
-                              />
+                              {toggleStatusLoading === shop.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Switch
+                                  checked={Boolean(shop.is_active)}
+                                  onCheckedChange={() => handleToggleStatus(shop.id)}
+                                />
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="w-1/6 text-center">{shop.sort_order}</TableCell>
@@ -295,38 +314,41 @@ export const ShopList: React.FC<ShopListProps> = ({
               </div>
             );
           })}
+          {/* 显示总计 */}
+          <div className="text-sm text-muted-foreground text-right">
+            {t('shop:total_shops', { count: totalShops })}
+          </div>
         </div>
       )}
-
-      {/* 底部总计信息 */}
-      <div className="text-sm text-muted-foreground">
-        {t('shop:total_shops', { count: totalShops })}
-      </div>
 
       {/* 添加店铺对话框 */}
       <AddShopDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        onSuccess={handleAddSuccess}
+        onSuccess={handleAddShop}
         categories={categories}
       />
 
       {/* 编辑店铺对话框 */}
-      <EditShopDialog
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        onSuccess={handleEditSuccess}
-        shop={selectedShop}
-        categories={categories}
-      />
+      {selectedShop && (
+        <EditShopDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSuccess={handleEditShop}
+          shop={selectedShop}
+          categories={categories}
+        />
+      )}
 
       {/* 删除店铺对话框 */}
-      <DeleteShopDialog
-        shop={selectedShop || null}
-        isOpen={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        onDeleted={handleDeleteSuccess}
-      />
+      {selectedShop && (
+        <DeleteShopDialog
+          isOpen={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          shop={selectedShop}
+          onDeleted={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 };
