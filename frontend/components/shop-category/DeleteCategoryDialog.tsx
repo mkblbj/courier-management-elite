@@ -10,12 +10,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ShopCategory } from '@/lib/types/shop';
+import { useTranslation } from 'react-i18next';
 
 interface DeleteCategoryDialogProps {
   category: ShopCategory;
   open: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
+  dialogDescription?: string;
 }
 
 export function DeleteCategoryDialog({
@@ -23,9 +25,11 @@ export function DeleteCategoryDialog({
   open,
   onClose,
   onConfirm,
+  dialogDescription,
 }: DeleteCategoryDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation(['shop', 'common']);
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
@@ -34,9 +38,9 @@ export function DeleteCategoryDialog({
       await onConfirm();
     } catch (err) {
       if (err instanceof Error && err.message.includes('关联')) {
-        setError('该类别已关联店铺，无法删除。请先移除关联的店铺或将店铺更换到其他类别。');
+        setError(t('shop:category_has_shops_error'));
       } else {
-        setError(err instanceof Error ? err.message : '删除失败，请重试');
+        setError(err instanceof Error ? err.message : t('shop:delete_failed'));
       }
       return false;
     } finally {
@@ -49,16 +53,16 @@ export function DeleteCategoryDialog({
     <AlertDialog open={open} onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>删除店铺类别</AlertDialogTitle>
+          <AlertDialogTitle>{t('shop:delete_category')}</AlertDialogTitle>
           <AlertDialogDescription>
-            确定要删除类别 "{category.name}" 吗？此操作不可撤销。
+            {dialogDescription || t('shop:delete_category_confirm', { name: category.name })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error && (
           <div className="text-sm text-red-500 py-2">{error}</div>
         )}
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isSubmitting}>取消</AlertDialogCancel>
+          <AlertDialogCancel disabled={isSubmitting}>{t('common:cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -71,7 +75,7 @@ export function DeleteCategoryDialog({
             disabled={isSubmitting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isSubmitting ? '删除中...' : '确认删除'}
+            {isSubmitting ? t('shop:deleting') : t('shop:confirm_delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -9,11 +9,13 @@ import {
   updateCategorySort
 } from '@/lib/api/shop-category';
 import { useToast } from '@/components/ui/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export function CategoryManagementTab() {
   const [categories, setCategories] = useState<ShopCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation(['common', 'shop']);
 
   useEffect(() => {
     fetchCategories();
@@ -28,8 +30,8 @@ export function CategoryManagementTab() {
       console.error('获取店铺类别失败:', error);
       toast({
         variant: 'destructive',
-        title: '获取店铺类别失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_loading_categories'),
+        description: error instanceof Error ? error.message : t('common:data_fetch_failed'),
       });
     } finally {
       setIsLoading(false);
@@ -40,16 +42,16 @@ export function CategoryManagementTab() {
     try {
       await createShopCategory(category);
       toast({
-        title: '添加成功',
-        description: `类别 "${category.name}" 已成功添加`,
+        title: t('shop:category_created'),
+        description: t('shop:category_updated_success', { name: category.name }),
       });
       await fetchCategories();
     } catch (error) {
       console.error('添加店铺类别失败:', error);
       toast({
         variant: 'destructive',
-        title: '添加失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_creating_category'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
       });
       throw error;
     }
@@ -59,16 +61,16 @@ export function CategoryManagementTab() {
     try {
       await updateShopCategory(id, category);
       toast({
-        title: '更新成功',
-        description: `类别 "${category.name}" 已成功更新`,
+        title: t('shop:category_updated'),
+        description: t('shop:category_updated_success', { name: category.name }),
       });
       await fetchCategories();
     } catch (error) {
       console.error('更新店铺类别失败:', error);
       toast({
         variant: 'destructive',
-        title: '更新失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_updating_category'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
       });
       throw error;
     }
@@ -78,16 +80,16 @@ export function CategoryManagementTab() {
     try {
       await deleteShopCategory(id);
       toast({
-        title: '删除成功',
-        description: '店铺类别已成功删除',
+        title: t('shop:category_deleted'),
+        description: t('shop:delete_success'),
       });
       await fetchCategories();
     } catch (error) {
       console.error('删除店铺类别失败:', error);
       toast({
         variant: 'destructive',
-        title: '删除失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_deleting_category'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
       });
       throw error;
     }
@@ -97,16 +99,16 @@ export function CategoryManagementTab() {
     try {
       await updateCategorySort(sortedCategories);
       toast({
-        title: '排序更新成功',
-        description: '店铺类别顺序已成功更新',
+        title: t('shop:sort_updated'),
+        description: t('shop:sort_updated_success'),
       });
       await fetchCategories();
     } catch (error) {
       console.error('更新排序失败:', error);
       toast({
         variant: 'destructive',
-        title: '排序更新失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_updating_sort'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
       });
       throw error;
     }
@@ -115,9 +117,9 @@ export function CategoryManagementTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold">店铺类别管理</h2>
+        <h2 className="text-xl font-bold">{t('shop:category_management')}</h2>
         <p className="text-sm text-muted-foreground">
-          管理店铺类别，用于对店铺进行分类。
+          {t('shop:manage_categories')}
         </p>
       </div>
 

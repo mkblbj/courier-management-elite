@@ -81,8 +81,8 @@ export default function CourierTypesPage() {
           <div className="bg-white shadow rounded-lg p-6 max-w-5xl mx-auto">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="mb-6">
-                <TabsTrigger value="courier-types">快递类型</TabsTrigger>
-                <TabsTrigger value="shop-management">店铺管理</TabsTrigger>
+                <TabsTrigger value="courier-types">{t('courier:courier_types')}</TabsTrigger>
+                <TabsTrigger value="shop-management">{t('shop:shop_management')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="courier-types">
@@ -94,8 +94,8 @@ export default function CourierTypesPage() {
               <TabsContent value="shop-management">
                 <Tabs value={shopTab} onValueChange={handleShopTabChange}>
                   <TabsList className="mb-6">
-                    <TabsTrigger value="categories">店铺类别</TabsTrigger>
-                    <TabsTrigger value="shops">店铺管理</TabsTrigger>
+                    <TabsTrigger value="categories">{t('shop:category_list')}</TabsTrigger>
+                    <TabsTrigger value="shops">{t('shop:shop_management')}</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="categories">
