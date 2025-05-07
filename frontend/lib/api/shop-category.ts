@@ -123,7 +123,7 @@ export async function deleteShopCategory(id: number): Promise<void> {
   });
   
   if (!response.ok) {
-    throw new Error(`删除店铺类别失败: ${response.statusText}`);
+    throw new Error(`删除店铺类别失败: 该类别已关联店铺，无法删除。请先移除关联的店铺或将店铺更换到其他类别 ${response.statusText}`);
   }
   
   const data: ApiResponse<void> = await response.json();
