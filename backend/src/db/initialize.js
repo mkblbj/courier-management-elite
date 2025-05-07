@@ -5,6 +5,13 @@
 
 const mysql = require('mysql2/promise');
 const { initConfig, dbName } = require('./config');
+const fs = require('fs');
+const path = require('path');
+
+// 导入迁移脚本
+const shopsTableMigration = require('./migrations/create_shops_table');
+const shopOutputsTableMigration = require('./migrations/create_shop_outputs_table');
+const shopCategoriesMigration = require('./migrations/create_shop_categories');
 
 async function initializeDatabase() {
   let connection;
@@ -79,6 +86,28 @@ async function initializeDatabase() {
       console.log('唯一约束 unique_date_courier 添加成功');
     } else {
       console.log('唯一约束 unique_date_courier 已存在，跳过添加');
+    }
+    
+    // 执行店铺相关的迁移脚本
+    console.log('执行店铺相关的迁移脚本...');
+    
+    try {
+      // 执行店铺表创建迁移
+      console.log('执行店铺表创建迁移...');
+      await shopsTableMigration.migrate();
+      
+      // 执行店铺类别表创建迁移
+      console.log('执行店铺类别表创建迁移...');
+      await shopCategoriesMigration.migrate();
+      
+      // 执行店铺出力表创建迁移
+      console.log('执行店铺出力表创建迁移...');
+      await shopOutputsTableMigration.migrate();
+      
+      console.log('所有迁移脚本执行完成');
+    } catch (migrationError) {
+      console.error('迁移脚本执行失败:', migrationError);
+      console.log('继续初始化过程...');
     }
     
     // 检查是否需要添加测试数据

@@ -9,10 +9,7 @@
     "db:init": "node src/db/initialize.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "migrate": "node src/db/migrations/add_parent_id.js",
-    "migrate:shops": "node src/db/migrations/create_shops_table.js",
-    "migrate:shop-outputs": "node src/db/migrations/create_shop_outputs_table.js"
+    "test:coverage": "jest --coverage"
   },
   "keywords": [],
   "author": "",
