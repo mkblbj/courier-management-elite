@@ -203,11 +203,11 @@ export const ShopList: React.FC<ShopListProps> = ({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t('shop:shop_name')}</TableHead>
-                      <TableHead>{t('shop:status')}</TableHead>
-                      <TableHead>{t('shop:sort_order')}</TableHead>
-                      <TableHead>{t('shop:remark')}</TableHead>
-                      <TableHead className="text-right">{t('common:actions')}</TableHead>
+                      <TableHead className="w-[25%]">{t('shop:shop_name')}</TableHead>
+                      <TableHead className="w-[15%] text-center">{t('shop:status')}</TableHead>
+                      <TableHead className="w-[15%] text-center">{t('shop:sort_order')}</TableHead>
+                      <TableHead className="w-[30%]">{t('shop:remark')}</TableHead>
+                      <TableHead className="w-[15%] text-right">{t('common:actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -217,13 +217,15 @@ export const ShopList: React.FC<ShopListProps> = ({
                         className="hover:bg-muted/50 transition-colors"
                       >
                         <TableCell className="font-medium">{shop.name}</TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={Boolean(shop.is_active)}
-                            onCheckedChange={() => handleToggleStatus(shop.id)}
-                          />
+                        <TableCell className="text-center">
+                          <div className="flex justify-center">
+                            <Switch
+                              checked={Boolean(shop.is_active)}
+                              onCheckedChange={() => handleToggleStatus(shop.id)}
+                            />
+                          </div>
                         </TableCell>
-                        <TableCell>{shop.sort_order}</TableCell>
+                        <TableCell className="text-center">{shop.sort_order}</TableCell>
                         <TableCell className="max-w-xs truncate">
                           {shop.remark || '-'}
                         </TableCell>
