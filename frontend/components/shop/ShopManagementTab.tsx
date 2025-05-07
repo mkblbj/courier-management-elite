@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { ShopList } from './ShopList';
-import { Shop, ShopCategory, ShopFormData } from '@/lib/types/shop';
-import { getShops, createShop, updateShop, deleteShop, updateShopSort, toggleShopStatus } from '@/lib/api/shop';
+import { Shop, ShopCategory, ShopFormData, ShopSortItem } from '@/lib/types/shop';
+import { getShops, createShop, updateShop, deleteShop, updateShopsSortOrder, toggleShopStatus } from '@/lib/api/shop';
 import { getShopCategories } from '@/lib/api/shop-category';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from 'react-i18next';
+import ShopSortModal from './ShopSortModal';
 
 export function ShopManagementTab() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [categories, setCategories] = useState<ShopCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [showSortModal, setShowSortModal] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation(['common', 'shop']);
 
@@ -215,13 +217,41 @@ export function ShopManagementTab() {
     }
   };
 
-  const handleSort = async () => {
-    // 这里只负责打开排序对话框，具体排序逻辑在ShopSortModal中处理
-    // 后续会实现ShopSortModal组件
-    toast({
-      title: t('shop:sort_feature'),
-      description: t('shop:sort_feature_coming_soon'),
-    });
+  const handleSort = () => {
+    setShowSortModal(true);
+  };
+
+  const handleSortSave = async (sortedShops: Shop[]) => {
+    try {
+      // 准备排序数据
+      const sortItems: ShopSortItem[] = sortedShops.map(shop => ({
+        id: shop.id,
+        sort_order: shop.sort_order
+      }));
+
+      // 调用API保存排序
+      const result = await updateShopsSortOrder(sortItems);
+
+      if (result && result.code === 0) {
+        // 更新本地状态
+        setShops(sortedShops);
+
+        toast({
+          title: t('shop:sort_updated'),
+          description: t('shop:sort_update_success'),
+        });
+      } else {
+        throw new Error(result?.message || t('shop:error_updating_sort'));
+      }
+    } catch (error) {
+      console.error('更新店铺排序失败:', error);
+      toast({
+        variant: 'destructive',
+        title: t('shop:error_updating_sort'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
+      });
+      throw error;
+    }
   };
 
   return (
@@ -243,6 +273,14 @@ export function ShopManagementTab() {
         onRefresh={refreshShops}
         onToggleStatus={handleToggleStatus}
         onSort={handleSort}
+      />
+
+      <ShopSortModal
+        open={showSortModal}
+        onOpenChange={setShowSortModal}
+        shops={shops}
+        categories={categories}
+        onSortSave={handleSortSave}
       />
     </div>
   );

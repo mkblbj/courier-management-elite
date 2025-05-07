@@ -81,7 +81,7 @@
   "error_updating_status": "更新店铺状态失败",
   "adjust_sort": "调整排序",
   "sort_updated": "排序已更新",
-  "sort_updated_success": "店铺排序已成功更新",
+  "sort_update_success": "店铺排序已成功更新",
   "error_updating_sort": "更新排序失败",
   "status": "状态",
   "sort_order": "排序",
@@ -138,5 +138,16 @@
   "enter_category_name": "请输入类别名称",
   "category_has_shops_error": "该类别已关联店铺，无法删除。请先移除关联的店铺或将店铺更换到其他类别。",
   "delete_failed": "删除失败，请重试",
-  "save_sort": "保存排序"
+  "save_sort": "保存排序",
+  
+  "adjust_shop_sort": "调整店铺排序",
+  "drag_to_adjust_shop_order": "拖拽调整店铺顺序，完成后点击保存排序按钮。",
+  "shop_sort_feature": "店铺排序功能",
+  "shop_sort_feature_coming_soon": "店铺排序功能即将推出",
+  "shop_sort_saved": "店铺排序已保存",
+  "shop_sort_save_failed": "保存店铺排序失败",
+  "shop_sort_saving": "正在保存排序...",
+  "shop_sort_help": "通过拖动手柄可以调整同一类别内店铺的顺序",
+  "no_shops_in_category": "此类别下暂无店铺",
+  "manage_shops_description": "管理店铺信息、状态和排序顺序"
 } 
