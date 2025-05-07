@@ -1,12 +1,14 @@
 export interface Shop {
   id: number;
   name: string;
-  is_active: number | boolean;
+  category_id: number;
+  category_name?: string;
+  is_active: boolean;
   sort_order: number;
-  category_id?: number;
   remark?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
+  hasRelatedData?: boolean;
 }
 
 export interface ShopFormData {

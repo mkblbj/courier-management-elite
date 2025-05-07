@@ -44,7 +44,7 @@
   "date_stats": "Date Statistics",
   "total_quantity": "Total Quantity",
   "days_count": "Days Count",
-  "shops_count": "Shops Count",
+  "shops_count": "{{count}} Shops",
   "couriers_count": "Couriers Count",
   "average_daily": "Average Daily",
   "confirm": "Confirm",
@@ -90,5 +90,6 @@
   "sort_shops": "Sort Shops",
   "saving": "Saving...",
   "shop_added_success": "Shop added successfully",
-  "shop_add_error": "Failed to add shop, please try again"
+  "shop_add_error": "Failed to add shop, please try again",
+  "total_shops": "Total {{count}} shops"
 } 

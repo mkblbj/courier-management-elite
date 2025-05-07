@@ -125,6 +125,12 @@ export const deleteShop = async (id: number): Promise<ApiResponse<null>> => {
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'DELETE',
   });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || '删除店铺失败');
+  }
+  
   return await response.json();
 };
 
@@ -155,4 +161,20 @@ export const updateShopsSortOrder = async (items: ShopSortItem[]): Promise<ApiRe
 };
 
 // 为兼容性添加别名
-export const updateShopSort = updateShopsSortOrder; 
+export const updateShopSort = updateShopsSortOrder;
+
+/**
+ * 检查店铺是否有关联数据
+ * @param id 店铺ID
+ */
+export const checkShopHasRelatedData = async (id: number): Promise<ApiResponse<{hasRelatedData: boolean}>> => {
+  // TODO: 这里是临时模拟API调用，需要替换为实际的后端API
+  return Promise.resolve({
+    code: 0,
+    message: '操作成功',
+    data: { 
+      // 始终返回有关联数据，确保显示警告
+      hasRelatedData: true 
+    }
+  });
+}; 

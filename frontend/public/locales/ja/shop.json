@@ -44,7 +44,7 @@
   "date_stats": "日付統計",
   "total_quantity": "総数量",
   "days_count": "日数",
-  "shops_count": "ショップ数",
+  "shops_count": "{{count}}店舗",
   "couriers_count": "配送数",
   "average_daily": "日平均",
   "confirm": "確認",
@@ -90,5 +90,6 @@
   "sort_shops": "ショップ並べ替え",
   "saving": "保存中...",
   "shop_added_success": "ショップが正常に追加されました",
-  "shop_add_error": "ショップの追加に失敗しました。再試行してください"
+  "shop_add_error": "ショップの追加に失敗しました。再試行してください",
+  "total_shops": "合計{{count}}店舗"
 } 

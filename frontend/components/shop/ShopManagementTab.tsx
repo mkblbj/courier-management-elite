@@ -91,23 +91,8 @@ export function ShopManagementTab() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteShop(id);
-      toast({
-        title: t('shop:shop_deleted'),
-        description: t('shop:delete_success'),
-      });
-      await fetchShops();
-    } catch (error) {
-      console.error('删除店铺失败:', error);
-      toast({
-        variant: 'destructive',
-        title: t('shop:error_deleting_shop'),
-        description: error instanceof Error ? error.message : t('common:operation_failed'),
-      });
-      throw error;
-    }
+  const refreshShops = async () => {
+    await fetchShops();
   };
 
   const handleToggleStatus = async (id: number) => {
@@ -159,7 +144,7 @@ export function ShopManagementTab() {
         isLoading={isLoading || isLoadingCategories}
         onAdd={handleAdd}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onRefresh={refreshShops}
         onToggleStatus={handleToggleStatus}
         onSort={handleSort}
       />

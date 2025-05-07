@@ -44,7 +44,7 @@
   "date_stats": "日期统计",
   "total_quantity": "总数量",
   "days_count": "天数",
-  "shops_count": "店铺数",
+  "shops_count": "共 {{count}} 个店铺",
   "couriers_count": "快递数",
   "average_daily": "日均数量",
   "confirm": "确认",
@@ -101,6 +101,7 @@
   "output_updated": "出力数据更新成功",
   "output_save_failed": "保存出力数据失败",
   "total_record": "共 {{count}} 条记录",
+  "total_shops": "共 {{count}} 个店铺",
   
   "category_management": "店铺类别管理",
   "category_name": "类别名称",

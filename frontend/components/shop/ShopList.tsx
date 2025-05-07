@@ -24,6 +24,7 @@ import {
 import { Shop, ShopCategory, ShopFormData } from "@/lib/types/shop";
 import AddShopDialog from './AddShopDialog';
 import EditShopDialog from './EditShopDialog';
+import { DeleteShopDialog } from './DeleteShopDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ShopListProps {
@@ -32,7 +33,7 @@ interface ShopListProps {
   isLoading?: boolean;
   onAdd?: (shop: ShopFormData) => Promise<void>;
   onEdit?: (id: number, shop: ShopFormData) => Promise<void>;
-  onDelete?: (id: number) => Promise<void>;
+  onRefresh?: () => Promise<void>;
   onToggleStatus?: (id: number) => Promise<void>;
   onSort?: () => void;
 }
@@ -43,7 +44,7 @@ export const ShopList: React.FC<ShopListProps> = ({
   isLoading = false,
   onAdd,
   onEdit,
-  onDelete,
+  onRefresh,
   onToggleStatus,
   onSort,
 }) => {
@@ -51,6 +52,7 @@ export const ShopList: React.FC<ShopListProps> = ({
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedShop, setSelectedShop] = useState<Shop | undefined>(undefined);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
@@ -149,6 +151,24 @@ export const ShopList: React.FC<ShopListProps> = ({
     setSelectedShop(undefined);
   };
 
+  // 处理删除店铺按钮点击
+  const handleDeleteClick = (shop: Shop) => {
+    setSelectedShop(shop);
+    setShowDeleteDialog(true);
+  };
+
+  // 处理删除成功
+  const handleDeleteSuccess = () => {
+    // 关闭删除对话框
+    setShowDeleteDialog(false);
+    // 重置选中的店铺
+    setSelectedShop(null);
+    // 刷新列表
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -212,64 +232,66 @@ export const ShopList: React.FC<ShopListProps> = ({
             if (shops.length === 0) return null;
 
             return (
-              <div key={categoryId} className="border rounded-md">
+              <div key={categoryId} className="border rounded-md w-full">
                 <div className="bg-muted p-3 flex justify-between items-center">
                   <h3 className="font-medium">
                     [{getCategoryName(categoryId)}] {t('shop:shops_count', { count: shops.length })}
                   </h3>
                 </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('shop:shop_name')}</TableHead>
-                      <TableHead className="text-center">{t('shop:status')}</TableHead>
-                      <TableHead className="text-center">{t('shop:sort_order')}</TableHead>
-                      <TableHead>{t('shop:remark')}</TableHead>
-                      <TableHead className="text-right">{t('common:actions')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {shops.map((shop) => (
-                      <TableRow
-                        key={shop.id}
-                        className="hover:bg-muted/50 transition-colors"
-                      >
-                        <TableCell className="font-medium">{shop.name}</TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex justify-center">
-                            <Switch
-                              checked={Boolean(shop.is_active)}
-                              onCheckedChange={() => handleToggleStatus(shop.id)}
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">{shop.sort_order}</TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {shop.remark || '-'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditClick(shop)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onDelete && onDelete(shop.id)}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                <div className="w-full overflow-hidden">
+                  <Table className="table-fixed w-full">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-1/4">{t('shop:shop_name')}</TableHead>
+                        <TableHead className="w-1/6 text-center">{t('shop:status')}</TableHead>
+                        <TableHead className="w-1/6 text-center">{t('shop:sort_order')}</TableHead>
+                        <TableHead className="w-1/3">{t('shop:remark')}</TableHead>
+                        <TableHead className="w-1/6 text-right">{t('common:actions')}</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+
+                    <TableBody>
+                      {shops.map((shop) => (
+                        <TableRow
+                          key={shop.id}
+                          className="hover:bg-muted/50 transition-colors"
+                        >
+                          <TableCell className="w-1/4 font-medium">{shop.name}</TableCell>
+                          <TableCell className="w-1/6 text-center">
+                            <div className="flex justify-center">
+                              <Switch
+                                checked={Boolean(shop.is_active)}
+                                onCheckedChange={() => handleToggleStatus(shop.id)}
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="w-1/6 text-center">{shop.sort_order}</TableCell>
+                          <TableCell className="w-1/3 max-w-xs truncate">
+                            {shop.remark || '-'}
+                          </TableCell>
+                          <TableCell className="w-1/6 text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditClick(shop)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteClick(shop)}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             );
           })}
@@ -296,6 +318,14 @@ export const ShopList: React.FC<ShopListProps> = ({
         onSuccess={handleEditSuccess}
         shop={selectedShop}
         categories={categories}
+      />
+
+      {/* 删除店铺对话框 */}
+      <DeleteShopDialog
+        shop={selectedShop || null}
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onDeleted={handleDeleteSuccess}
       />
     </div>
   );
