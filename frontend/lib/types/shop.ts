@@ -3,6 +3,7 @@ export interface Shop {
   name: string;
   is_active: number | boolean;
   sort_order: number;
+  category_id?: number;
   remark?: string;
   created_at?: string;
   updated_at?: string;
@@ -12,6 +13,7 @@ export interface ShopFormData {
   name: string;
   is_active: boolean;
   sort_order?: number;
+  category_id?: number;
   remark?: string;
 }
 

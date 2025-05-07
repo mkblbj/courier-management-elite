@@ -11,29 +11,37 @@ interface ApiResponse<T> {
 
 /**
  * 获取店铺列表
- * @param isActive 是否只获取启用的店铺
- * @param params 其他查询参数
+ * @param params 查询参数对象
  */
-export const getShops = async (
-  isActive?: boolean,
-  params?: {
-    search?: string;
-    sort?: string;
-    order?: 'asc' | 'desc';
-  }
-): Promise<Shop[]> => {
+export const getShops = async (params?: {
+  isActive?: boolean;
+  categoryId?: number;
+  search?: string;
+  sort?: string;
+  order?: 'ASC' | 'DESC';
+}): Promise<Shop[]> => {
   const url = new URL(API_URL, window.location.origin);
   
-  if (isActive !== undefined) {
-    url.searchParams.append('status', isActive ? 'active' : 'inactive');
-  }
-  
   if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        url.searchParams.append(key, String(value));
-      }
-    });
+    if (params.isActive !== undefined) {
+      url.searchParams.append('is_active', params.isActive ? '1' : '0');
+    }
+    
+    if (params.categoryId !== undefined) {
+      url.searchParams.append('category', String(params.categoryId));
+    }
+    
+    if (params.search) {
+      url.searchParams.append('search', params.search);
+    }
+    
+    if (params.sort) {
+      url.searchParams.append('sort', params.sort);
+    }
+    
+    if (params.order) {
+      url.searchParams.append('order', params.order);
+    }
   }
   
   try {
@@ -50,6 +58,23 @@ export const getShops = async (
     console.error("Exception in getShops:", error);
     return [];
   }
+};
+
+// 为兼容性保留原有的函数签名
+export const getShopsByActiveStatus = async (
+  isActive?: boolean,
+  additionalParams?: {
+    search?: string;
+    sort?: string;
+    order?: 'asc' | 'desc';
+  }
+): Promise<Shop[]> => {
+  return getShops({
+    isActive,
+    search: additionalParams?.search,
+    sort: additionalParams?.sort,
+    order: additionalParams?.order as 'ASC' | 'DESC'
+  });
 };
 
 /**

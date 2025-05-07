@@ -10,12 +10,11 @@ import {
 import { toast } from "sonner";
 import ShopForm from "./ShopForm";
 import { ShopFormData } from "@/lib/types/shop";
-import { createShop } from "@/lib/api/shop";
 
 interface AddShopDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (data: ShopFormData) => Promise<void>;
 }
 
 export const AddShopDialog: React.FC<AddShopDialogProps> = ({
@@ -29,12 +28,13 @@ export const AddShopDialog: React.FC<AddShopDialogProps> = ({
   const handleSubmit = async (data: ShopFormData) => {
     try {
       setIsSubmitting(true);
-      await createShop(data);
-      toast.success(t('shop:shop_added_success'));
-      onOpenChange(false);
+
       if (onSuccess) {
-        onSuccess();
+        await onSuccess(data);
       }
+
+      onOpenChange(false);
+      toast.success(t('shop:shop_added_success'));
     } catch (error) {
       console.error("添加店铺失败:", error);
       toast.error(

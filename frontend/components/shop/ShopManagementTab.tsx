@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { ShopList } from './ShopList';
-import { Shop, ShopCategory } from '@/lib/types/shop';
+import { Shop, ShopCategory, ShopFormData } from '@/lib/types/shop';
 import { getShops, createShop, updateShop, deleteShop, updateShopSort, toggleShopStatus } from '@/lib/api/shop';
 import { getShopCategories } from '@/lib/api/shop-category';
 import { useToast } from '@/components/ui/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export function ShopManagementTab() {
   const [shops, setShops] = useState<Shop[]>([]);
@@ -11,6 +12,7 @@ export function ShopManagementTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation(['common', 'shop']);
 
   useEffect(() => {
     fetchShops();
@@ -26,8 +28,8 @@ export function ShopManagementTab() {
       console.error('获取店铺列表失败:', error);
       toast({
         variant: 'destructive',
-        title: '获取店铺列表失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_loading_shops'),
+        description: error instanceof Error ? error.message : t('common:data_fetch_failed'),
       });
     } finally {
       setIsLoading(false);
@@ -43,47 +45,47 @@ export function ShopManagementTab() {
       console.error('获取店铺类别失败:', error);
       toast({
         variant: 'destructive',
-        title: '获取店铺类别失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_loading_categories'),
+        description: error instanceof Error ? error.message : t('common:data_fetch_failed'),
       });
     } finally {
       setIsLoadingCategories(false);
     }
   };
 
-  const handleAdd = async (shop: Omit<Shop, 'id'>) => {
+  const handleAdd = async (shopData: ShopFormData) => {
     try {
-      await createShop(shop);
+      await createShop(shopData);
       toast({
-        title: '添加成功',
-        description: `店铺 "${shop.name}" 已成功添加`,
+        title: t('shop:shop_added'),
+        description: t('shop:shop_add_success', { name: shopData.name }),
       });
       await fetchShops();
     } catch (error) {
       console.error('添加店铺失败:', error);
       toast({
         variant: 'destructive',
-        title: '添加失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_adding_shop'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
       });
       throw error;
     }
   };
 
-  const handleEdit = async (id: number, shop: Partial<Shop>) => {
+  const handleEdit = async (id: number, shopData: ShopFormData) => {
     try {
-      await updateShop(id, shop);
+      await updateShop(id, shopData);
       toast({
-        title: '更新成功',
-        description: `店铺 "${shop.name || '店铺'}" 已成功更新`,
+        title: t('shop:shop_updated'),
+        description: t('shop:shop_update_success', { name: shopData.name || t('shop:shop') }),
       });
       await fetchShops();
     } catch (error) {
       console.error('更新店铺失败:', error);
       toast({
         variant: 'destructive',
-        title: '更新失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_updating_shop'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
       });
       throw error;
     }
@@ -93,16 +95,16 @@ export function ShopManagementTab() {
     try {
       await deleteShop(id);
       toast({
-        title: '删除成功',
-        description: '店铺已成功删除',
+        title: t('shop:shop_deleted'),
+        description: t('shop:delete_success'),
       });
       await fetchShops();
     } catch (error) {
       console.error('删除店铺失败:', error);
       toast({
         variant: 'destructive',
-        title: '删除失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_deleting_shop'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
       });
       throw error;
     }
@@ -112,49 +114,42 @@ export function ShopManagementTab() {
     try {
       const shop = shops.find(s => s.id === id);
       if (!shop) return;
-      
+
       await toggleShopStatus(id);
       toast({
-        title: '状态更新成功',
-        description: `店铺 "${shop.name}" 已${shop.is_active ? '禁用' : '启用'}`,
+        title: t('shop:status_updated'),
+        description: t('shop:status_update_success', {
+          name: shop.name,
+          status: shop.is_active ? t('shop:disabled') : t('shop:enabled')
+        }),
       });
       await fetchShops();
     } catch (error) {
       console.error('切换店铺状态失败:', error);
       toast({
         variant: 'destructive',
-        title: '状态更新失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
+        title: t('shop:error_updating_status'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
       });
       throw error;
     }
   };
 
-  const handleSort = async (sortedShops: { id: number; sort_order: number }[]) => {
-    try {
-      await updateShopSort(sortedShops);
-      toast({
-        title: '排序更新成功',
-        description: '店铺顺序已成功更新',
-      });
-      await fetchShops();
-    } catch (error) {
-      console.error('更新排序失败:', error);
-      toast({
-        variant: 'destructive',
-        title: '排序更新失败',
-        description: error instanceof Error ? error.message : '请稍后重试',
-      });
-      throw error;
-    }
+  const handleSort = async () => {
+    // 这里只负责打开排序对话框，具体排序逻辑在ShopSortModal中处理
+    // 后续会实现ShopSortModal组件
+    toast({
+      title: t('shop:sort_feature'),
+      description: t('shop:sort_feature_coming_soon'),
+    });
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold">店铺管理</h2>
+        <h2 className="text-xl font-bold">{t('shop:shop_management')}</h2>
         <p className="text-sm text-muted-foreground">
-          管理店铺信息，包括店铺状态、排序等。
+          {t('shop:manage_shops_description')}
         </p>
       </div>
 

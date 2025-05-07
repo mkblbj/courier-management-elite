@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from "react-i18next";
 import {
   Table,
@@ -11,197 +11,123 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronLeft, ChevronRight, Plus, Pencil, Trash } from "lucide-react";
-import { Shop } from "@/lib/types/shop";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Pencil,
+  Trash,
+  Store,
+  Filter
+} from "lucide-react";
+import { Shop, ShopCategory, ShopFormData } from "@/lib/types/shop";
 import AddShopDialog from './AddShopDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ShopListProps {
   shops: Shop[];
-  onToggleActive?: (id: number, active: boolean) => void;
-  onEdit?: (shop: Shop) => void;
-  onDelete?: (id: number) => void;
+  categories: ShopCategory[];
+  isLoading?: boolean;
+  onAdd?: (shop: ShopFormData) => Promise<void>;
+  onEdit?: (id: number, shop: ShopFormData) => Promise<void>;
+  onDelete?: (id: number) => Promise<void>;
+  onToggleStatus?: (id: number) => Promise<void>;
   onSort?: () => void;
-  onRefresh?: () => void;
-  loading?: boolean;
-  searchTerm?: string;
-  onSearch?: (term: string) => void;
 }
 
 export const ShopList: React.FC<ShopListProps> = ({
   shops = [],
-  onToggleActive,
+  categories = [],
+  isLoading = false,
+  onAdd,
   onEdit,
   onDelete,
+  onToggleStatus,
   onSort,
-  onRefresh,
-  loading = false,
-  searchTerm = '',
-  onSearch,
 }) => {
   const { t } = useTranslation(['common', 'shop']);
-  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  
-  // 分页状态
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [paginatedShops, setPaginatedShops] = useState<Shop[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
-  // 当搜索词从父组件变化时，更新本地状态
-  useEffect(() => {
-    setLocalSearchTerm(searchTerm);
-  }, [searchTerm]);
-
-  // 根据搜索词过滤店铺
-  useEffect(() => {
-    // 确保shops是数组再调用filter
-    const shopsArray = Array.isArray(shops) ? shops : [];
-    setFilteredShops(
-      shopsArray.filter(shop => 
-        shop && shop.name && shop.name.toLowerCase().includes(localSearchTerm.toLowerCase())
-      )
+  // 将店铺按类别分组
+  const groupedShops = useMemo(() => {
+    // 先过滤
+    const filteredShops = shops.filter(shop =>
+      shop.name.toLowerCase().includes(localSearchTerm.toLowerCase())
     );
-    setCurrentPage(1); // 重置到第一页
-  }, [shops, localSearchTerm]);
 
-  // 计算分页数据
-  useEffect(() => {
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    setPaginatedShops(filteredShops.slice(indexOfFirstItem, indexOfLastItem));
-  }, [filteredShops, currentPage, itemsPerPage]);
+    // 如果选择了特定类别，只返回该类别的店铺
+    if (selectedCategoryId !== 'all') {
+      return {
+        [selectedCategoryId]: filteredShops.filter(
+          shop => shop.category_id && shop.category_id.toString() === selectedCategoryId
+        )
+      };
+    }
+
+    // 否则按类别分组
+    return filteredShops.reduce((groups: Record<string, Shop[]>, shop) => {
+      const categoryId = shop.category_id ? shop.category_id.toString() : 'uncategorized';
+      if (!groups[categoryId]) {
+        groups[categoryId] = [];
+      }
+      groups[categoryId].push(shop);
+      return groups;
+    }, {});
+  }, [shops, localSearchTerm, selectedCategoryId]);
 
   // 处理搜索
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLocalSearchTerm(value);
-    if (onSearch) {
-      onSearch(value);
+    setLocalSearchTerm(e.target.value);
+  };
+
+  // 处理状态切换
+  const handleToggleStatus = (id: number) => {
+    if (onToggleStatus) {
+      onToggleStatus(id);
     }
   };
 
-  // 处理页面变化
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  // 处理类别筛选变化
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategoryId(value);
   };
-  
+
+  // 获取类别名称
+  const getCategoryName = (categoryId: number | string | undefined) => {
+    if (!categoryId) return t('shop:uncategorized');
+    const category = categories.find(c => c.id.toString() === categoryId.toString());
+    return category ? category.name : t('shop:uncategorized');
+  };
+
+  // 计算店铺总数
+  const totalShops = useMemo(() => {
+    return Object.values(groupedShops).reduce((total, shops) => total + shops.length, 0);
+  }, [groupedShops]);
+
+  // 转换Shop到ShopFormData
+  const convertToFormData = (shop: Shop): ShopFormData => {
+    return {
+      name: shop.name,
+      is_active: Boolean(shop.is_active),
+      sort_order: shop.sort_order,
+      category_id: shop.category_id,
+      remark: shop.remark
+    };
+  };
+
   // 处理添加店铺成功
-  const handleAddSuccess = () => {
-    if (onRefresh) {
-      onRefresh();
+  const handleAddSuccess = async (data: ShopFormData): Promise<void> => {
+    if (onAdd) {
+      return onAdd(data);
     }
-  };
-
-  // 处理编辑按钮点击
-  const handleEditClick = (shop: Shop) => {
-    if (onEdit) {
-      onEdit(shop);
-    }
-  };
-
-  // 生成分页组件
-  const renderPagination = () => {
-    const totalPages = Math.ceil(filteredShops.length / itemsPerPage);
-    if (totalPages <= 1) return null;
-    
-    const pageNumbers = [];
-    const maxVisiblePages = 5;
-    
-    // 确定要显示哪些页码
-    let startPage, endPage;
-    if (totalPages <= maxVisiblePages) {
-      // 如果总页数小于最大可见页数，显示所有页码
-      startPage = 1;
-      endPage = totalPages;
-    } else {
-      // 在中间显示当前页，前后各显示1个页码
-      const leftOffset = Math.floor(maxVisiblePages / 2);
-      const rightOffset = Math.ceil(maxVisiblePages / 2) - 1;
-      
-      if (currentPage <= leftOffset + 1) {
-        // 当前页靠近开始
-        startPage = 1;
-        endPage = maxVisiblePages;
-      } else if (currentPage >= totalPages - rightOffset) {
-        // 当前页靠近结束
-        startPage = totalPages - maxVisiblePages + 1;
-        endPage = totalPages;
-      } else {
-        // 当前页在中间
-        startPage = currentPage - leftOffset;
-        endPage = currentPage + rightOffset;
-      }
-    }
-    
-    // 添加页码按钮
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(
-        <Button
-          key={i}
-          variant={currentPage === i ? "default" : "outline"}
-          size="sm"
-          onClick={() => handlePageChange(i)}
-          className="mx-1 h-8 w-8 p-0"
-        >
-          {i}
-        </Button>
-      );
-    }
-    
-    return (
-      <div className="flex items-center justify-center space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="h-8 w-8 p-0"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        {startPage > 1 && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(1)}
-              className="mx-1 h-8 w-8 p-0"
-            >
-              1
-            </Button>
-            {startPage > 2 && <span className="mx-1">...</span>}
-          </>
-        )}
-        {pageNumbers}
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && <span className="mx-1">...</span>}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(totalPages)}
-              className="mx-1 h-8 w-8 p-0"
-            >
-              {totalPages}
-            </Button>
-          </>
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="h-8 w-8 p-0"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-    );
+    return Promise.resolve();
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex gap-4">
           <div className="relative w-64">
@@ -213,7 +139,23 @@ export const ShopList: React.FC<ShopListProps> = ({
               onChange={handleSearch}
             />
           </div>
-          <Button 
+          <Select
+            value={selectedCategoryId}
+            onValueChange={handleCategoryChange}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder={t('shop:filter_by_category')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('shop:all_categories')}</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id.toString()}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
             onClick={() => setShowAddDialog(true)}
             className="flex items-center gap-1"
           >
@@ -226,73 +168,99 @@ export const ShopList: React.FC<ShopListProps> = ({
         </Button>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('shop:shop_name')}</TableHead>
-              <TableHead>{t('shop:status')}</TableHead>
-              <TableHead>{t('shop:sort_order')}</TableHead>
-              <TableHead>{t('shop:remark')}</TableHead>
-              <TableHead className="text-right">{t('common:actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-10">
-                  {t('common:loading')}
-                </TableCell>
-              </TableRow>
-            ) : filteredShops.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-10">
-                  {t('shop:no_shops_found')}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedShops.map((shop) => (
-                <TableRow key={shop.id}>
-                  <TableCell className="font-medium">{shop.name}</TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={!!shop.is_active}
-                      onCheckedChange={(checked) => onToggleActive?.(shop.id, checked)}
-                    />
-                  </TableCell>
-                  <TableCell>{shop.sort_order}</TableCell>
-                  <TableCell>{shop.remark}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditClick(shop)}
-                      className="h-8 w-8"
-                      title={t('common:edit')}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      <span className="sr-only">{t('common:edit')}</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDelete?.(shop.id)}
-                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      title={t('common:delete')}
-                    >
-                      <Trash className="h-4 w-4" />
-                      <span className="sr-only">{t('common:delete')}</span>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      {isLoading ? (
+        <div className="rounded-md border p-8 text-center">
+          <p className="text-muted-foreground">{t('common:loading')}</p>
+        </div>
+      ) : totalShops === 0 ? (
+        <div className="rounded-md border p-8 text-center">
+          <Store className="mx-auto h-12 w-12 text-muted-foreground opacity-50 mb-2" />
+          <h3 className="text-lg font-medium">{t('shop:no_shops_found')}</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            {localSearchTerm
+              ? t('shop:no_shops_matching_search')
+              : t('shop:add_your_first_shop')}
+          </p>
+        </div>
+      ) : (
+        // 按类别分组显示店铺
+        <div className="space-y-6">
+          {Object.entries(groupedShops).map(([categoryId, shops]) => {
+            if (shops.length === 0) return null;
+
+            const categoryName = getCategoryName(categoryId);
+
+            return (
+              <div key={categoryId} className="rounded-md border overflow-hidden">
+                {/* 类别标题行 */}
+                <div className="bg-muted p-3 font-medium flex justify-between items-center">
+                  <span>
+                    [{categoryName}] {t('shop:shop_count', { count: shops.length })}
+                  </span>
+                </div>
+
+                {/* 该类别下的店铺表格 */}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('shop:shop_name')}</TableHead>
+                      <TableHead>{t('shop:status')}</TableHead>
+                      <TableHead>{t('shop:sort_order')}</TableHead>
+                      <TableHead>{t('shop:remark')}</TableHead>
+                      <TableHead className="text-right">{t('common:actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {shops.map((shop) => (
+                      <TableRow
+                        key={shop.id}
+                        className="hover:bg-muted/50 transition-colors"
+                      >
+                        <TableCell className="font-medium">{shop.name}</TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={Boolean(shop.is_active)}
+                            onCheckedChange={() => handleToggleStatus(shop.id)}
+                          />
+                        </TableCell>
+                        <TableCell>{shop.sort_order}</TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {shop.remark || '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onEdit && onEdit(shop.id, convertToFormData(shop))}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onDelete && onDelete(shop.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 底部总计信息 */}
+      <div className="text-sm text-muted-foreground">
+        {t('shop:total_shops', { count: totalShops })}
       </div>
 
-      {renderPagination()}
-      
+      {/* 添加店铺对话框 */}
       <AddShopDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
