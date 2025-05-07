@@ -24,7 +24,7 @@ export default function OutputSummary() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [todayOutputs, setTodayOutputs] = useState<ShopOutput[]>([]);
-  
+
   // 计算今天的日期
   const today = format(new Date(), DATE_FORMAT);
 
@@ -51,7 +51,7 @@ export default function OutputSummary() {
   // 按店铺和快递类型分组汇总数据
   const summaryData = todayOutputs.reduce((acc, item) => {
     const key = `${item.shop_id}-${item.courier_id}`;
-    
+
     if (!acc[key]) {
       acc[key] = {
         shop_id: item.shop_id,
@@ -61,7 +61,7 @@ export default function OutputSummary() {
         total_quantity: 0
       };
     }
-    
+
     acc[key].total_quantity += item.quantity;
     return acc;
   }, {} as Record<string, {
@@ -77,6 +77,28 @@ export default function OutputSummary() {
 
   // 计算总出力量
   const totalQuantity = summaryArray.reduce((sum, item) => sum + item.total_quantity, 0);
+
+  // 这里仅创建组件框架，数据获取和处理逻辑将在后续故事中实现
+  const mockSummary = [
+    {
+      category_name: "乐天",
+      shop_name: "测试店铺1",
+      courier_name: "顺丰速运",
+      quantity: 50,
+    },
+    {
+      category_name: "乐天",
+      shop_name: "测试店铺2",
+      courier_name: "顺丰速运",
+      quantity: 35,
+    },
+    {
+      category_name: "亚马逊",
+      shop_name: "测试店铺3",
+      courier_name: "圆通快递",
+      quantity: 60,
+    },
+  ];
 
   return (
     <Card className="shadow-sm">
@@ -95,7 +117,7 @@ export default function OutputSummary() {
             <div className="text-xl font-medium mb-4">
               总出力量：{totalQuantity}
             </div>
-            
+
             <div className="rounded-md border">
               <Table>
                 <TableHeader>

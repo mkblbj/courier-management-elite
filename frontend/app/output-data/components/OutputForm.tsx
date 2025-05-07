@@ -31,6 +31,13 @@ import { DATE_FORMAT } from "@/lib/constants";
 import CourierSelector from "@/components/shop-output/CourierSelector";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const outputFormSchema = z.object({
   shop_id: z.number({
@@ -78,6 +85,10 @@ export default function OutputForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const quantityInputRef = useRef<HTMLInputElement>(null);
+  const [shopId, setShopId] = useState<string>("");
+  const [courierId, setCourierId] = useState<string>("");
+  const [quantity, setQuantity] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
 
   const isEditMode = !!initialData;
   const isModal = !!onClose;
@@ -249,11 +260,14 @@ export default function OutputForm({
               <FormItem>
                 <FormLabel>{t('shop:shop')}</FormLabel>
                 <FormControl>
-                  <ShopSelector
-                    selectedShopId={field.value}
-                    onSelectShop={handleShopChange}
-                    className="w-full"
-                  />
+                  <Select value={shopId} onValueChange={setShopId}>
+                    <SelectTrigger id="shop">
+                      <SelectValue placeholder="选择店铺" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="placeholder">选择店铺（将从API获取）</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -267,11 +281,14 @@ export default function OutputForm({
               <FormItem>
                 <FormLabel>{t('shop:courier')}</FormLabel>
                 <FormControl>
-                  <CourierSelector
-                    selectedCourierId={field.value}
-                    onSelectCourier={handleCourierChange}
-                    className="w-full"
-                  />
+                  <Select value={courierId} onValueChange={setCourierId}>
+                    <SelectTrigger id="courier">
+                      <SelectValue placeholder="选择快递类型" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="placeholder">选择快递类型（将从API获取）</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
