@@ -6,6 +6,9 @@ import {
   ShopOutputStats,
   ShopOutputTotal,
   DashboardData,
+  ShopOutputForm,
+  ShopOutputStat,
+  ShopOutputStatFilter,
 } from "../types/shop-output";
 
 const API_URL = `${API_BASE_URL}/shop-outputs`;
@@ -19,160 +22,214 @@ interface ApiResponse<T> {
 }
 
 /**
- * 获取出力数据列表
- * @param filter 筛选条件
+ * 获取店铺出力数据列表
+ * @param params 查询参数
  */
-export async function getShopOutputs(filter?: ShopOutputFilter): Promise<ShopOutput[]> {
-  let url = API_URL;
+export async function getShopOutputs(params?: ShopOutputFilter): Promise<ShopOutput[]> {
+  const queryParams = new URLSearchParams();
   
-  if (filter) {
-    const params = new URLSearchParams();
-    
-    if (filter.shop_id !== undefined) {
-      params.append("shop_id", filter.shop_id.toString());
-    }
-    
-    if (filter.courier_id !== undefined) {
-      params.append("courier_id", filter.courier_id.toString());
-    }
-    
-    if (filter.date_from) {
-      params.append("date_from", filter.date_from);
-    }
-    
-    if (filter.date_to) {
-      params.append("date_to", filter.date_to);
-    }
-    
-    if (filter.search) {
-      params.append("search", filter.search);
-    }
-    
-    const paramStr = params.toString();
-    if (paramStr) {
-      url += `?${paramStr}`;
-    }
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    });
   }
   
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+  
+  const response = await fetch(`${API_URL}${query}`);
   
   if (!response.ok) {
-    throw new Error(`获取出力数据失败: ${response.status}`);
+    throw new Error(`获取店铺出力数据失败: ${response.statusText}`);
   }
   
-  const result: ApiResponse<ShopOutput[]> = await response.json();
+  const data: ApiResponse<ShopOutput[]> = await response.json();
   
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
+  if (data.code !== 0) {
+    throw new Error(data.message || '获取店铺出力数据失败');
   }
   
-  return result.data;
+  return data.data;
 }
 
 /**
- * 获取单条出力记录
- * @param id 出力记录ID
+ * 获取单个店铺出力数据
+ * @param id 出力数据ID
  */
 export async function getShopOutput(id: number): Promise<ShopOutput> {
-  const response = await fetch(`${API_URL}/${id}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await fetch(`${API_URL}/${id}`);
   
   if (!response.ok) {
-    throw new Error(`获取出力记录失败: ${response.status}`);
+    throw new Error(`获取店铺出力数据失败: ${response.statusText}`);
   }
   
-  const result: ApiResponse<ShopOutput> = await response.json();
+  const data: ApiResponse<ShopOutput> = await response.json();
   
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
+  if (data.code !== 0) {
+    throw new Error(data.message || '获取店铺出力数据失败');
   }
   
-  return result.data;
+  return data.data;
 }
 
 /**
- * 创建出力记录
- * @param data 出力数据
+ * 创建店铺出力数据
+ * @param output 出力数据
  */
-export async function createShopOutput(data: ShopOutputFormData): Promise<ShopOutput> {
+export async function createShopOutput(output: ShopOutputForm): Promise<ShopOutput> {
   const response = await fetch(API_URL, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(output),
   });
   
   if (!response.ok) {
-    throw new Error(`创建出力记录失败: ${response.status}`);
+    throw new Error(`创建店铺出力数据失败: ${response.statusText}`);
   }
   
-  const result: ApiResponse<ShopOutput> = await response.json();
+  const data: ApiResponse<ShopOutput> = await response.json();
   
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
+  if (data.code !== 0) {
+    throw new Error(data.message || '创建店铺出力数据失败');
   }
   
-  return result.data;
+  return data.data;
 }
 
 /**
- * 更新出力记录
- * @param id 出力记录ID
- * @param data 出力数据
+ * 更新店铺出力数据
+ * @param id 出力数据ID
+ * @param output 出力数据
  */
-export async function updateShopOutput(id: number, data: ShopOutputFormData): Promise<ShopOutput> {
+export async function updateShopOutput(id: number, output: Partial<ShopOutputForm>): Promise<ShopOutput> {
   const response = await fetch(`${API_URL}/${id}`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(output),
   });
   
   if (!response.ok) {
-    throw new Error(`更新出力记录失败: ${response.status}`);
+    throw new Error(`更新店铺出力数据失败: ${response.statusText}`);
   }
   
-  const result: ApiResponse<ShopOutput> = await response.json();
+  const data: ApiResponse<ShopOutput> = await response.json();
   
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
+  if (data.code !== 0) {
+    throw new Error(data.message || '更新店铺出力数据失败');
   }
   
-  return result.data;
+  return data.data;
 }
 
 /**
- * 删除出力记录
- * @param id 出力记录ID
+ * 删除店铺出力数据
+ * @param id 出力数据ID
  */
 export async function deleteShopOutput(id: number): Promise<void> {
   const response = await fetch(`${API_URL}/${id}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    method: 'DELETE',
   });
   
   if (!response.ok) {
-    throw new Error(`删除出力记录失败: ${response.status}`);
+    throw new Error(`删除店铺出力数据失败: ${response.statusText}`);
   }
   
-  const result: ApiResponse<null> = await response.json();
+  const data: ApiResponse<void> = await response.json();
   
-  if (result.code !== 0) {
-    throw new Error(`API错误: ${result.message}`);
+  if (data.code !== 0) {
+    throw new Error(data.message || '删除店铺出力数据失败');
   }
+}
+
+/**
+ * 批量导入店铺出力数据
+ * @param file Excel文件
+ */
+export async function importShopOutputs(file: File): Promise<{success: number; failed: number}> {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await fetch(`${API_URL}/import`, {
+    method: 'POST',
+    body: formData,
+  });
+  
+  if (!response.ok) {
+    throw new Error(`导入店铺出力数据失败: ${response.statusText}`);
+  }
+  
+  const data: ApiResponse<{success: number; failed: number}> = await response.json();
+  
+  if (data.code !== 0) {
+    throw new Error(data.message || '导入店铺出力数据失败');
+  }
+  
+  return data.data;
+}
+
+/**
+ * 导出店铺出力数据
+ * @param params 查询参数
+ */
+export async function exportShopOutputs(params?: ShopOutputFilter): Promise<Blob> {
+  const queryParams = new URLSearchParams();
+  
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+  
+  const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+  
+  const response = await fetch(`${API_URL}/export${query}`, {
+    method: 'GET',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`导出店铺出力数据失败: ${response.statusText}`);
+  }
+  
+  return await response.blob();
+}
+
+/**
+ * 获取店铺出力统计数据
+ * @param params 查询参数
+ */
+export async function getShopOutputStats(params?: ShopOutputStatFilter): Promise<ShopOutputStat[]> {
+  const queryParams = new URLSearchParams();
+  
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+  
+  const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+  
+  const response = await fetch(`${STATS_URL}${query}`);
+  
+  if (!response.ok) {
+    throw new Error(`获取店铺出力统计数据失败: ${response.statusText}`);
+  }
+  
+  const data: ApiResponse<ShopOutputStat[]> = await response.json();
+  
+  if (data.code !== 0) {
+    throw new Error(data.message || '获取店铺出力统计数据失败');
+  }
+  
+  return data.data;
 }
 
 /**
