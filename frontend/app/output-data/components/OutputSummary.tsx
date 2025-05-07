@@ -20,29 +20,33 @@ import { getShopOutputs } from "@/lib/api/shop-output";
 import { ShopOutput } from "@/lib/types/shop-output";
 import { DATE_FORMAT } from "@/lib/constants";
 
-export default function OutputSummary() {
+interface OutputSummaryProps {
+  selectedDate?: Date;
+}
+
+export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [todayOutputs, setTodayOutputs] = useState<ShopOutput[]>([]);
 
-  // 计算今天的日期
-  const today = format(new Date(), DATE_FORMAT);
+  // 使用选择的日期或当天日期
+  const dateToUse = selectedDate ? format(selectedDate, DATE_FORMAT) : format(new Date(), DATE_FORMAT);
 
   useEffect(() => {
     fetchTodayData();
-  }, []);
+  }, [selectedDate]);
 
   const fetchTodayData = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // 获取今日的出力数据
-      const data = await getShopOutputs({ date_from: today, date_to: today });
+      // 获取选定日期的出力数据
+      const data = await getShopOutputs({ date_from: dateToUse, date_to: dateToUse });
       setTodayOutputs(data);
     } catch (err) {
       console.error("Failed to fetch today's outputs:", err);
-      setError("获取今日出力数据失败，请重试");
+      setError("获取出力数据失败，请重试");
     } finally {
       setLoading(false);
     }
@@ -103,7 +107,7 @@ export default function OutputSummary() {
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle>当日数据汇总</CardTitle>
+        <CardTitle>{selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '今日'}数据汇总</CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -111,7 +115,9 @@ export default function OutputSummary() {
         ) : error ? (
           <div className="text-center py-8 text-red-500">{error}</div>
         ) : todayOutputs.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">今日暂无数据</div>
+          <div className="text-center py-8 text-muted-foreground">
+            {selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '今日'}暂无数据
+          </div>
         ) : (
           <div>
             <div className="text-xl font-medium mb-4">

@@ -40,9 +40,10 @@ import {
 
 interface OutputListProps {
   filter?: ShopOutputFilter;
+  selectedDate?: Date;
 }
 
-export default function OutputList({ filter = {} }: OutputListProps) {
+export default function OutputList({ filter = {}, selectedDate }: OutputListProps) {
   const { t } = useTranslation(['common', 'shop']);
   const { toast } = useToast();
   const [outputs, setOutputs] = useState<ShopOutput[]>([]);
@@ -58,7 +59,14 @@ export default function OutputList({ filter = {} }: OutputListProps) {
     setLoading(true);
     setError(null);
     try {
-      const data = await getShopOutputs(filter);
+      // 合并筛选条件，优先使用selectedDate
+      const dateFilter = selectedDate ? {
+        date_from: format(selectedDate, 'yyyy-MM-dd'),
+        date_to: format(selectedDate, 'yyyy-MM-dd')
+      } : {};
+
+      const combinedFilter = { ...filter, ...dateFilter };
+      const data = await getShopOutputs(combinedFilter);
       setOutputs(data);
     } catch (err) {
       console.error("Failed to fetch outputs:", err);
@@ -70,7 +78,7 @@ export default function OutputList({ filter = {} }: OutputListProps) {
 
   useEffect(() => {
     fetchOutputs();
-  }, [filter]);
+  }, [filter, selectedDate]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

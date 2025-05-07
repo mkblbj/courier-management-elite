@@ -24,6 +24,7 @@ interface ShopSelectorProps {
   onSelectShop: (shopId: number | undefined) => void;
   label?: string;
   onlyActive?: boolean;
+  categoryId?: number;
   className?: string;
 }
 
@@ -32,6 +33,7 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
   onSelectShop,
   label,
   onlyActive = true,
+  categoryId,
   className,
 }) => {
   const { t } = useTranslation(['common', 'shop']);
@@ -44,7 +46,20 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
     const fetchShops = async () => {
       setLoading(true);
       try {
-        const data = await getShops(onlyActive);
+        const params: {
+          isActive?: boolean;
+          categoryId?: number;
+        } = {};
+
+        if (onlyActive) {
+          params.isActive = true;
+        }
+
+        if (categoryId) {
+          params.categoryId = categoryId;
+        }
+
+        const data = await getShops(params);
         setShops(data || []);
       } catch (error) {
         console.error("Failed to fetch shops:", error);
@@ -55,7 +70,13 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({
     };
 
     fetchShops();
-  }, [onlyActive]);
+  }, [onlyActive, categoryId]);
+
+  useEffect(() => {
+    if (selectedShopId && shops.length > 0 && !shops.some(shop => shop.id === selectedShopId)) {
+      onSelectShop(undefined);
+    }
+  }, [shops, selectedShopId, onSelectShop]);
 
   const selectedShop = shops.find((shop) => shop.id === selectedShopId);
 
@@ -120,6 +141,7 @@ interface MultiShopSelectorProps {
   onSelectShops: (shopIds: number[]) => void;
   label?: string;
   onlyActive?: boolean;
+  categoryId?: number;
   className?: string;
 }
 
@@ -128,6 +150,7 @@ export const MultiShopSelector: React.FC<MultiShopSelectorProps> = ({
   onSelectShops,
   label,
   onlyActive = true,
+  categoryId,
   className,
 }) => {
   const { t } = useTranslation(['common', 'shop']);
@@ -140,7 +163,20 @@ export const MultiShopSelector: React.FC<MultiShopSelectorProps> = ({
     const fetchShops = async () => {
       setLoading(true);
       try {
-        const data = await getShops(onlyActive);
+        const params: {
+          isActive?: boolean;
+          categoryId?: number;
+        } = {};
+
+        if (onlyActive) {
+          params.isActive = true;
+        }
+
+        if (categoryId) {
+          params.categoryId = categoryId;
+        }
+
+        const data = await getShops(params);
         setShops(data || []);
       } catch (error) {
         console.error("Failed to fetch shops:", error);
@@ -151,7 +187,7 @@ export const MultiShopSelector: React.FC<MultiShopSelectorProps> = ({
     };
 
     fetchShops();
-  }, [onlyActive]);
+  }, [onlyActive, categoryId]);
 
   const selectedShops = shops.filter((shop) => selectedShopIds.includes(shop.id));
 
