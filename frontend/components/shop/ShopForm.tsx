@@ -8,11 +8,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Shop, ShopFormData } from '@/lib/types/shop';
+import { Shop, ShopFormData, ShopCategory } from '@/lib/types/shop';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // 表单验证schema
 const shopFormSchema = z.object({
   name: z.string().min(1, '店铺名称不能为空').max(50, '店铺名称不能超过50个字符'),
+  category_id: z.number().optional().or(z.string().optional().transform(val => val ? Number(val) : undefined)),
   remark: z.string().optional(),
   is_active: z.boolean().default(true),
 });
@@ -21,16 +29,18 @@ type ShopFormValues = z.infer<typeof shopFormSchema>;
 
 interface ShopFormProps {
   initialValues?: Partial<Shop>;
+  categories?: ShopCategory[];
   onSubmit: (values: ShopFormData) => void;
   onCancel?: () => void;
   isSubmitting: boolean;
 }
 
-const ShopForm = ({ initialValues, onSubmit, onCancel, isSubmitting }: ShopFormProps) => {
+const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmitting }: ShopFormProps) => {
   const form = useForm<ShopFormValues>({
     resolver: zodResolver(shopFormSchema),
     defaultValues: {
       name: initialValues?.name || '',
+      category_id: initialValues?.category_id,
       remark: initialValues?.remark || '',
       is_active: initialValues?.is_active !== undefined ? Boolean(initialValues.is_active) : true,
     },
@@ -41,6 +51,7 @@ const ShopForm = ({ initialValues, onSubmit, onCancel, isSubmitting }: ShopFormP
     if (initialValues) {
       form.reset({
         name: initialValues.name || '',
+        category_id: initialValues.category_id,
         remark: initialValues.remark || '',
         is_active: initialValues.is_active !== undefined ? Boolean(initialValues.is_active) : true,
       });
@@ -59,6 +70,34 @@ const ShopForm = ({ initialValues, onSubmit, onCancel, isSubmitting }: ShopFormP
               <FormControl>
                 <Input {...field} placeholder="请输入店铺名称" />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="category_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>所属类别</FormLabel>
+              <Select
+                onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                value={field.value?.toString()}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择店铺所属类别" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

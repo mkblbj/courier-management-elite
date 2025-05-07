@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import ShopForm from "./ShopForm";
-import { Shop, ShopFormData } from "@/lib/types/shop";
+import { Shop, ShopFormData, ShopCategory } from "@/lib/types/shop";
 import { updateShop } from "@/lib/api/shop";
 
 interface EditShopDialogProps {
@@ -17,6 +17,7 @@ interface EditShopDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
   shop?: Shop;
+  categories: ShopCategory[];
 }
 
 const EditShopDialog: React.FC<EditShopDialogProps> = ({
@@ -24,13 +25,14 @@ const EditShopDialog: React.FC<EditShopDialogProps> = ({
   onOpenChange,
   onSuccess,
   shop,
+  categories = [],
 }) => {
   const { t } = useTranslation(['common', 'shop']);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (data: ShopFormData) => {
     if (!shop) return;
-    
+
     setIsSubmitting(true);
     try {
       await updateShop(shop.id, data);
@@ -61,6 +63,7 @@ const EditShopDialog: React.FC<EditShopDialogProps> = ({
           onSubmit={handleSubmit}
           onCancel={() => onOpenChange(false)}
           isSubmitting={isSubmitting}
+          categories={categories}
         />
       </DialogContent>
     </Dialog>

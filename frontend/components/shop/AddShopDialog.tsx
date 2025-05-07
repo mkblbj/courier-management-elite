@@ -9,18 +9,20 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import ShopForm from "./ShopForm";
-import { ShopFormData } from "@/lib/types/shop";
+import { ShopFormData, ShopCategory } from "@/lib/types/shop";
 
 interface AddShopDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (data: ShopFormData) => Promise<void>;
+  categories: ShopCategory[];
 }
 
 export const AddShopDialog: React.FC<AddShopDialogProps> = ({
   open,
   onOpenChange,
   onSuccess,
+  categories = [],
 }) => {
   const { t } = useTranslation(['common', 'shop']);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,6 +73,7 @@ export const AddShopDialog: React.FC<AddShopDialogProps> = ({
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           isSubmitting={isSubmitting}
+          categories={categories}
         />
       </DialogContent>
     </Dialog>

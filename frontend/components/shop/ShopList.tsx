@@ -267,6 +267,7 @@ export const ShopList: React.FC<ShopListProps> = ({
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onSuccess={handleAddSuccess}
+        categories={categories}
       />
     </div>
   );
