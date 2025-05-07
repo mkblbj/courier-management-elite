@@ -7,6 +7,7 @@ const { body, validationResult } = require('express-validator');
 const validateShop = [
   body('name').notEmpty().withMessage('名称不能为空')
     .isLength({ max: 100 }).withMessage('名称长度不能超过100'),
+  body('category_id').optional().isInt().withMessage('类别ID必须是整数'),
   body('is_active').optional().isBoolean().withMessage('状态必须是布尔值'),
   body('sort_order').optional().isInt().withMessage('排序值必须是整数'),
   body('remark').optional()
@@ -23,6 +24,7 @@ class ShopControllerClass {
 
       const options = {
         is_active: isActive,
+        category_id: req.query.category ? parseInt(req.query.category) : null,
         sort_by: req.query.sort || 'sort_order',
         sort_order: req.query.order || 'ASC',
         search: req.query.search || ''

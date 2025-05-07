@@ -2,6 +2,7 @@ const express = require('express');
 const courierRoutes = require('./courierRoutes');
 const shippingRoutes = require('./shippingRoutes');
 const shopRoutes = require('./shopRoutes');
+const shopCategoryRoutes = require('./shopCategoryRoutes');
 const shopOutputRoutes = require('./shopOutputRoutes');
 const statsRoutes = require('./statsRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
@@ -22,6 +23,9 @@ router.use('/couriers', courierRoutes);
 
 // 发货记录API路由
 router.use('/shipping', shippingRoutes);
+
+// 店铺类别API路由
+router.use('/shop-categories', shopCategoryRoutes);
 
 // 店铺API路由
 router.use('/shops', shopRoutes);
@@ -67,6 +71,19 @@ router.get('/docs', (req, res) => {
           { method: 'PUT', path: '/:id', description: '更新发货记录' },
           { method: 'DELETE', path: '/:id', description: '删除发货记录' },
           { method: 'POST', path: '/batch', description: '批量添加发货记录' }
+        ]
+      },
+      {
+        name: '店铺类别API',
+        description: '店铺类别的CRUD操作',
+        basePath: '/api/shop-categories',
+        endpoints: [
+          { method: 'GET', path: '/', description: '获取店铺类别列表' },
+          { method: 'GET', path: '/:id', description: '获取单个店铺类别详情' },
+          { method: 'POST', path: '/', description: '创建店铺类别' },
+          { method: 'PUT', path: '/:id', description: '更新店铺类别' },
+          { method: 'DELETE', path: '/:id', description: '删除店铺类别' },
+          { method: 'POST', path: '/sort', description: '更新店铺类别排序' }
         ]
       },
       {

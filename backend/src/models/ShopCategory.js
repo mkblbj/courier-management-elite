@@ -1,39 +1,25 @@
 const db = require('../db');
 
-class Shop {
+class ShopCategory {
   constructor() {
-    this.table = 'shops';
+    this.table = 'shop_categories';
   }
 
   /**
-   * 获取所有店铺
+   * 获取所有店铺类别
    * @param {Object} options 过滤和排序选项
    * @returns {Promise<Array>} 
    */
   async getAll(options = {}) {
-    let sql = `
-      SELECT s.*, c.name as category_name 
-      FROM ${this.table} s 
-      LEFT JOIN shop_categories c ON s.category_id = c.id
-    `;
+    let sql = `SELECT * FROM ${this.table}`;
     const params = [];
     const whereClauses = [];
 
-    // 添加过滤条件
-    if (options.is_active !== null && options.is_active !== undefined) {
-      whereClauses.push('s.is_active = ?');
-      params.push(options.is_active ? 1 : 0);
-    }
-
-    if (options.category_id) {
-      whereClauses.push('s.category_id = ?');
-      params.push(options.category_id);
-    }
-
+    // 添加搜索过滤条件
     if (options.search) {
-      whereClauses.push('(s.name LIKE ? OR s.remark LIKE ?)');
+      whereClauses.push('name LIKE ?');
       const searchTerm = `%${options.search}%`;
-      params.push(searchTerm, searchTerm);
+      params.push(searchTerm);
     }
 
     // 添加WHERE子句
@@ -42,8 +28,8 @@ class Shop {
     }
 
     // 添加排序
-    const allowedSortFields = ['id', 'name', 'is_active', 'sort_order', 'created_at', 'updated_at'];
-    const sortBy = allowedSortFields.includes(options.sort_by) ? `s.${options.sort_by}` : 's.sort_order';
+    const allowedSortFields = ['id', 'name', 'sort_order', 'created_at', 'updated_at'];
+    const sortBy = allowedSortFields.includes(options.sort_by) ? options.sort_by : 'sort_order';
     const sortOrder = options.sort_order === 'DESC' ? 'DESC' : 'ASC';
     
     sql += ` ORDER BY ${sortBy} ${sortOrder}`;
@@ -52,48 +38,37 @@ class Shop {
   }
 
   /**
-   * 根据ID获取店铺
-   * @param {number} id 店铺ID
+   * 根据ID获取店铺类别
+   * @param {number} id 店铺类别ID
    * @returns {Promise<Object|null>}
    */
   async getById(id) {
-    const sql = `
-      SELECT s.*, c.name as category_name 
-      FROM ${this.table} s 
-      LEFT JOIN shop_categories c ON s.category_id = c.id
-      WHERE s.id = ?
-    `;
+    const sql = `SELECT * FROM ${this.table} WHERE id = ?`;
     const results = await db.query(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
 
   /**
-   * 添加店铺
-   * @param {Object} data 店铺数据
+   * 添加店铺类别
+   * @param {Object} data 店铺类别数据
    * @returns {Promise<number>} 新创建的ID
    */
   async add(data) {
-    const sql = `INSERT INTO ${this.table} (name, category_id, is_active, sort_order, remark) VALUES (?, ?, ?, ?, ?)`;
+    const sql = `INSERT INTO ${this.table} (name, sort_order) VALUES (?, ?)`;
     
-    const isActive = data.is_active !== undefined ? data.is_active : true;
     const sortOrder = data.sort_order !== undefined ? data.sort_order : 0;
-    const remark = data.remark || null;
-    const categoryId = data.category_id || null;
 
     const result = await db.query(sql, [
       data.name,
-      categoryId,
-      isActive ? 1 : 0,
-      sortOrder,
-      remark
+      sortOrder
     ]);
 
     return result.insertId;
   }
 
   /**
-   * 更新店铺
-   * @param {number} id 店铺ID
+   * 更新店铺类别
+   * @param {number} id 店铺类别ID
    * @param {Object} data 更新的数据
    * @returns {Promise<boolean>} 是否更新成功
    */
@@ -107,24 +82,9 @@ class Shop {
       params.push(data.name);
     }
     
-    if (data.category_id !== undefined) {
-      setClauses.push("category_id = ?");
-      params.push(data.category_id);
-    }
-    
-    if (data.is_active !== undefined) {
-      setClauses.push("is_active = ?");
-      params.push(data.is_active ? 1 : 0);
-    }
-    
     if (data.sort_order !== undefined) {
       setClauses.push("sort_order = ?");
       params.push(data.sort_order);
-    }
-    
-    if (data.remark !== undefined) {
-      setClauses.push("remark = ?");
-      params.push(data.remark);
     }
     
     // 如果没有需要更新的字段，直接返回成功
@@ -142,27 +102,26 @@ class Shop {
   }
 
   /**
-   * 删除店铺
-   * @param {number} id 店铺ID
+   * 删除店铺类别
+   * @param {number} id 店铺类别ID
    * @returns {Promise<boolean>} 是否删除成功
    */
   async delete(id) {
-    // 我们可能需要先检查是否有关联的出力数据
-    // 但由于有外键约束，如果存在关联记录，数据库会拒绝删除
+    // 由于有外键约束，如果存在关联店铺，数据库会拒绝删除
     const sql = `DELETE FROM ${this.table} WHERE id = ?`;
     const result = await db.query(sql, [id]);
     return result.affectedRows > 0;
   }
 
   /**
-   * 切换店铺启用状态
-   * @param {number} id 店铺ID
-   * @returns {Promise<boolean>} 是否成功
+   * 检查类别是否被店铺使用
+   * @param {number} id 类别ID
+   * @returns {Promise<boolean>} 是否被使用
    */
-  async toggleActive(id) {
-    const sql = `UPDATE ${this.table} SET is_active = NOT is_active WHERE id = ?`;
-    const result = await db.query(sql, [id]);
-    return result.affectedRows > 0;
+  async isBeingUsed(id) {
+    const sql = `SELECT COUNT(*) as count FROM shops WHERE category_id = ?`;
+    const results = await db.query(sql, [id]);
+    return results[0].count > 0;
   }
 
   /**
@@ -190,4 +149,4 @@ class Shop {
   }
 }
 
-module.exports = new Shop(); 
+module.exports = new ShopCategory(); 
