@@ -109,17 +109,15 @@ graph TD
 
 ### 3.1 数据库模型
 
-#### 3.1.1 shop 表
+#### 3.1.1 shop_categories 表
 
-店铺表存储所有店铺的基本信息。
+店铺类别表存储所有店铺类别信息。
 
 ```sql
-CREATE TABLE IF NOT EXISTS shops (
+CREATE TABLE IF NOT EXISTS shop_categories (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  is_active BOOLEAN DEFAULT true,
   sort_order INT DEFAULT 0,
-  remark TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -128,14 +126,41 @@ CREATE TABLE IF NOT EXISTS shops (
 | 字段名     | 类型         | 约束                                                  | 描述       |
 | ---------- | ------------ | ----------------------------------------------------- | ---------- |
 | id         | INT          | PRIMARY KEY, AUTO_INCREMENT                           | 主键，自增 |
-| name       | VARCHAR(255) | NOT NULL                                              | 店铺名称   |
-| is_active  | BOOLEAN      | DEFAULT true                                          | 是否启用   |
+| name       | VARCHAR(255) | NOT NULL                                              | 类别名称   |
 | sort_order | INT          | DEFAULT 0                                             | 排序顺序   |
-| remark     | TEXT         | NULL 允许                                             | 备注信息   |
 | created_at | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | 创建时间   |
 | updated_at | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间   |
 
-#### 3.1.2 shop_outputs 表
+#### 3.1.2 shops 表
+
+店铺表存储所有店铺的基本信息。
+
+```sql
+CREATE TABLE IF NOT EXISTS shops (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  category_id INT,
+  is_active BOOLEAN DEFAULT true,
+  sort_order INT DEFAULT 0,
+  remark TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (category_id) REFERENCES shop_categories(id)
+);
+```
+
+| 字段名      | 类型         | 约束                                                  | 描述                          |
+| ----------- | ------------ | ----------------------------------------------------- | ----------------------------- |
+| id          | INT          | PRIMARY KEY, AUTO_INCREMENT                           | 主键，自增                    |
+| name        | VARCHAR(255) | NOT NULL                                              | 店铺名称                      |
+| category_id | INT          | FOREIGN KEY                                           | 外键，关联 shop_categories 表 |
+| is_active   | BOOLEAN      | DEFAULT true                                          | 是否启用                      |
+| sort_order  | INT          | DEFAULT 0                                             | 排序顺序                      |
+| remark      | TEXT         | NULL 允许                                             | 备注信息                      |
+| created_at  | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | 创建时间                      |
+| updated_at  | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间                      |
+
+#### 3.1.3 shop_outputs 表
 
 店铺出力数据表存储各店铺的出力记录。
 
@@ -170,28 +195,42 @@ CREATE TABLE IF NOT EXISTS shop_outputs (
 为提高查询性能，我们在以下字段上创建索引：
 
 ```sql
+-- shop_categories表索引
+CREATE INDEX idx_shop_categories_sort_order ON shop_categories(sort_order);
+
+-- shops表索引
+CREATE INDEX idx_shops_category_id ON shops(category_id);
+CREATE INDEX idx_shops_is_active ON shops(is_active);
+CREATE INDEX idx_shops_sort_order ON shops(sort_order);
+
 -- shop_outputs表索引
 CREATE INDEX idx_shop_outputs_date ON shop_outputs(output_date);
 CREATE INDEX idx_shop_outputs_shop_id ON shop_outputs(shop_id);
 CREATE INDEX idx_shop_outputs_courier_id ON shop_outputs(courier_id);
 CREATE INDEX idx_shop_outputs_composite_1 ON shop_outputs(shop_id, courier_id, output_date);
 CREATE INDEX idx_shop_outputs_composite_2 ON shop_outputs(output_date, shop_id);
-
--- shops表索引
-CREATE INDEX idx_shops_is_active ON shops(is_active);
-CREATE INDEX idx_shops_sort_order ON shops(sort_order);
 ```
 
 ### 3.3 实体关系图
 
 ```mermaid
 erDiagram
+    SHOP_CATEGORIES ||--o{ SHOPS : "has"
     SHOPS ||--o{ SHOP_OUTPUTS : "has"
     COURIERS ||--o{ SHOP_OUTPUTS : "used_in"
+
+    SHOP_CATEGORIES {
+        int id PK
+        string name
+        int sort_order
+        timestamp created_at
+        timestamp updated_at
+    }
 
     SHOPS {
         int id PK
         string name
+        int category_id FK
         boolean is_active
         int sort_order
         text remark
@@ -223,224 +262,46 @@ erDiagram
 
 ### 3.4 数据库关系
 
+- **shop_categories 表与 shops 表**：一对多关系，一个类别可以包含多个店铺
 - **shops 表与 shop_outputs 表**：一对多关系，一个店铺可以有多条出力记录
 - **couriers 表与 shop_outputs 表**：一对多关系，一个快递类型可以有多条出力记录
 
 ## 4. API 设计
 
-### 4.1 店铺管理 API
+### 4.1 店铺类别管理 API
 
-| 接口路径              | 方法   | 描述             | 请求参数                               | 响应结果                        |
-| --------------------- | ------ | ---------------- | -------------------------------------- | ------------------------------- |
-| /api/shops            | GET    | 获取店铺列表     | ?is_active=true&search=xx&sort_by=name | { success, data: [shop1, ...] } |
-| /api/shops/:id        | GET    | 获取单个店铺     | id                                     | { success, data: shop }         |
-| /api/shops            | POST   | 创建店铺         | { name, remark, is_active }            | { success, data: { id, ... } }  |
-| /api/shops/:id        | PUT    | 更新店铺         | { name, remark, is_active }            | { success, data: shop }         |
-| /api/shops/:id        | DELETE | 删除店铺         | id                                     | { success, message }            |
-| /api/shops/sort       | POST   | 更新店铺排序     | [{ id, sort_order }, ...]              | { success, message }            |
-| /api/shops/:id/toggle | POST   | 切换店铺活跃状态 | id                                     | { success, data: shop }         |
+| 接口路径                  | 方法   | 描述             | 请求参数                  | 响应结果                       |
+| ------------------------- | ------ | ---------------- | ------------------------- | ------------------------------ |
+| /api/shop-categories      | GET    | 获取店铺类别列表 | ?search=xx&sort_by=name   | { success, data: [cat1, ...] } |
+| /api/shop-categories/:id  | GET    | 获取单个店铺类别 | id                        | { success, data: category }    |
+| /api/shop-categories      | POST   | 创建店铺类别     | { name }                  | { success, data: { id, ... } } |
+| /api/shop-categories/:id  | PUT    | 更新店铺类别     | { name }                  | { success, data: category }    |
+| /api/shop-categories/:id  | DELETE | 删除店铺类别     | id                        | { success, message }           |
+| /api/shop-categories/sort | POST   | 更新店铺类别排序 | [{ id, sort_order }, ...] | { success, message }           |
 
-#### 请求/响应示例
+### 4.2 店铺管理 API
 
-**获取店铺列表**
-
-```
-GET /api/shops?is_active=true&search=京东&sort_by=name
-
-响应:
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "name": "京东店",
-      "is_active": true,
-      "sort_order": 2,
-      "remark": "京东官方旗舰店",
-      "created_at": "2023-05-15T08:00:00Z",
-      "updated_at": "2023-05-15T08:00:00Z"
-    },
-    ...
-  ]
-}
-```
-
-**创建店铺**
-
-```
-POST /api/shops
-{
-  "name": "拼多多店",
-  "remark": "拼多多旗舰店",
-  "is_active": true
-}
-
-响应:
-{
-  "success": true,
-  "data": {
-    "id": 3,
-    "name": "拼多多店",
-    "remark": "拼多多旗舰店",
-    "is_active": true,
-    "sort_order": 3,
-    "created_at": "2023-05-15T10:30:00Z",
-    "updated_at": "2023-05-15T10:30:00Z"
-  }
-}
-```
-
-### 4.2 店铺出力数据 API
-
-| 接口路径                 | 方法   | 描述                   | 请求参数                                              | 响应结果                             |
-| ------------------------ | ------ | ---------------------- | ----------------------------------------------------- | ------------------------------------ |
-| /api/shop-outputs        | GET    | 获取出力数据列表       | ?date=&shop_id=&courier_id=&page=&per_page=           | { success, data, total, page_count } |
-| /api/shop-outputs/:id    | GET    | 获取单条出力记录       | id                                                    | { success, data: output }            |
-| /api/shop-outputs        | POST   | 创建出力记录           | { shop_id, courier_id, output_date, quantity, notes } | { success, data: { id, ... } }       |
-| /api/shop-outputs/:id    | PUT    | 更新出力记录           | { shop_id, courier_id, output_date, quantity, notes } | { success, data: output }            |
-| /api/shop-outputs/:id    | DELETE | 删除出力记录           | id                                                    | { success, message }                 |
-| /api/shop-outputs/recent | GET    | 获取最近录入的出力数据 | ?limit=10                                             | { success, data: [output1, ...] }    |
-| /api/shop-outputs/today  | GET    | 获取今日出力数据       | -                                                     | { success, data: [output1, ...] }    |
-
-#### 请求/响应示例
-
-**获取出力数据列表**
-
-```
-GET /api/shop-outputs?date=2023-05-15&shop_id=1&page=1&per_page=10
-
-响应:
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "shop_id": 1,
-      "shop_name": "京东店",
-      "courier_id": 2,
-      "courier_name": "顺丰",
-      "output_date": "2023-05-15",
-      "quantity": 85,
-      "notes": "大促销活动",
-      "created_at": "2023-05-15T08:00:00Z",
-      "updated_at": "2023-05-15T08:00:00Z"
-    },
-    ...
-  ],
-  "total": 24,
-  "page_count": 3
-}
-```
-
-**创建出力记录**
-
-```
-POST /api/shop-outputs
-{
-  "shop_id": 1,
-  "courier_id": 2,
-  "output_date": "2023-05-16",
-  "quantity": 50,
-  "notes": "预计明日发货"
-}
-
-响应:
-{
-  "success": true,
-  "data": {
-    "id": 25,
-    "shop_id": 1,
-    "shop_name": "京东店",
-    "courier_id": 2,
-    "courier_name": "顺丰",
-    "output_date": "2023-05-16",
-    "quantity": 50,
-    "notes": "预计明日发货",
-    "created_at": "2023-05-15T14:30:00Z",
-    "updated_at": "2023-05-15T14:30:00Z"
-  }
-}
-```
+| 接口路径              | 方法   | 描述             | 请求参数                                             | 响应结果                        |
+| --------------------- | ------ | ---------------- | ---------------------------------------------------- | ------------------------------- |
+| /api/shops            | GET    | 获取店铺列表     | ?is_active=true&category_id=1&search=xx&sort_by=name | { success, data: [shop1, ...] } |
+| /api/shops/:id        | GET    | 获取单个店铺     | id                                                   | { success, data: shop }         |
+| /api/shops            | POST   | 创建店铺         | { name, category_id, remark, is_active }             | { success, data: { id, ... } }  |
+| /api/shops/:id        | PUT    | 更新店铺         | { name, category_id, remark, is_active }             | { success, data: shop }         |
+| /api/shops/:id        | DELETE | 删除店铺         | id                                                   | { success, message }            |
+| /api/shops/sort       | POST   | 更新店铺排序     | [{ id, sort_order }, ...]                            | { success, message }            |
+| /api/shops/:id/toggle | POST   | 切换店铺活跃状态 | id                                                   | { success, data: shop }         |
 
 ### 4.3 统计分析 API
 
-| 接口路径                             | 方法 | 描述                   | 请求参数                                  | 响应结果                                |
-| ------------------------------------ | ---- | ---------------------- | ----------------------------------------- | --------------------------------------- |
-| /api/stats/shop-outputs/shops        | GET  | 按店铺统计出力数据     | ?date_from=&date_to=&courier_id=          | { success, data: [stat1, ...] }         |
-| /api/stats/shop-outputs/couriers     | GET  | 按快递类型统计出力数据 | ?date_from=&date_to=&shop_id=             | { success, data: [stat1, ...] }         |
-| /api/stats/shop-outputs/dates        | GET  | 按日期统计出力数据     | ?date_from=&date_to=&shop_id=&courier_id= | { success, data: [stat1, ...] }         |
-| /api/stats/shop-outputs/total        | GET  | 获取总计数据           | ?date_from=&date_to=                      | { success, data: { total, ... } }       |
-| /api/dashboard/shop-outputs/today    | GET  | 获取今日出力概览       | -                                         | { success, data: { total, shops: [] } } |
-| /api/dashboard/shop-outputs/tomorrow | GET  | 获取明日出力预测       | -                                         | { success, data: { total, shops: [] } } |
-
-#### 请求/响应示例
-
-**按店铺统计出力数据**
-
-```
-GET /api/stats/shop-outputs/shops?date_from=2023-05-01&date_to=2023-05-31
-
-响应:
-{
-  "success": true,
-  "data": [
-    {
-      "shop_id": 1,
-      "shop_name": "京东店",
-      "total_quantity": 2500,
-      "percentage": 42.5,
-      "daily_average": 80.6,
-      "details": [
-        {
-          "courier_id": 1,
-          "courier_name": "韵达",
-          "quantity": 1200
-        },
-        {
-          "courier_id": 2,
-          "courier_name": "顺丰",
-          "quantity": 1300
-        }
-      ]
-    },
-    ...
-  ]
-}
-```
-
-**获取今日出力概览**
-
-```
-GET /api/dashboard/shop-outputs/today
-
-响应:
-{
-  "success": true,
-  "data": {
-    "total": 285,
-    "shops": [
-      {
-        "shop_id": 1,
-        "shop_name": "淘宝店",
-        "value": 125,
-        "percent": "44%"
-      },
-      {
-        "shop_id": 2,
-        "shop_name": "京东店",
-        "value": 95,
-        "percent": "33%"
-      },
-      {
-        "shop_id": 3,
-        "shop_name": "拼多多店",
-        "value": 65,
-        "percent": "23%"
-      }
-    ]
-  }
-}
-```
+| 接口路径                             | 方法 | 描述                   | 请求参数                                               | 响应结果                                |
+| ------------------------------------ | ---- | ---------------------- | ------------------------------------------------------ | --------------------------------------- |
+| /api/stats/shop-outputs/categories   | GET  | 按店铺类别统计出力数据 | ?date_from=&date_to=&courier_id=                       | { success, data: [stat1, ...] }         |
+| /api/stats/shop-outputs/shops        | GET  | 按店铺统计出力数据     | ?date_from=&date_to=&category_id=&courier_id=          | { success, data: [stat1, ...] }         |
+| /api/stats/shop-outputs/couriers     | GET  | 按快递类型统计出力数据 | ?date_from=&date_to=&category_id=&shop_id=             | { success, data: [stat1, ...] }         |
+| /api/stats/shop-outputs/dates        | GET  | 按日期统计出力数据     | ?date_from=&date_to=&category_id=&shop_id=&courier_id= | { success, data: [stat1, ...] }         |
+| /api/stats/shop-outputs/total        | GET  | 获取总计数据           | ?date_from=&date_to=&category_id=                      | { success, data: { total, ... } }       |
+| /api/dashboard/shop-outputs/today    | GET  | 获取今日出力概览       | ?category_id=                                          | { success, data: { total, shops: [] } } |
+| /api/dashboard/shop-outputs/tomorrow | GET  | 获取明日出力预测       | ?category_id=                                          | { success, data: { total, shops: [] } } |
 
 ## 5. 前端实现
 
@@ -460,6 +321,7 @@ frontend/
 │   │   ├── page.tsx                   # 快递类型与店铺管理页面
 │   │   └── components/                # 页面专用组件
 │   │       ├── TypeManagementTab.tsx  # 快递类型管理标签页
+│   │       ├── CategoryManagementTab.tsx # 店铺类别管理标签页
 │   │       └── ShopManagementTab.tsx  # 店铺管理标签页
 │   ├── stats/
 │   │   ├── page.tsx                   # 统计分析页面
@@ -478,17 +340,23 @@ frontend/
 │   │   ├── ShopForm.tsx               # 店铺表单组件
 │   │   ├── ShopList.tsx               # 店铺列表组件
 │   │   └── ShopSortModal.tsx          # 店铺排序模态框
+│   ├── shop-category/                 # 店铺类别相关组件
+│   │   ├── CategoryForm.tsx           # 类别表单组件
+│   │   ├── CategoryList.tsx           # 类别列表组件
+│   │   └── CategorySortModal.tsx      # 类别排序模态框
 │   ├── shop-output/                   # 出力数据相关通用组件
 │   │   ├── DateSelector.tsx           # 日期选择器(今天/明天)
-│   │   └── ShopSelector.tsx           # 店铺选择器
+│   │   └── ShopSelector.tsx           # 店铺选择器(支持按类别筛选)
 │   └── ui/                            # UI组件库
 │       ├── ...                        # 通用UI组件
 └── lib/
     ├── types/                         # 类型定义
     │   ├── shop.ts                    # 店铺相关类型
+    │   ├── shop-category.ts           # 店铺类别相关类型
     │   └── shop-output.ts             # 出力数据相关类型
     ├── api/                           # API封装
     │   ├── shop.ts                    # 店铺API
+    │   ├── shop-category.ts           # 店铺类别API
     │   └── shop-output.ts             # 出力数据API
     └── utils/                         # 工具函数
         ├── date.ts                    # 日期相关工具
@@ -626,6 +494,7 @@ sequenceDiagram
 interface OutputFormProps {
   onSubmit: (data: ShopOutputFormData) => Promise<void>;
   shopsList: Shop[];
+  categoriesList: Category[];
   couriersList: Courier[];
 }
 
@@ -640,6 +509,7 @@ interface ShopOutputFormData {
 export function OutputForm({
   onSubmit,
   shopsList,
+  categoriesList,
   couriersList,
 }: OutputFormProps) {
   // 组件实现...
@@ -683,8 +553,29 @@ export function ShopManagementTab() {
 项目使用 SWR 库进行数据获取和状态管理，以下是核心 hooks 示例：
 
 ```tsx
+// hooks/useShopCategories.ts
+export function useShopCategories(params?: { search?: string }) {
+  const { data, error, mutate } = useSWR(
+    `/api/shop-categories${
+      params ? `?${new URLSearchParams(params as any).toString()}` : ""
+    }`,
+    fetcher
+  );
+
+  return {
+    categories: data?.data || [],
+    isLoading: !error && !data,
+    isError: error,
+    mutate,
+  };
+}
+
 // hooks/useShops.ts
-export function useShops(params?: { isActive?: boolean; search?: string }) {
+export function useShops(params?: {
+  isActive?: boolean;
+  categoryId?: number;
+  search?: string;
+}) {
   const { data, error, mutate } = useSWR(
     `/api/shops${
       params ? `?${new URLSearchParams(params as any).toString()}` : ""
@@ -749,32 +640,29 @@ export function useDashboardOutputs() {
 
 ### 6.1 控制器设计
 
-#### 6.1.1 店铺控制器
+#### 6.1.1 店铺类别控制器
 
 ```javascript
-// shopController.js
-const Shop = require("../models/Shop");
+// shopCategoryController.js
+const ShopCategory = require("../models/ShopCategory");
 
-// 获取店铺列表
-exports.getShops = async (req, res) => {
+// 获取店铺类别列表
+exports.getShopCategories = async (req, res) => {
   try {
-    const { is_active, search, sort_by = "sort_order" } = req.query;
+    const { search, sort_by = "sort_order" } = req.query;
 
     // 构建查询条件
     const query = {};
-    if (is_active !== undefined) {
-      query.is_active = is_active === "true";
-    }
     if (search) {
       query.name = { $regex: search, $options: "i" };
     }
 
     // 执行查询
-    const shops = await Shop.find(query).sort({ [sort_by]: 1 });
+    const categories = await ShopCategory.find(query).sort({ [sort_by]: 1 });
 
-    res.json({ success: true, data: shops });
+    res.json({ success: true, data: categories });
   } catch (error) {
-    console.error("获取店铺列表出错:", error);
+    console.error("获取店铺类别列表出错:", error);
     res.status(500).json({ success: false, message: "服务器错误" });
   }
 };
@@ -782,68 +670,56 @@ exports.getShops = async (req, res) => {
 // 其他控制器方法...
 ```
 
-#### 6.1.2 出力数据控制器
+#### 6.1.2 店铺控制器
 
 ```javascript
-// shopOutputController.js
-const ShopOutput = require("../models/ShopOutput");
+// shopController.js
 const Shop = require("../models/Shop");
-const Courier = require("../models/Courier");
+const ShopCategory = require("../models/ShopCategory");
 
-// 获取出力数据列表
-exports.getShopOutputs = async (req, res) => {
+// 获取店铺列表
+exports.getShops = async (req, res) => {
   try {
-    const { date, shop_id, courier_id, page = 1, per_page = 10 } = req.query;
+    const {
+      is_active,
+      category_id,
+      search,
+      sort_by = "sort_order",
+    } = req.query;
 
     // 构建查询条件
     const query = {};
-    if (date) {
-      query.output_date = date;
+    if (is_active !== undefined) {
+      query.is_active = is_active === "true";
     }
-    if (shop_id) {
-      query.shop_id = shop_id;
+    if (category_id) {
+      query.category_id = category_id;
     }
-    if (courier_id) {
-      query.courier_id = courier_id;
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
     }
-
-    // 计算分页
-    const skip = (page - 1) * per_page;
 
     // 执行查询
-    const outputs = await ShopOutput.find(query)
-      .populate("shop_id", "name")
-      .populate("courier_id", "name")
-      .sort({ output_date: -1, created_at: -1 })
-      .skip(skip)
-      .limit(parseInt(per_page));
+    const shops = await Shop.find(query)
+      .populate("category_id", "name")
+      .sort({ [sort_by]: 1 });
 
-    // 获取总数
-    const total = await ShopOutput.countDocuments(query);
-    const pageCount = Math.ceil(total / per_page);
-
-    // 转换为前端友好格式
-    const data = outputs.map((output) => ({
-      id: output._id,
-      shop_id: output.shop_id._id,
-      shop_name: output.shop_id.name,
-      courier_id: output.courier_id._id,
-      courier_name: output.courier_id.name,
-      output_date: output.output_date,
-      quantity: output.quantity,
-      notes: output.notes,
-      created_at: output.created_at,
-      updated_at: output.updated_at,
+    // 处理结果
+    const data = shops.map((shop) => ({
+      id: shop._id,
+      name: shop.name,
+      category_id: shop.category_id ? shop.category_id._id : null,
+      category_name: shop.category_id ? shop.category_id.name : null,
+      is_active: shop.is_active,
+      sort_order: shop.sort_order,
+      remark: shop.remark,
+      created_at: shop.created_at,
+      updated_at: shop.updated_at,
     }));
 
-    res.json({
-      success: true,
-      data,
-      total,
-      page_count: pageCount,
-    });
+    res.json({ success: true, data });
   } catch (error) {
-    console.error("获取出力数据列表出错:", error);
+    console.error("获取店铺列表出错:", error);
     res.status(500).json({ success: false, message: "服务器错误" });
   }
 };
@@ -948,6 +824,35 @@ exports.getShopStats = async (req, res) => {
 
 ### 6.2 模型设计
 
+#### ShopCategory 模型
+
+```javascript
+// ShopCategory.js
+const mongoose = require("mongoose");
+
+const shopCategorySchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    sort_order: {
+      type: Number,
+      default: 0,
+    },
+  },
+  {
+    timestamps: {
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+    },
+  }
+);
+
+module.exports = mongoose.model("ShopCategory", shopCategorySchema);
+```
+
 #### Shop 模型
 
 ```javascript
@@ -960,6 +865,10 @@ const shopSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    category_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ShopCategory",
     },
     is_active: {
       type: Boolean,
