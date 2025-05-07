@@ -19,18 +19,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ShopSelector } from "@/components/shop-output/ShopSelector";
 import { DateSelector } from "@/components/shop-output/DateSelector";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { ShopOutput, ShopOutputFormData } from "@/lib/types/shop-output";
 import { createShopOutput, updateShopOutput } from "@/lib/api/shop-output";
 import { DATE_FORMAT } from "@/lib/constants";
 import CourierSelector from "@/components/shop-output/CourierSelector";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 
 const outputFormSchema = z.object({
   shop_id: z.number({
@@ -65,15 +65,16 @@ type OutputFormProps = {
   };
 };
 
-export default function OutputForm({ 
-  initialData, 
-  isOpen, 
-  onClose, 
+export default function OutputForm({
+  initialData,
+  isOpen,
+  onClose,
   onSuccess,
   onSelectionChange,
   selection
 }: OutputFormProps) {
   const { t } = useTranslation(['common', 'shop']);
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const quantityInputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +88,7 @@ export default function OutputForm({
     defaultValues: {
       shop_id: initialData?.shop_id || selection?.shopId || undefined,
       courier_id: initialData?.courier_id || selection?.courierId || undefined,
-      output_date: initialData?.output_date || 
+      output_date: initialData?.output_date ||
         (selection?.date ? format(selection.date, DATE_FORMAT) : format(new Date(), DATE_FORMAT)),
       quantity: initialData?.quantity || undefined,
       notes: initialData?.notes || "",
@@ -124,12 +125,16 @@ export default function OutputForm({
 
       if (isEditMode && initialData) {
         await updateShopOutput(initialData.id, outputData);
-        toast.success(t('shop:output_updated'));
+        toast({
+          title: t('shop:output_updated'),
+        });
       } else {
         await createShopOutput(outputData);
-        toast.success(t('shop:output_created'));
+        toast({
+          title: t('shop:output_created'),
+        });
       }
-      
+
       form.reset({
         shop_id: values.shop_id,
         courier_id: values.courier_id,
@@ -137,17 +142,20 @@ export default function OutputForm({
         quantity: undefined,
         notes: "",
       });
-      
+
       // 成功后聚焦数量输入框，方便继续录入
       if (!isModal && quantityInputRef.current) {
         quantityInputRef.current.focus();
       }
-      
+
       onSuccess?.();
     } catch (err) {
       console.error("Failed to submit output data:", err);
       setError(`${isEditMode ? '更新' : '添加'}出力数据失败，请重试`);
-      toast.error(t('shop:output_save_failed'));
+      toast({
+        variant: 'destructive',
+        title: t('shop:output_save_failed'),
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -156,7 +164,7 @@ export default function OutputForm({
   // 处理日期变化
   const handleDateChange = (date: Date | undefined) => {
     form.setValue('output_date', date ? format(date, DATE_FORMAT) : '');
-    
+
     if (onSelectionChange) {
       onSelectionChange({
         date,
@@ -169,7 +177,7 @@ export default function OutputForm({
   // 处理店铺变化
   const handleShopChange = (shopId: number | undefined) => {
     form.setValue('shop_id', shopId || 0);
-    
+
     if (onSelectionChange) {
       onSelectionChange({
         date: form.getValues().output_date ? new Date(form.getValues().output_date) : undefined,
@@ -182,7 +190,7 @@ export default function OutputForm({
   // 处理快递类型变化
   const handleCourierChange = (courierId: number | undefined) => {
     form.setValue('courier_id', courierId || 0);
-    
+
     if (onSelectionChange) {
       onSelectionChange({
         date: form.getValues().output_date ? new Date(form.getValues().output_date) : undefined,
@@ -199,7 +207,7 @@ export default function OutputForm({
       e.preventDefault();
       form.handleSubmit(onSubmit)();
     }
-    
+
     // Alt+R 重置表单
     if (e.altKey && e.key === 'r') {
       e.preventDefault();
@@ -209,9 +217,9 @@ export default function OutputForm({
 
   const formContent = (
     <Form {...form}>
-      <form 
-        onSubmit={form.handleSubmit(onSubmit)} 
-        className="space-y-6" 
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-6"
         onKeyDown={handleKeyDown}
         noValidate
       >
@@ -332,9 +340,9 @@ export default function OutputForm({
                 取消
               </Button>
             )}
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => form.reset()}
               className="text-gray-700 hover:bg-gray-100"
             >

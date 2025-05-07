@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { Edit2, Trash2, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -31,11 +31,11 @@ import { ShopOutput, ShopOutputFilter } from "@/lib/types/shop-output";
 import { getShopOutputs, deleteShopOutput } from "@/lib/api/shop-output";
 import OutputForm from "./OutputForm";
 import { cn } from "@/lib/utils";
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 
 interface OutputListProps {
@@ -44,6 +44,7 @@ interface OutputListProps {
 
 export default function OutputList({ filter = {} }: OutputListProps) {
   const { t } = useTranslation(['common', 'shop']);
+  const { toast } = useToast();
   const [outputs, setOutputs] = useState<ShopOutput[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,16 +92,21 @@ export default function OutputList({ filter = {} }: OutputListProps) {
 
   const confirmDelete = async () => {
     if (!selectedOutput) return;
-    
+
     setIsDeleting(true);
     try {
       await deleteShopOutput(selectedOutput.id);
       setIsDeleteDialogOpen(false);
-      toast.success(t('shop:delete_success'));
+      toast({
+        title: t('shop:delete_success'),
+      });
       await fetchOutputs(); // 重新加载数据
     } catch (err) {
       console.error("Failed to delete output:", err);
-      toast.error(t('common:operation_failed'));
+      toast({
+        variant: 'destructive',
+        title: t('common:operation_failed'),
+      });
     } finally {
       setIsDeleting(false);
     }

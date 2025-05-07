@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Shop, ShopCategory, ShopFormData } from "@/lib/types/shop";
 import AddShopDialog from './AddShopDialog';
+import EditShopDialog from './EditShopDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ShopListProps {
@@ -49,6 +50,8 @@ export const ShopList: React.FC<ShopListProps> = ({
   const { t } = useTranslation(['common', 'shop']);
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedShop, setSelectedShop] = useState<Shop | undefined>(undefined);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
   // 将店铺按类别分组
@@ -126,6 +129,26 @@ export const ShopList: React.FC<ShopListProps> = ({
     return Promise.resolve();
   };
 
+  // 处理编辑店铺按钮点击
+  const handleEditClick = (shop: Shop) => {
+    setSelectedShop(shop);
+    setShowEditDialog(true);
+  };
+
+  // 处理编辑成功
+  const handleEditSuccess = async (data: ShopFormData) => {
+    if (selectedShop && onEdit) {
+      try {
+        await onEdit(selectedShop.id, data);
+      } catch (error) {
+        // 错误会在onEdit内部处理
+        console.error('编辑店铺出错:', error);
+      }
+    }
+    setShowEditDialog(false);
+    setSelectedShop(undefined);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -188,28 +211,24 @@ export const ShopList: React.FC<ShopListProps> = ({
           {Object.entries(groupedShops).map(([categoryId, shops]) => {
             if (shops.length === 0) return null;
 
-            const categoryName = getCategoryName(categoryId);
-
             return (
-              <div key={categoryId} className="rounded-md border overflow-hidden">
-                {/* 类别标题行 */}
-                <div className="bg-muted p-3 font-medium flex justify-between items-center">
-                  <span>
-                    [{categoryName}] {t('shop:shop_count', { count: shops.length })}
-                  </span>
+              <div key={categoryId} className="border rounded-md">
+                <div className="bg-muted p-3 flex justify-between items-center">
+                  <h3 className="font-medium">
+                    [{getCategoryName(categoryId)}] {t('shop:shops_count', { count: shops.length })}
+                  </h3>
                 </div>
-
-                {/* 该类别下的店铺表格 */}
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[25%]">{t('shop:shop_name')}</TableHead>
-                      <TableHead className="w-[15%] text-center">{t('shop:status')}</TableHead>
-                      <TableHead className="w-[15%] text-center">{t('shop:sort_order')}</TableHead>
-                      <TableHead className="w-[30%]">{t('shop:remark')}</TableHead>
-                      <TableHead className="w-[15%] text-right">{t('common:actions')}</TableHead>
+                      <TableHead>{t('shop:shop_name')}</TableHead>
+                      <TableHead className="text-center">{t('shop:status')}</TableHead>
+                      <TableHead className="text-center">{t('shop:sort_order')}</TableHead>
+                      <TableHead>{t('shop:remark')}</TableHead>
+                      <TableHead className="text-right">{t('common:actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
+
                   <TableBody>
                     {shops.map((shop) => (
                       <TableRow
@@ -234,7 +253,7 @@ export const ShopList: React.FC<ShopListProps> = ({
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => onEdit && onEdit(shop.id, convertToFormData(shop))}
+                              onClick={() => handleEditClick(shop)}
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -267,6 +286,15 @@ export const ShopList: React.FC<ShopListProps> = ({
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onSuccess={handleAddSuccess}
+        categories={categories}
+      />
+
+      {/* 编辑店铺对话框 */}
+      <EditShopDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSuccess={handleEditSuccess}
+        shop={selectedShop}
         categories={categories}
       />
     </div>

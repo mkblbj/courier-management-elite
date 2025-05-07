@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 import ShopForm from "./ShopForm";
 import { ShopFormData, ShopCategory } from "@/lib/types/shop";
 
@@ -25,6 +25,7 @@ export const AddShopDialog: React.FC<AddShopDialogProps> = ({
   categories = [],
 }) => {
   const { t } = useTranslation(['common', 'shop']);
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (data: ShopFormData) => {
@@ -36,14 +37,13 @@ export const AddShopDialog: React.FC<AddShopDialogProps> = ({
       }
 
       onOpenChange(false);
-      toast.success(t('shop:shop_added_success'));
     } catch (error) {
       console.error("添加店铺失败:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t('shop:shop_add_error')
-      );
+      toast({
+        variant: 'destructive',
+        title: t('shop:error_adding_shop'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
+      });
     } finally {
       setIsSubmitting(false);
     }

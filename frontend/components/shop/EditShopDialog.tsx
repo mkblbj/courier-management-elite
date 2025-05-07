@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 import ShopForm from "./ShopForm";
 import { Shop, ShopFormData, ShopCategory } from "@/lib/types/shop";
 import { updateShop } from "@/lib/api/shop";
@@ -15,7 +15,7 @@ import { updateShop } from "@/lib/api/shop";
 interface EditShopDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (data: ShopFormData) => void;
   shop?: Shop;
   categories: ShopCategory[];
 }
@@ -28,6 +28,7 @@ const EditShopDialog: React.FC<EditShopDialogProps> = ({
   categories = [],
 }) => {
   const { t } = useTranslation(['common', 'shop']);
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (data: ShopFormData) => {
@@ -35,15 +36,17 @@ const EditShopDialog: React.FC<EditShopDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      await updateShop(shop.id, data);
-      toast.success(t('shop:shop_updated_successfully'));
-      onOpenChange(false);
       if (onSuccess) {
-        onSuccess();
+        await onSuccess(data);
       }
+      onOpenChange(false);
     } catch (error) {
       console.error('Failed to update shop:', error);
-      toast.error(t('shop:failed_to_update_shop'));
+      toast({
+        variant: 'destructive',
+        title: t('shop:error_updating_shop'),
+        description: error instanceof Error ? error.message : t('common:operation_failed'),
+      });
     } finally {
       setIsSubmitting(false);
     }
