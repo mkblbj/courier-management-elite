@@ -114,29 +114,39 @@ class ShopOutputControllerClass {
         });
       }
       
-      // 创建出力记录
+      // 检查是否已存在相同日期、店铺和快递类型的记录
+      const existingRecord = await ShopOutput.getByShopCourierDate(
+        req.body.shop_id, 
+        req.body.courier_id, 
+        req.body.output_date
+      );
+      
+      // 创建或更新出力记录
       const id = await ShopOutput.add(req.body);
       
       if (!id) {
         return res.status(500).json({
           code: 500,
-          message: '创建出力记录失败'
+          message: '处理出力记录失败'
         });
       }
       
-      // 获取新创建的出力记录
+      // 获取新创建或更新的出力记录
       const newOutput = await ShopOutput.getById(id);
       
-      res.status(201).json({
+      // 根据是否更新了现有记录返回不同的消息
+      const message = existingRecord ? '数量已累加' : '添加成功';
+      
+      res.status(existingRecord ? 200 : 201).json({
         code: 0,
-        message: '添加成功',
+        message: message,
         data: newOutput
       });
     } catch (error) {
-      console.error('创建出力记录失败:', error);
+      console.error('处理出力记录失败:', error);
       res.status(500).json({
         code: 500,
-        message: '创建出力记录失败'
+        message: '处理出力记录失败'
       });
     }
   }

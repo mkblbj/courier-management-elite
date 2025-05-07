@@ -93,23 +93,41 @@ class ShopOutput {
   /**
    * 添加出力数据
    * @param {Object} data 出力数据
-   * @returns {Promise<number>} 新创建的ID
+   * @returns {Promise<number>} 新创建的ID或更新的ID
    */
   async add(data) {
-    const sql = `INSERT INTO ${this.table} (shop_id, courier_id, output_date, quantity, notes) VALUES (?, ?, ?, ?, ?)`;
+    // 首先检查是否已存在相同日期、店铺和快递类型的记录
+    const existingRecord = await this.getByShopCourierDate(data.shop_id, data.courier_id, data.output_date);
     
-    const quantity = data.quantity || 0;
-    const notes = data.notes || null;
-
-    const result = await db.query(sql, [
-      data.shop_id,
-      data.courier_id,
-      data.output_date,
-      quantity,
-      notes
-    ]);
-
-    return result.insertId;
+    if (existingRecord) {
+      // 如果存在记录，则更新数量（累加）
+      const newQuantity = existingRecord.quantity + (data.quantity || 0);
+      const notes = data.notes || existingRecord.notes;
+      
+      // 更新记录
+      await this.update(existingRecord.id, {
+        quantity: newQuantity,
+        notes: notes
+      });
+      
+      return existingRecord.id;
+    } else {
+      // 如果不存在记录，则创建新记录
+      const sql = `INSERT INTO ${this.table} (shop_id, courier_id, output_date, quantity, notes) VALUES (?, ?, ?, ?, ?)`;
+      
+      const quantity = data.quantity || 0;
+      const notes = data.notes || null;
+  
+      const result = await db.query(sql, [
+        data.shop_id,
+        data.courier_id,
+        data.output_date,
+        quantity,
+        notes
+      ]);
+  
+      return result.insertId;
+    }
   }
 
   /**
@@ -261,6 +279,26 @@ class ShopOutput {
     
     const results = await db.query(sql, [courierId, dateFrom, dateTo]);
     return results[0]?.total || 0;
+  }
+
+  /**
+   * 根据店铺ID、快递类型ID和日期获取出力记录
+   * @param {number} shopId 店铺ID
+   * @param {number} courierId 快递类型ID
+   * @param {string} date 日期 YYYY-MM-DD
+   * @returns {Promise<Object|null>} 出力记录
+   */
+  async getByShopCourierDate(shopId, courierId, date) {
+    const sql = `
+      SELECT so.*, s.name as shop_name, c.name as courier_name 
+      FROM ${this.table} so
+      LEFT JOIN shops s ON so.shop_id = s.id
+      LEFT JOIN couriers c ON so.courier_id = c.id
+      WHERE so.shop_id = ? AND so.courier_id = ? AND so.output_date = ?
+    `;
+    
+    const results = await db.query(sql, [shopId, courierId, date]);
+    return results.length > 0 ? results[0] : null;
   }
 }
 
