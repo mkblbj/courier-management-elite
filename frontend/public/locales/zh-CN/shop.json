@@ -101,6 +101,7 @@
   "output_updated": "出力数据更新成功",
   "output_save_failed": "保存出力数据失败",
   "total_record": "共 {{count}} 条记录",
+  "limited_records": "显示 {{count}} 条记录（限制显示最近 {{limit}} 条）",
   "total_shops": "共 {{count}} 个店铺",
   
   "category_management": "店铺类别管理",

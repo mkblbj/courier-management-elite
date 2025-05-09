@@ -10,7 +10,6 @@ import { DateSelector } from "@/components/shop-output/DateSelector";
 import { CategoryShopSelector } from "@/components/shop-output/CategoryShopSelector";
 import { CourierSelector } from "@/components/shop-output/CourierSelector";
 import OutputList from "./components/OutputList";
-import OutputSummary from "./components/OutputSummary";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { toast } from "@/components/ui/use-toast";
@@ -171,29 +170,16 @@ export default function OutputDataPage() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card className="lg:col-span-1">
-            <CardHeader className="px-6 py-4">
-              <CardTitle className="text-xl">最近录入数据</CardTitle>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-              <Suspense fallback={<ListSkeleton />}>
-                <OutputList selectedDate={selectedDate} key={`list-${refreshKey}`} />
-              </Suspense>
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-1">
-            <CardHeader className="px-6 py-4">
-              <CardTitle className="text-xl">当日数据汇总</CardTitle>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-              <Suspense fallback={<ListSkeleton />}>
-                <OutputSummary selectedDate={selectedDate} key={`summary-${refreshKey}`} />
-              </Suspense>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="mb-6">
+          <CardHeader className="px-6 py-4">
+            <CardTitle className="text-xl">最近录入数据</CardTitle>
+          </CardHeader>
+          <CardContent className="px-6 pb-6">
+            <Suspense fallback={<ListSkeleton />}>
+              <OutputList selectedDate={selectedDate} key={`list-${refreshKey}`} />
+            </Suspense>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
