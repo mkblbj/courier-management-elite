@@ -10,6 +10,7 @@ import { DateSelector } from "@/components/shop-output/DateSelector";
 import { CategoryShopSelector } from "@/components/shop-output/CategoryShopSelector";
 import { CourierSelector } from "@/components/shop-output/CourierSelector";
 import OutputList from "./components/OutputList";
+import OutputSummary from "./components/OutputSummary";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { toast } from "@/components/ui/use-toast";
@@ -19,6 +20,7 @@ import { ShopOutput } from "@/lib/types/shop-output";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditOutputModal from "./components/EditOutputModal";
+import DeleteOutputModal from "./components/DeleteOutputModal";
 import { isSameDay } from "date-fns";
 import { dateToApiString, apiStringToDate } from "@/lib/date-utils";
 
@@ -33,7 +35,7 @@ export default function OutputDataPage() {
 
   // 用于编辑和删除的状态
   const [editingOutput, setEditingOutput] = useState<ShopOutput | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deletingOutput, setDeletingOutput] = useState<ShopOutput | null>(null);
 
   const handleAddRecord = async () => {
     if (!selectedDate || !selectedShopId || !selectedCourierId || !quantity || parseInt(quantity) <= 0) {
@@ -168,22 +170,43 @@ export default function OutputDataPage() {
     }
   };
 
-  const handleDeleteOutput = async (id: string) => {
-    setDeleteId(id);
+  const handleDeleteOutput = async (id: string | number) => {
+    try {
+      // 根据 ID 获取要删除的出力数据详情
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shop-outputs/${id}`);
+      if (!response.ok) {
+        throw new Error(`获取出力数据详情失败: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (result.code !== 0) {
+        throw new Error(result.message || '获取出力数据详情失败');
+      }
+
+      // 设置要删除的数据
+      setDeletingOutput(result.data);
+    } catch (error) {
+      console.error("获取删除数据详情失败:", error);
+      toast({
+        title: "操作失败",
+        description: "无法获取要删除的数据详情",
+        variant: "destructive",
+      });
+    }
   };
 
   const confirmDelete = async () => {
-    if (!deleteId) return;
+    if (!deletingOutput) return;
 
     // 保存当前选中的日期，以便在删除后恢复
     const currentSelectedDate = selectedDate;
 
     setIsLoading(true);
     try {
-      await deleteShopOutput(Number(deleteId));
+      await deleteShopOutput(Number(deletingOutput.id));
 
       setRefreshKey(prev => prev + 1);
-      setDeleteId(null);
+      setDeletingOutput(null);
 
       // 始终恢复到删除前的日期
       setSelectedDate(currentSelectedDate);
@@ -324,6 +347,20 @@ export default function OutputDataPage() {
             </Suspense>
           </CardContent>
         </Card>
+
+        <Card className="mb-6">
+          <CardHeader className="px-6 py-4">
+            <CardTitle className="text-xl">当日数据汇总</CardTitle>
+          </CardHeader>
+          <CardContent className="px-6 pb-6">
+            <Suspense fallback={<ListSkeleton />}>
+              <OutputSummary
+                key={`summary-${refreshKey}`}
+                selectedDate={selectedDate}
+              />
+            </Suspense>
+          </CardContent>
+        </Card>
       </main>
 
       {/* 编辑出力数据对话框 */}
@@ -336,31 +373,13 @@ export default function OutputDataPage() {
       />
 
       {/* 删除确认对话框 */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
-            <AlertDialogDescription>
-              您确定要删除这条出力数据记录吗？此操作无法撤销。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>取消</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isLoading}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  删除中...
-                </>
-              ) : "删除"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteOutputModal
+        output={deletingOutput}
+        open={!!deletingOutput}
+        onOpenChange={(open) => !open && setDeletingOutput(null)}
+        onConfirm={confirmDelete}
+        isLoading={isLoading}
+      />
     </div>
   );
 }
