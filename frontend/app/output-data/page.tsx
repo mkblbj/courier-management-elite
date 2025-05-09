@@ -18,6 +18,7 @@ import { Loader2 } from "lucide-react";
 import { ShopOutput } from "@/lib/types/shop-output";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import EditOutputModal from "./components/EditOutputModal";
 
 export default function OutputDataPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -255,20 +256,13 @@ export default function OutputDataPage() {
       </main>
 
       {/* 编辑出力数据对话框 */}
-      <Dialog open={!!editingOutput} onOpenChange={(open) => !open && setEditingOutput(null)}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>编辑出力数据</DialogTitle>
-          </DialogHeader>
-          {editingOutput && (
-            <OutputEditForm
-              output={editingOutput}
-              onSubmit={handleUpdateOutput}
-              isLoading={isLoading}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <EditOutputModal
+        output={editingOutput}
+        open={!!editingOutput}
+        onOpenChange={(open) => !open && setEditingOutput(null)}
+        onSave={handleUpdateOutput}
+        isLoading={isLoading}
+      />
 
       {/* 删除确认对话框 */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
@@ -297,109 +291,6 @@ export default function OutputDataPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
-}
-
-// 编辑表单组件
-function OutputEditForm({
-  output,
-  onSubmit,
-  isLoading
-}: {
-  output: ShopOutput,
-  onSubmit: (output: ShopOutput) => Promise<void>,
-  isLoading: boolean
-}) {
-  const [editedOutput, setEditedOutput] = useState<ShopOutput>({ ...output });
-  const [editDate, setEditDate] = useState<Date>(new Date(output.output_date));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit({
-      ...editedOutput,
-      output_date: editDate.toISOString().split('T')[0]
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <DateSelector
-            date={editDate}
-            onDateChange={(date) => date && setEditDate(date)}
-            showQuickButtons={true}
-            label="日期"
-            className="w-full"
-          />
-        </div>
-        <div>
-          <CategoryShopSelector
-            selectedShopId={editedOutput.shop_id}
-            onSelectShop={(id) => setEditedOutput({ ...editedOutput, shop_id: id })}
-            label="店铺选择"
-            onlyActive={true}
-            className="w-full"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <CourierSelector
-            selectedCourierId={editedOutput.courier_id}
-            onSelectCourier={(id) => setEditedOutput({ ...editedOutput, courier_id: id })}
-            label="快递类型"
-            onlyActive={true}
-            className="w-full"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">数量</label>
-          <Input
-            type="number"
-            placeholder="请输入数量"
-            value={editedOutput.quantity.toString()}
-            onChange={(e) => setEditedOutput({ ...editedOutput, quantity: parseInt(e.target.value) || 0 })}
-            min="1"
-            className="w-full"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">备注</label>
-        <Textarea
-          placeholder="请输入备注（可选）"
-          value={editedOutput.notes || ''}
-          onChange={(e) => setEditedOutput({ ...editedOutput, notes: e.target.value })}
-          className="w-full resize-none"
-        />
-      </div>
-
-      <div className="flex justify-end gap-2 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onSubmit(null as any)}
-          disabled={isLoading}
-        >
-          取消
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              保存中...
-            </>
-          ) : "保存更改"}
-        </Button>
-      </div>
-    </form>
   );
 }
 
