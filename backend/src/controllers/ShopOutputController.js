@@ -2,6 +2,7 @@ const ShopOutput = require('../models/ShopOutput');
 const Shop = require('../models/Shop');
 const Courier = require('../models/Courier');
 const { body, validationResult } = require('express-validator');
+const { formatToISOString, getToday } = require('../config/timezone');
 
 /**
  * 验证店铺出力数据
@@ -24,31 +25,33 @@ class ShopOutputControllerClass {
    */
   async getAll(req, res) {
     try {
+      // 从请求中获取过滤和排序参数
       const options = {
-        shop_id: req.query.shop_id ? parseInt(req.query.shop_id) : null,
-        courier_id: req.query.courier_id ? parseInt(req.query.courier_id) : null,
-        date_from: req.query.date_from,
-        date_to: req.query.date_to,
-        output_date: req.query.output_date,
-        sort_by: req.query.sort || 'output_date',
-        sort_order: req.query.order || 'DESC',
-        search: req.query.search || '',
-        limit: req.query.limit ? parseInt(req.query.limit) : null,
-        offset: req.query.offset ? parseInt(req.query.offset) : null
+        shop_id: req.query.shop_id ? parseInt(req.query.shop_id) : undefined,
+        courier_id: req.query.courier_id ? parseInt(req.query.courier_id) : undefined,
+        output_date: req.query.output_date || undefined,
+        date_from: req.query.date_from || undefined,
+        date_to: req.query.date_to || undefined,
+        search: req.query.search || undefined,
+        sort_by: req.query.sort_by || 'output_date',
+        sort_order: req.query.sort_order || 'DESC',
+        limit: req.query.limit ? parseInt(req.query.limit) : undefined,
+        offset: req.query.offset ? parseInt(req.query.offset) : undefined
       };
-
-      const outputs = await ShopOutput.getAll(options);
+      
+      // 获取店铺出力数据
+      const data = await ShopOutput.getAll(options);
       
       res.status(200).json({
         code: 0,
-        message: '获取成功',
-        data: outputs
+        message: "获取成功",
+        data
       });
     } catch (error) {
-      console.error('获取出力数据列表失败:', error);
+      console.error("获取所有出力数据失败:", error);
       res.status(500).json({
         code: 500,
-        message: '获取出力数据列表失败'
+        message: "查询出错"
       });
     }
   }
@@ -115,39 +118,29 @@ class ShopOutputControllerClass {
         });
       }
       
-      // 检查是否已存在相同日期、店铺和快递类型的记录
-      const existingRecord = await ShopOutput.getByShopCourierDate(
-        req.body.shop_id, 
-        req.body.courier_id, 
-        req.body.output_date
-      );
-      
-      // 创建或更新出力记录
+      // 创建新的出力记录
       const id = await ShopOutput.add(req.body);
       
       if (!id) {
         return res.status(500).json({
           code: 500,
-          message: '处理出力记录失败'
+          message: '创建出力记录失败'
         });
       }
       
-      // 获取新创建或更新的出力记录
+      // 获取新创建的出力记录
       const newOutput = await ShopOutput.getById(id);
       
-      // 根据是否更新了现有记录返回不同的消息
-      const message = existingRecord ? '数量已累加' : '添加成功';
-      
-      res.status(existingRecord ? 200 : 201).json({
+      res.status(201).json({
         code: 0,
-        message: message,
+        message: '添加成功',
         data: newOutput
       });
     } catch (error) {
-      console.error('处理出力记录失败:', error);
+      console.error('创建出力记录失败:', error);
       res.status(500).json({
         code: 500,
-        message: '处理出力记录失败'
+        message: '创建出力记录失败'
       });
     }
   }
@@ -271,8 +264,9 @@ class ShopOutputControllerClass {
    */
   async getRecent(req, res) {
     try {
-      // 修改为返回当日数据
-      const outputs = await ShopOutput.getTodayOutputs();
+      // 使用时区工具获取今天的日期
+      const today = formatToISOString(getToday(), false);
+      const outputs = await ShopOutput.getAggregatedOutputsByDate(today);
       
       res.status(200).json({
         code: 0,
@@ -293,7 +287,8 @@ class ShopOutputControllerClass {
    */
   async getToday(req, res) {
     try {
-      const outputs = await ShopOutput.getTodayOutputs();
+      // 获取今日数据并按店铺和快递类型分组累加
+      const outputs = await ShopOutput.getAggregatedTodayOutputs();
       
       res.status(200).json({
         code: 0,

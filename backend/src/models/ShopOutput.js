@@ -1,4 +1,5 @@
 const db = require('../db');
+const { formatToISOString, parseDate, getToday } = require('../config/timezone');
 
 class ShopOutput {
   constructor() {
@@ -75,7 +76,9 @@ class ShopOutput {
       }
     }
 
-    return await db.query(sql, params);
+    // 转换返回结果为数组
+    const results = await db.query(sql, params);
+    return Array.isArray(results) ? results : [];
   }
 
   /**
@@ -92,47 +95,34 @@ class ShopOutput {
       WHERE so.id = ?
     `;
     const results = await db.query(sql, [id]);
-    return results.length > 0 ? results[0] : null;
+    // 确保返回数组并处理第一个元素
+    const rows = Array.isArray(results) ? results : [];
+    return rows.length > 0 ? rows[0] : null;
   }
 
   /**
    * 添加出力数据
    * @param {Object} data 出力数据
-   * @returns {Promise<number>} 新创建的ID或更新的ID
+   * @returns {Promise<number>} 新创建的ID
    */
   async add(data) {
-    // 首先检查是否已存在相同日期、店铺和快递类型的记录
-    const existingRecord = await this.getByShopCourierDate(data.shop_id, data.courier_id, data.output_date);
+    // 直接创建新记录，不再检查是否存在
+    const sql = `INSERT INTO ${this.table} (shop_id, courier_id, output_date, quantity, notes) VALUES (?, ?, ?, ?, ?)`;
     
-    if (existingRecord) {
-      // 如果存在记录，则更新数量（累加）
-      const newQuantity = existingRecord.quantity + (data.quantity || 0);
-      const notes = data.notes || existingRecord.notes;
-      
-      // 更新记录
-      await this.update(existingRecord.id, {
-        quantity: newQuantity,
-        notes: notes
-      });
-      
-      return existingRecord.id;
-    } else {
-      // 如果不存在记录，则创建新记录
-      const sql = `INSERT INTO ${this.table} (shop_id, courier_id, output_date, quantity, notes) VALUES (?, ?, ?, ?, ?)`;
-      
-      const quantity = data.quantity || 0;
-      const notes = data.notes || null;
-  
-      const result = await db.query(sql, [
-        data.shop_id,
-        data.courier_id,
-        data.output_date,
-        quantity,
-        notes
-      ]);
-  
-      return result.insertId;
-    }
+    const quantity = data.quantity || 0;
+    const notes = data.notes || null;
+
+    const result = await db.query(sql, [
+      data.shop_id,
+      data.courier_id,
+      data.output_date,
+      quantity,
+      notes
+    ]);
+
+    // 处理不同类型的返回结果以获取insertId
+    return result && result.insertId ? result.insertId : 
+           (Array.isArray(result) && result[0] && result[0].insertId ? result[0].insertId : 0);
   }
 
   /**
@@ -182,7 +172,9 @@ class ShopOutput {
     const sql = `UPDATE ${this.table} SET ${setClauses.join(", ")} WHERE id = ?`;
     
     const result = await db.query(sql, params);
-    return result.affectedRows > 0;
+    // 处理不同类型的返回结果以获取affectedRows
+    return result && result.affectedRows ? result.affectedRows > 0 : 
+           (Array.isArray(result) && result[0] && result[0].affectedRows ? result[0].affectedRows > 0 : false);
   }
 
   /**
@@ -193,7 +185,9 @@ class ShopOutput {
   async delete(id) {
     const sql = `DELETE FROM ${this.table} WHERE id = ?`;
     const result = await db.query(sql, [id]);
-    return result.affectedRows > 0;
+    // 处理不同类型的返回结果以获取affectedRows
+    return result && result.affectedRows ? result.affectedRows > 0 : 
+           (Array.isArray(result) && result[0] && result[0].affectedRows ? result[0].affectedRows > 0 : false);
   }
 
   /**
@@ -210,7 +204,9 @@ class ShopOutput {
       ORDER BY so.created_at DESC
       LIMIT ?
     `;
-    return await db.query(sql, [limit]);
+    const results = await db.query(sql, [limit]);
+    // 转换返回结果为数组
+    return Array.isArray(results) ? results : [];
   }
 
   /**
@@ -229,7 +225,9 @@ class ShopOutput {
       ORDER BY so.shop_id, so.courier_id
     `;
     
-    return await db.query(sql, [today]);
+    const results = await db.query(sql, [today]);
+    // 转换返回结果为数组
+    return Array.isArray(results) ? results : [];
   }
 
   /**
@@ -238,16 +236,21 @@ class ShopOutput {
    * @returns {Promise<Array>} 出力数据列表
    */
   async getOutputsByDate(date) {
+    // 确保日期格式正确
+    const formattedDate = typeof date === 'string' ? date : formatToISOString(date, false);
+    
     const sql = `
       SELECT so.*, s.name as shop_name, c.name as courier_name 
       FROM ${this.table} so
       LEFT JOIN shops s ON so.shop_id = s.id
       LEFT JOIN couriers c ON so.courier_id = c.id
       WHERE so.output_date = ?
-      ORDER BY so.shop_id, so.courier_id
+      ORDER BY s.name, c.name
     `;
     
-    return await db.query(sql, [date]);
+    const results = await db.query(sql, [formattedDate]);
+    // 转换返回结果为数组
+    return Array.isArray(results) ? results : [];
   }
 
   /**
@@ -258,14 +261,20 @@ class ShopOutput {
    * @returns {Promise<number>} 总量
    */
   async getTotalQuantityByShopAndDateRange(shopId, dateFrom, dateTo) {
+    // 确保日期格式正确
+    const formattedDateFrom = typeof dateFrom === 'string' ? dateFrom : formatToISOString(dateFrom, false);
+    const formattedDateTo = typeof dateTo === 'string' ? dateTo : formatToISOString(dateTo, false);
+    
     const sql = `
       SELECT SUM(quantity) as total
       FROM ${this.table}
       WHERE shop_id = ? AND output_date BETWEEN ? AND ?
     `;
     
-    const results = await db.query(sql, [shopId, dateFrom, dateTo]);
-    return results[0]?.total || 0;
+    const results = await db.query(sql, [shopId, formattedDateFrom, formattedDateTo]);
+    // 处理结果，确保有返回值
+    const rows = Array.isArray(results) ? results : [];
+    return rows[0]?.total || 0;
   }
 
   /**
@@ -276,14 +285,20 @@ class ShopOutput {
    * @returns {Promise<number>} 总量
    */
   async getTotalQuantityByCourierAndDateRange(courierId, dateFrom, dateTo) {
+    // 确保日期格式正确
+    const formattedDateFrom = typeof dateFrom === 'string' ? dateFrom : formatToISOString(dateFrom, false);
+    const formattedDateTo = typeof dateTo === 'string' ? dateTo : formatToISOString(dateTo, false);
+    
     const sql = `
       SELECT SUM(quantity) as total
       FROM ${this.table}
       WHERE courier_id = ? AND output_date BETWEEN ? AND ?
     `;
     
-    const results = await db.query(sql, [courierId, dateFrom, dateTo]);
-    return results[0]?.total || 0;
+    const results = await db.query(sql, [courierId, formattedDateFrom, formattedDateTo]);
+    // 处理结果，确保有返回值
+    const rows = Array.isArray(results) ? results : [];
+    return rows[0]?.total || 0;
   }
 
   /**
@@ -294,6 +309,9 @@ class ShopOutput {
    * @returns {Promise<Object|null>} 出力记录
    */
   async getByShopCourierDate(shopId, courierId, date) {
+    // 确保日期格式正确
+    const formattedDate = typeof date === 'string' ? date : formatToISOString(date, false);
+    
     const sql = `
       SELECT so.*, s.name as shop_name, c.name as courier_name 
       FROM ${this.table} so
@@ -302,8 +320,51 @@ class ShopOutput {
       WHERE so.shop_id = ? AND so.courier_id = ? AND so.output_date = ?
     `;
     
-    const results = await db.query(sql, [shopId, courierId, date]);
-    return results.length > 0 ? results[0] : null;
+    const results = await db.query(sql, [shopId, courierId, formattedDate]);
+    // 处理结果，确保有返回值
+    const rows = Array.isArray(results) ? results : [];
+    return rows.length > 0 ? rows[0] : null;
+  }
+
+  /**
+   * 获取已累加的今日出力数据
+   * @returns {Promise<Array>} 今日出力数据列表（已按店铺和快递类型分组累加）
+   */
+  async getAggregatedTodayOutputs() {
+    // 使用时区配置中的方法获取今天的日期
+    const today = formatToISOString(getToday(), false);
+    return this.getAggregatedOutputsByDate(today);
+  }
+
+  /**
+   * 获取指定日期的已累加出力数据
+   * @param {string} date 日期 YYYY-MM-DD
+   * @returns {Promise<Array>} 出力数据列表（已按店铺和快递类型分组累加）
+   */
+  async getAggregatedOutputsByDate(date) {
+    // 首先获取原始数据
+    const outputs = await this.getOutputsByDate(date);
+    
+    // 用于按shop_id和courier_id分组的对象
+    const groupedOutputs = {};
+    
+    // 按shop_id和courier_id分组并累加quantity
+    outputs.forEach(output => {
+      const key = `${output.shop_id}-${output.courier_id}`;
+      if (!groupedOutputs[key]) {
+        // 创建一个新对象，保留原始记录的所有属性
+        groupedOutputs[key] = {
+          ...output,
+          original_id: output.id, // 保存原始ID供参考
+          quantity: 0 // 重置数量，准备累加
+        };
+      }
+      // 累加数量
+      groupedOutputs[key].quantity += output.quantity;
+    });
+    
+    // 将分组结果转换为数组
+    return Object.values(groupedOutputs);
   }
 }
 

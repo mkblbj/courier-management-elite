@@ -1,6 +1,6 @@
 "use client";
 import { useTranslation } from "react-i18next";
-import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns"
+import { subDays, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { useState, useEffect } from "react"
 import type { DateRange } from "react-day-picker"
@@ -9,6 +9,13 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  formatDisplayDate,
+  APP_TIMEZONE,
+  getTodayInAppTimezone,
+  isSameDayInAppTimezone
+} from "@/lib/date-utils"
+import { toZonedTime } from "date-fns-tz"
 
 interface DateRangePickerProps {
   value?: DateRange
@@ -34,35 +41,43 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
   }, [])
 
   const handleTodayClick = () => {
-    const today = new Date()
+    const today = getTodayInAppTimezone()
     onChange({ from: today, to: today })
     setIsOpen(false)
   }
 
   const handleQuickOptionSelect = (option: string) => {
-    const today = new Date()
+    const today = getTodayInAppTimezone()
     let from: Date
     let to: Date = today
 
     switch (option) {
       case "last7Days":
-        from = subDays(today, 6) // Last 7 days including today
+        // 在应用时区范围内计算过去7天
+        from = new Date(today)
+        from.setDate(today.getDate() - 6) // Last 7 days including today
         break
       case "last30Days":
-        from = subDays(today, 29) // Last 30 days including today
+        // 在应用时区范围内计算过去30天
+        from = new Date(today)
+        from.setDate(today.getDate() - 29) // Last 30 days including today
         break
       case "thisMonth":
-        from = startOfMonth(today)
-        to = endOfMonth(today)
+        // 获取当前月的第一天，在应用时区下
+        from = toZonedTime(startOfMonth(today), APP_TIMEZONE)
+        to = toZonedTime(endOfMonth(today), APP_TIMEZONE)
         break
       case "lastMonth":
-        const lastMonth = subMonths(today, 1)
-        from = startOfMonth(lastMonth)
-        to = endOfMonth(lastMonth)
+        // 获取上个月的范围，在应用时区下
+        const lastMonth = new Date(today)
+        lastMonth.setMonth(today.getMonth() - 1)
+        from = toZonedTime(startOfMonth(lastMonth), APP_TIMEZONE)
+        to = toZonedTime(endOfMonth(lastMonth), APP_TIMEZONE)
         break
       case "thisWeek":
-        from = startOfWeek(today, { weekStartsOn: 1 }) // Week starts on Monday
-        to = endOfWeek(today, { weekStartsOn: 1 })
+        // 获取本周的范围，在应用时区下
+        from = toZonedTime(startOfWeek(today, { weekStartsOn: 1 }), APP_TIMEZONE) // Week starts on Monday
+        to = toZonedTime(endOfWeek(today, { weekStartsOn: 1 }), APP_TIMEZONE)
         break
       default:
         return
@@ -89,10 +104,10 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
             {value?.from ? (
               value.to ? (
                 <>
-                  {format(value.from, "yyyy-MM-dd")} - {format(value.to, "yyyy-MM-dd")}
+                  {formatDisplayDate(value.from, "yyyy-MM-dd")} - {formatDisplayDate(value.to, "yyyy-MM-dd")}
                 </>
               ) : (
-                format(value.from, "yyyy-MM-dd")
+                formatDisplayDate(value.from, "yyyy-MM-dd")
               )
             ) : (
               <span>{t("选择日期范围")}</span>
@@ -164,6 +179,9 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                 onSelect={onChange}
                 numberOfMonths={isMobile ? 1 : 2}
                 className="p-0"
+                modifiers={{
+                  today: (date) => isSameDayInAppTimezone(date, getTodayInAppTimezone())
+                }}
               />
             </div>
           </div>

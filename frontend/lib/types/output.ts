@@ -2,24 +2,33 @@ export interface ShopOutput {
   id: number;
   shop_id: number;
   shop_name?: string;
+  courier_id?: number;
+  courier_name?: string;
   date: string;
+  output_date?: string;
   output_count: number;
+  quantity?: number;
   avg_time: number;
   min_time: number;
   max_time: number;
   total_time: number;
+  notes?: string;
   created_at?: string;
   updated_at?: string;
 }
 
 export interface ShopOutputForm {
   shop_id: number;
+  courier_id: number;
   date: string;
+  output_date?: string;
   output_count: number;
+  quantity?: number;
   avg_time: number;
   min_time: number;
   max_time: number;
   total_time: number;
+  notes?: string;
 }
 
 export interface ShopOutputStat {

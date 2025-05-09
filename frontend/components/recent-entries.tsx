@@ -29,6 +29,7 @@ import { toast } from "@/components/ui/use-toast"
 import { CourierTypeSelector } from "@/components/courier-type-selector"
 import { Separator } from "@/components/ui/separator"
 import { api } from "@/services/api"
+import { dateToApiString } from "@/lib/date-utils"
 
 interface RecentEntriesProps {
   entries: ShippingEntry[]
@@ -111,7 +112,7 @@ export function RecentEntries({
     } else {
       setDateRange(undefined)
     }
-    
+
     // 同步快递类型ID
     setCourierTypeId(dateFilter?.courierTypeId)
   }, [dateFilter])
@@ -160,8 +161,8 @@ export function RecentEntries({
     if (range?.from && range?.to) {
       onFilterChange({
         type: "range",
-        dateFrom: format(range.from, "yyyy-MM-dd"),
-        dateTo: format(range.to, "yyyy-MM-dd"),
+        dateFrom: dateToApiString(range.from),
+        dateTo: dateToApiString(range.to),
         courierTypeId,
       })
     }
@@ -169,13 +170,13 @@ export function RecentEntries({
 
   const handleCourierTypeChange = (value: string | number | undefined) => {
     setCourierTypeId(value)
-    
+
     // 应用快递类型筛选
     if (dateRange?.from && dateRange?.to) {
       onFilterChange({
         type: "range",
-        dateFrom: format(dateRange.from, "yyyy-MM-dd"),
-        dateTo: format(dateRange.to, "yyyy-MM-dd"),
+        dateFrom: dateToApiString(dateRange.from),
+        dateTo: dateToApiString(dateRange.to),
         courierTypeId: value,
       })
     } else {
@@ -227,20 +228,20 @@ export function RecentEntries({
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <CardTitle className="text-lg font-medium whitespace-nowrap">{t("最近录入记录")}</CardTitle>
-              
+
               {/* 日期范围选择器和快递类型选择器 */}
               <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
-              
+
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-muted-foreground hidden sm:block" />
-                <CourierTypeSelector 
-                  value={courierTypeId} 
-                  onChange={handleCourierTypeChange} 
+                <CourierTypeSelector
+                  value={courierTypeId}
+                  onChange={handleCourierTypeChange}
                   placeholder={t("选择快递类型")}
                   className="w-[150px] sm:w-[180px]"
                 />
               </div>
-              
+
               {/* 显示当前筛选条件 */}
               {(dateFilter || courierTypeId) && (
                 <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-sm flex-shrink-0">
@@ -251,7 +252,7 @@ export function RecentEntries({
                 </div>
               )}
             </div>
-            
+
             {/* 刷新按钮 */}
             <Button variant="outline" size="icon" className="h-8 w-8 ml-auto" onClick={handleRefresh} disabled={isLoading}>
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />

@@ -36,6 +36,14 @@ import { Badge } from "@/components/ui/badge";
 import { getShops } from "@/lib/api/shop";
 import { getShopCategories } from "@/lib/api/shop-category";
 import { getCouriers } from "@/lib/api/courier";
+import {
+  dateToApiString,
+  formatDisplayDate,
+  getTodayInAppTimezone,
+  apiStringToDate,
+  APP_TIMEZONE
+} from "@/lib/date-utils";
+import { formatInTimeZone } from 'date-fns-tz';
 
 // 扩展ShopOutputFilter类型，添加排序和分页相关属性
 interface ExtendedShopOutputFilter extends ShopOutputFilter {
@@ -51,16 +59,20 @@ interface ExtendedShopOutputFilter extends ShopOutputFilter {
 interface OutputListProps {
   onEdit?: (output: ShopOutput) => void;
   onDelete?: (id: string | number) => void;
+  selectedDate?: Date;
+  onDateChange?: (date: Date) => void;
 }
 
-export default function OutputList({ onEdit, onDelete }: OutputListProps) {
+export default function OutputList({ onEdit, onDelete, selectedDate: propSelectedDate, onDateChange }: OutputListProps) {
   // 状态定义
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recentOutputs, setRecentOutputs] = useState<ShopOutput[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [internalSelectedDate, setInternalSelectedDate] = useState<Date>(new Date());
+  // 使用props的selectedDate或者内部状态
+  const selectedDate = propSelectedDate || internalSelectedDate;
   const [courierTypeId, setCourierTypeId] = useState<number | undefined>(undefined);
   const [shopTypeId, setShopTypeId] = useState<number | undefined>(undefined);
   const [shopId, setShopId] = useState<number | undefined>(undefined);
@@ -111,9 +123,9 @@ export default function OutputList({ onEdit, onDelete }: OutputListProps) {
       // 创建筛选条件对象
       const filter: ExtendedShopOutputFilter = {};
 
-      // 使用单日查询，确保格式正确
+      // 使用日期工具函数处理日期
       if (selectedDate) {
-        filter.output_date = format(selectedDate, 'yyyy-MM-dd');
+        filter.output_date = dateToApiString(selectedDate);
         console.log("使用日期筛选:", filter.output_date);
       }
 
@@ -193,8 +205,13 @@ export default function OutputList({ onEdit, onDelete }: OutputListProps) {
   // 处理日期变化
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
-      console.log("日期已更改为:", format(date, 'yyyy-MM-dd'));
-      setSelectedDate(date);
+      console.log("日期已更改为:", dateToApiString(date));
+
+      if (onDateChange) {
+        onDateChange(date);
+      } else {
+        setInternalSelectedDate(date);
+      }
     }
   };
 
@@ -215,7 +232,13 @@ export default function OutputList({ onEdit, onDelete }: OutputListProps) {
 
   // 清除所有筛选条件
   const handleClearFilters = () => {
-    // 保留当前日期，只清除其他筛选条件
+    // 重置所有筛选条件，包括将日期设置为今天
+    const today = getTodayInAppTimezone();
+    if (onDateChange) {
+      onDateChange(today);
+    } else {
+      setInternalSelectedDate(today);
+    }
     setCourierTypeId(undefined);
     setShopTypeId(undefined);
     setShopId(undefined);
@@ -230,11 +253,13 @@ export default function OutputList({ onEdit, onDelete }: OutputListProps) {
   const getFilterDescription = () => {
     const filters = [];
 
-    filters.push(
-      <Badge key="date" variant="default" className="bg-blue-500 text-white font-medium">
-        日期: {format(selectedDate, 'yyyy-MM-dd')}
-      </Badge>
-    );
+    if (selectedDate) {
+      filters.push(
+        <Badge key="date" variant="default" className="bg-blue-500 text-white font-medium">
+          日期: {dateToApiString(selectedDate)}
+        </Badge>
+      );
+    }
 
     if (courierTypeId) {
       const courierName = couriers.find(c => c.id === courierTypeId)?.name || courierTypeId;
@@ -451,12 +476,16 @@ export default function OutputList({ onEdit, onDelete }: OutputListProps) {
                           <div className="flex flex-col">
                             <div className="flex items-center text-sm font-medium">
                               <CalendarIcon className="mr-1 h-3 w-3 text-muted-foreground" />
-                              {format(new Date(output.output_date), DATE_FORMAT)}
+                              {formatDisplayDate(output.output_date)}
                             </div>
                             {output.created_at && (
                               <div className="flex items-center text-xs text-muted-foreground mt-1">
                                 <Clock className="mr-1 h-3 w-3" />
-                                {format(new Date(output.created_at), 'HH:mm:ss')}
+                                {formatInTimeZone(
+                                  apiStringToDate(output.created_at),
+                                  APP_TIMEZONE,
+                                  'HH:mm:ss'
+                                )}
                               </div>
                             )}
                           </div>

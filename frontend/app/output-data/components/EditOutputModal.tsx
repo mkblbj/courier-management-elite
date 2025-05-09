@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +20,10 @@ import {
       FormLabel,
       FormMessage,
 } from "@/components/ui/form";
+import { toast } from "@/components/ui/use-toast";
+import { CategoryShopSelector } from "@/components/shop-output/CategoryShopSelector";
+import { CourierSelector } from "@/components/shop-output/CourierSelector";
+import { formatDisplayDate, apiStringToDate, dateToApiString } from "@/lib/date-utils";
 
 // 定义表单验证Schema
 const formSchema = z.object({
@@ -40,13 +44,16 @@ interface EditOutputModalProps {
       isLoading: boolean;
 }
 
-export default function EditOutputModal({
+const EditOutputModal: React.FC<EditOutputModalProps> = ({
       output,
       open,
       onOpenChange,
       onSave,
       isLoading
-}: EditOutputModalProps) {
+}) => {
+      const [editedOutput, setEditedOutput] = useState<ShopOutput>({ ...output });
+      const [isSubmitting, setIsSubmitting] = useState(false);
+
       const form = useForm<FormData>({
             resolver: zodResolver(formSchema),
             defaultValues: {
@@ -55,26 +62,82 @@ export default function EditOutputModal({
             }
       });
 
-      // 当output变化时更新表单值
+      // 当modal打开或output变化时，重置表单
       useEffect(() => {
-            if (output) {
+            if (open) {
+                  setEditedOutput({ ...output });
                   form.reset({
-                        quantity: output.quantity.toString(),
-                        notes: output.notes || ""
+                        quantity: output ? output.quantity.toString() : "",
+                        notes: output?.notes || ""
                   });
             }
-      }, [output, form]);
+      }, [open, output, form]);
 
-      // 提交表单
+      const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+            const { name, value } = e.target;
+            setEditedOutput(prev => ({
+                  ...prev,
+                  [name]: value
+            }));
+      };
+
+      const handleShopChange = (shopId: number | undefined) => {
+            setEditedOutput(prev => ({
+                  ...prev,
+                  shop_id: shopId as number
+            }));
+      };
+
+      const handleCourierChange = (courierId: number | undefined) => {
+            setEditedOutput(prev => ({
+                  ...prev,
+                  courier_id: courierId as number
+            }));
+      };
+
+      const handleSave = async () => {
+            if (!editedOutput.shop_id || !editedOutput.courier_id || !editedOutput.quantity) {
+                  toast({
+                        title: "表单不完整",
+                        description: "请填写所有必要字段",
+                        variant: "destructive",
+                  });
+                  return;
+            }
+
+            setIsSubmitting(true);
+            try {
+                  // 使用onSave回调保存更改
+                  await onSave(editedOutput);
+                  onOpenChange(false);
+            } catch (error) {
+                  console.error("保存编辑失败:", error);
+                  toast({
+                        title: "保存失败",
+                        description: "无法更新出力数据",
+                        variant: "destructive",
+                  });
+            } finally {
+                  setIsSubmitting(false);
+            }
+      };
+
       const onSubmit = async (data: FormData) => {
             if (!output) return;
 
+            // 保留原始output对象的所有字段，只更新quantity和notes
+            // 确保使用正确的时区处理日期
             await onSave({
                   ...output,
+                  output_date: output.output_date, // 使用原始日期，不做修改
                   quantity: parseInt(data.quantity),
                   notes: data.notes
             });
       };
+
+      // 使用日期工具函数格式化显示日期
+      const formattedDate = output?.output_date ?
+            formatDisplayDate(output.output_date, DATE_FORMAT) : '未知日期';
 
       // 如果没有output数据则不显示对话框
       if (!output) return null;
@@ -84,6 +147,9 @@ export default function EditOutputModal({
                   <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
                               <DialogTitle>编辑出力数据</DialogTitle>
+                              <DialogDescription>
+                                    修改店铺出力数据，只有数量和备注可以编辑
+                              </DialogDescription>
                         </DialogHeader>
 
                         <Form {...form}>
@@ -92,7 +158,7 @@ export default function EditOutputModal({
                                     <div className="grid gap-2">
                                           <label className="text-sm font-medium">日期</label>
                                           <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
-                                                {output.output_date ? format(new Date(output.output_date), DATE_FORMAT) : "未知"}
+                                                {formattedDate}
                                           </div>
                                           <p className="text-xs text-muted-foreground">日期不可编辑</p>
                                     </div>
@@ -178,4 +244,6 @@ export default function EditOutputModal({
                   </DialogContent>
             </Dialog>
       );
-} 
+};
+
+export default EditOutputModal; 

@@ -1,22 +1,22 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -45,6 +45,7 @@ import { OutputDataDialog } from './OutputDataDialog';
 import { ImportDataDialog } from './ImportDataDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DateRange } from 'react-day-picker';
+import { dateToApiString } from '@/lib/date-utils';
 
 export function ShopOutputList() {
   const [outputs, setOutputs] = useState<ShopOutput[]>([]);
@@ -62,7 +63,7 @@ export function ShopOutputList() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const { toast } = useToast();
-  
+
   // 页面大小
   const pageSize = 10;
 
@@ -100,7 +101,7 @@ export function ShopOutputList() {
 
   const fetchShops = async () => {
     try {
-      const data = await getShops(true); // 只获取活跃的店铺
+      const data = await getShops({ isActive: true }); // 只获取活跃的店铺
       setShops(data);
     } catch (error) {
       console.error('获取店铺列表失败:', error);
@@ -190,10 +191,10 @@ export function ShopOutputList() {
               className="w-[250px]"
             />
           </div>
-          
+
           <div className="flex flex-col gap-1.5">
             <label htmlFor="shop-category" className="text-sm font-medium">店铺类别</label>
-            <Select 
+            <Select
               onValueChange={(value) => setFilter(prev => ({ ...prev, shop_category_id: parseInt(value) || undefined }))}
             >
               <SelectTrigger className="w-[200px]">
@@ -209,10 +210,10 @@ export function ShopOutputList() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex flex-col gap-1.5">
             <label htmlFor="shop" className="text-sm font-medium">店铺</label>
-            <Select 
+            <Select
               onValueChange={(value) => setFilter(prev => ({ ...prev, shop_id: parseInt(value) || undefined }))}
             >
               <SelectTrigger className="w-[200px]">
@@ -228,13 +229,13 @@ export function ShopOutputList() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <Button onClick={handleSearch}>
             <Search className="h-4 w-4 mr-2" />
             搜索
           </Button>
         </div>
-        
+
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
@@ -250,13 +251,13 @@ export function ShopOutputList() {
           </Button>
         </div>
       </div>
-      
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[120px]">
-                <button 
+                <button
                   className="flex items-center space-x-1"
                   onClick={() => handleSort('date')}
                 >
@@ -266,7 +267,7 @@ export function ShopOutputList() {
               </TableHead>
               <TableHead>店铺名称</TableHead>
               <TableHead className="text-right">
-                <button 
+                <button
                   className="flex items-center space-x-1"
                   onClick={() => handleSort('output_count')}
                 >
@@ -275,7 +276,7 @@ export function ShopOutputList() {
                 </button>
               </TableHead>
               <TableHead className="text-right">
-                <button 
+                <button
                   className="flex items-center space-x-1"
                   onClick={() => handleSort('avg_time')}
                 >
@@ -310,8 +311,8 @@ export function ShopOutputList() {
                   <TableCell className="text-right">{output.total_time}分钟</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         onClick={() => {
                           setEditOutput(output);
@@ -320,8 +321,8 @@ export function ShopOutputList() {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(output.id)}
                       >
@@ -341,7 +342,7 @@ export function ShopOutputList() {
           </TableBody>
         </Table>
       </div>
-      
+
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
@@ -367,7 +368,7 @@ export function ShopOutputList() {
           </div>
         </div>
       )}
-      
+
       {isDialogOpen && (
         <OutputDataDialog
           output={editOutput}
@@ -376,7 +377,7 @@ export function ShopOutputList() {
           onClose={handleDialogClose}
         />
       )}
-      
+
       {isImportDialogOpen && (
         <ImportDataDialog
           open={isImportDialogOpen}

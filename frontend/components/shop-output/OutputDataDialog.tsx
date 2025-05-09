@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -19,10 +19,12 @@ import {
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ShopOutput } from '@/lib/types/output';
+import { ShopOutput, ShopOutputForm } from '@/lib/types/output';
 import { Shop } from '@/lib/types/shop';
 import { createShopOutput, updateShopOutput } from '@/lib/api/shop-output';
 import { useToast } from '@/components/ui/use-toast';
+import { formatDisplayDate, dateToApiString } from '@/lib/date-utils';
+import { getCouriers } from '@/lib/api/courier';
 
 interface OutputDataDialogProps {
   output?: ShopOutput | null;
@@ -34,15 +36,13 @@ interface OutputDataDialogProps {
 export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDialogProps) {
   const isEditMode = !!output;
   const { toast } = useToast();
+  const [couriers, setCouriers] = useState<{ id: number, name: string }[]>([]);
 
   const [formData, setFormData] = useState({
     shop_id: output?.shop_id?.toString() || '',
-    date: output?.date || format(new Date(), 'yyyy-MM-dd'),
+    date: output?.date || dateToApiString(new Date()),
+    courier_id: output?.courier_id?.toString() || '1',
     output_count: output?.output_count?.toString() || '',
-    avg_time: output?.avg_time?.toString() || '',
-    min_time: output?.min_time?.toString() || '',
-    max_time: output?.max_time?.toString() || '',
-    total_time: output?.total_time?.toString() || '',
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
@@ -51,6 +51,25 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    // 获取快递类型数据
+    const fetchCouriers = async () => {
+      try {
+        const data = await getCouriers(true);
+        setCouriers(data);
+      } catch (error) {
+        console.error('获取快递类型失败:', error);
+        toast({
+          variant: 'destructive',
+          title: '获取快递类型失败',
+          description: '请刷新页面重试',
+        });
+      }
+    };
+
+    fetchCouriers();
+  }, [toast]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -63,34 +82,14 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
       newErrors.date = '请选择日期';
     }
 
+    if (!formData.courier_id) {
+      newErrors.courier_id = '请选择快递类型';
+    }
+
     if (!formData.output_count) {
       newErrors.output_count = '请输入出力件数';
     } else if (isNaN(Number(formData.output_count)) || Number(formData.output_count) < 0) {
       newErrors.output_count = '出力件数必须是非负数';
-    }
-
-    if (!formData.avg_time) {
-      newErrors.avg_time = '请输入平均时间';
-    } else if (isNaN(Number(formData.avg_time)) || Number(formData.avg_time) < 0) {
-      newErrors.avg_time = '平均时间必须是非负数';
-    }
-
-    if (!formData.min_time) {
-      newErrors.min_time = '请输入最短时间';
-    } else if (isNaN(Number(formData.min_time)) || Number(formData.min_time) < 0) {
-      newErrors.min_time = '最短时间必须是非负数';
-    }
-
-    if (!formData.max_time) {
-      newErrors.max_time = '请输入最长时间';
-    } else if (isNaN(Number(formData.max_time)) || Number(formData.max_time) < 0) {
-      newErrors.max_time = '最长时间必须是非负数';
-    }
-
-    if (!formData.total_time) {
-      newErrors.total_time = '请输入总时间';
-    } else if (isNaN(Number(formData.total_time)) || Number(formData.total_time) < 0) {
-      newErrors.total_time = '总时间必须是非负数';
     }
 
     setErrors(newErrors);
@@ -107,7 +106,7 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      setFormData(prev => ({ ...prev, date: format(date, 'yyyy-MM-dd') }));
+      setFormData(prev => ({ ...prev, date: dateToApiString(date) }));
       if (errors.date) {
         setErrors(prev => ({ ...prev, date: '' }));
       }
@@ -124,12 +123,10 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
     try {
       const data = {
         shop_id: parseInt(formData.shop_id),
-        date: formData.date,
-        output_count: parseInt(formData.output_count),
-        avg_time: parseFloat(formData.avg_time),
-        min_time: parseFloat(formData.min_time),
-        max_time: parseFloat(formData.max_time),
-        total_time: parseFloat(formData.total_time),
+        courier_id: parseInt(formData.courier_id),
+        output_date: formData.date,
+        quantity: parseInt(formData.output_count),
+        notes: ""
       };
 
       if (isEditMode && output) {
@@ -189,6 +186,28 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="courier" className="text-right">快递类型</Label>
+            <div className="col-span-3">
+              <Select
+                value={formData.courier_id}
+                onValueChange={(value) => handleChange('courier_id', value)}
+              >
+                <SelectTrigger id="courier">
+                  <SelectValue placeholder="选择快递类型" />
+                </SelectTrigger>
+                <SelectContent>
+                  {couriers.map(courier => (
+                    <SelectItem key={courier.id} value={courier.id.toString()}>
+                      {courier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.courier_id && <p className="text-sm text-red-500 mt-1">{errors.courier_id}</p>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="date" className="text-right">日期</Label>
             <div className="col-span-3">
               <Popover>
@@ -201,7 +220,7 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, 'yyyy-MM-dd') : <span>选择日期</span>}
+                    {selectedDate ? formatDisplayDate(selectedDate) : <span>选择日期</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -228,66 +247,6 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
                 onChange={(e) => handleChange('output_count', e.target.value)}
               />
               {errors.output_count && <p className="text-sm text-red-500 mt-1">{errors.output_count}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="avg_time" className="text-right">平均时间（分钟）</Label>
-            <div className="col-span-3">
-              <Input
-                id="avg_time"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.avg_time}
-                onChange={(e) => handleChange('avg_time', e.target.value)}
-              />
-              {errors.avg_time && <p className="text-sm text-red-500 mt-1">{errors.avg_time}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="min_time" className="text-right">最短时间（分钟）</Label>
-            <div className="col-span-3">
-              <Input
-                id="min_time"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.min_time}
-                onChange={(e) => handleChange('min_time', e.target.value)}
-              />
-              {errors.min_time && <p className="text-sm text-red-500 mt-1">{errors.min_time}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="max_time" className="text-right">最长时间（分钟）</Label>
-            <div className="col-span-3">
-              <Input
-                id="max_time"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.max_time}
-                onChange={(e) => handleChange('max_time', e.target.value)}
-              />
-              {errors.max_time && <p className="text-sm text-red-500 mt-1">{errors.max_time}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="total_time" className="text-right">总时间（分钟）</Label>
-            <div className="col-span-3">
-              <Input
-                id="total_time"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.total_time}
-                onChange={(e) => handleChange('total_time', e.target.value)}
-              />
-              {errors.total_time && <p className="text-sm text-red-500 mt-1">{errors.total_time}</p>}
             </div>
           </div>
         </div>

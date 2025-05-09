@@ -12,6 +12,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  APP_TIMEZONE,
+  getTodayInAppTimezone,
+  getTomorrowInAppTimezone,
+  formatDisplayDate,
+  isSameDayInAppTimezone
+} from "@/lib/date-utils";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface DateSelectorProps {
   date: Date | undefined;
@@ -35,8 +43,9 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
   const defaultPlaceholder = t('shop:select_date_placeholder');
   const [open, setOpen] = React.useState(false);
 
-  const today = startOfDay(new Date());
-  const tomorrow = addDays(today, 1);
+  // 使用工具函数获取今天和明天的日期
+  const today = getTodayInAppTimezone();
+  const tomorrow = getTomorrowInAppTimezone();
 
   const handleSelectToday = () => {
     onDateChange(today);
@@ -63,10 +72,11 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
     }
   };
 
-  // 格式化日期，添加星期信息
+  // 格式化日期，添加星期信息，使用应用时区
   const formatDateWithWeekday = (date: Date) => {
+    if (!date) return '';
+
     const locale = getLocale();
-    const dateString = format(date, DATE_FORMAT);
 
     // 根据当前语言格式化星期
     let weekdayFormat;
@@ -84,7 +94,9 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
         break;
     }
 
-    const weekday = format(date, weekdayFormat, { locale });
+    // 使用环境变量中的时区格式化日期
+    const dateString = formatInTimeZone(date, APP_TIMEZONE, DATE_FORMAT);
+    const weekday = formatInTimeZone(date, APP_TIMEZONE, weekdayFormat, { locale });
     return `${dateString} ${weekday}`;
   };
 
@@ -139,11 +151,14 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
             defaultMonth={date || today}
             formatters={{
               formatCaption: (date, options) => {
-                return format(date, 'yyyy年MM月', { locale: options?.locale });
+                return formatInTimeZone(date, APP_TIMEZONE, 'yyyy-MM', { locale: options?.locale });
               },
               formatDay: (date, options) => {
-                return format(date, 'd', { locale: options?.locale });
+                return formatInTimeZone(date, APP_TIMEZONE, 'd', { locale: options?.locale });
               }
+            }}
+            modifiers={{
+              today: (date) => isSameDayInAppTimezone(date, today)
             }}
           />
         </PopoverContent>

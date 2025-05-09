@@ -19,6 +19,8 @@ import { ShopOutput } from "@/lib/types/shop-output";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditOutputModal from "./components/EditOutputModal";
+import { isSameDay } from "date-fns";
+import { dateToApiString, apiStringToDate } from "@/lib/date-utils";
 
 export default function OutputDataPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -45,10 +47,12 @@ export default function OutputDataPage() {
 
     setIsLoading(true);
     try {
+      const formattedDate = dateToApiString(selectedDate);
+
       await createShopOutput({
         shop_id: selectedShopId,
         courier_id: selectedCourierId,
-        output_date: selectedDate.toISOString().split('T')[0],
+        output_date: formattedDate,
         quantity: parseInt(quantity),
         notes: notes || undefined,
       });
@@ -82,22 +86,81 @@ export default function OutputDataPage() {
   const handleUpdateOutput = async (updatedOutput: ShopOutput) => {
     if (!updatedOutput.id) return;
 
+    // 保存当前选中的日期，以便在更新后恢复
+    const currentSelectedDate = selectedDate;
+
     setIsLoading(true);
     try {
-      await updateShopOutput(Number(updatedOutput.id), updatedOutput);
+      // 使用工具函数处理日期，确保按照应用时区格式化
+      let formattedDate = '';
 
+      // output_date在ShopOutput类型中被定义为string类型
+      if (typeof updatedOutput.output_date === 'string' && updatedOutput.output_date) {
+        // 先转换为日期对象，再格式化为API需要的格式
+        const dateObj = apiStringToDate(updatedOutput.output_date);
+        formattedDate = dateToApiString(dateObj);
+      } else {
+        // 使用当前选中的日期作为默认值
+        formattedDate = dateToApiString(selectedDate);
+        console.warn('无法识别的日期格式，使用当前选中日期');
+      }
+
+      // 提取原始记录中的必填字段
+      const recordToUpdate = {
+        shop_id: updatedOutput.shop_id,
+        courier_id: updatedOutput.courier_id,
+        output_date: formattedDate,
+        quantity: Number(updatedOutput.quantity), // 确保是数字类型
+        notes: updatedOutput.notes || undefined // 确保空字符串转为undefined
+      };
+
+      console.log('更新记录:', JSON.stringify(recordToUpdate, null, 2));
+
+      // 发送所有必要的字段
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shop-outputs/${updatedOutput.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(recordToUpdate),
+      });
+
+      if (!response.ok) {
+        let errorText = `更新失败 (${response.status}): ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          console.error('API错误响应:', errorData);
+          errorText = errorData.message || errorText;
+        } catch (e) {
+          console.error('解析错误响应失败:', e);
+        }
+        throw new Error(errorText);
+      }
+
+      const result = await response.json();
+
+      if (result.code !== 0) {
+        throw new Error(result.message || '更新出力数据失败');
+      }
+
+      // 更新刷新键，触发数据重新加载
       setRefreshKey(prev => prev + 1);
       setEditingOutput(null);
+
+      // 始终恢复到更新前的日期，无需额外判断
+      setSelectedDate(currentSelectedDate);
 
       toast({
         title: "更新成功",
         description: "出力数据已成功更新",
       });
     } catch (error) {
-      console.error("Failed to update output record:", error);
+      console.error("更新出力记录失败:", error);
       toast({
         title: "更新失败",
-        description: "无法更新出力数据记录",
+        description: typeof error === 'object' && error !== null && 'message' in error
+          ? String(error.message)
+          : "无法更新出力数据记录",
         variant: "destructive",
       });
     } finally {
@@ -112,12 +175,18 @@ export default function OutputDataPage() {
   const confirmDelete = async () => {
     if (!deleteId) return;
 
+    // 保存当前选中的日期，以便在删除后恢复
+    const currentSelectedDate = selectedDate;
+
     setIsLoading(true);
     try {
       await deleteShopOutput(Number(deleteId));
 
       setRefreshKey(prev => prev + 1);
       setDeleteId(null);
+
+      // 始终恢复到删除前的日期
+      setSelectedDate(currentSelectedDate);
 
       toast({
         title: "删除成功",
@@ -249,6 +318,8 @@ export default function OutputDataPage() {
                 key={`list-${refreshKey}`}
                 onEdit={handleEditOutput}
                 onDelete={handleDeleteOutput}
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
               />
             </Suspense>
           </CardContent>

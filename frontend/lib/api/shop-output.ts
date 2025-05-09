@@ -102,6 +102,10 @@ export async function createShopOutput(output: ShopOutputFormData): Promise<Shop
  * @param output 出力数据
  */
 export async function updateShopOutput(id: number | string, output: Partial<ShopOutputFormData>): Promise<ShopOutput> {
+  // 记录发送的数据，用于调试
+  console.log('更新出力数据，ID:', id);
+  console.log('更新出力数据，发送数据:', JSON.stringify(output, null, 2));
+  
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'PUT',
     headers: {
@@ -111,7 +115,21 @@ export async function updateShopOutput(id: number | string, output: Partial<Shop
   });
   
   if (!response.ok) {
-    throw new Error(`更新店铺出力数据失败: ${response.statusText}`);
+    // 尝试解析错误响应内容
+    let errorMessage = `更新店铺出力数据失败: ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      console.error('API错误响应:', errorData);
+      if (errorData.message) {
+        errorMessage = `更新店铺出力数据失败: ${errorData.message}`;
+      }
+      if (errorData.errors) {
+        errorMessage += ` - ${JSON.stringify(errorData.errors)}`;
+      }
+    } catch (e) {
+      console.error('解析错误响应失败:', e);
+    }
+    throw new Error(errorMessage);
   }
   
   const data: ApiResponse<ShopOutput> = await response.json();

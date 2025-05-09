@@ -1,6 +1,7 @@
 const ShippingRecord = require('../models/ShippingRecord');
 const ShopOutput = require('../models/ShopOutput');
 const dateUtils = require('../utils/dateUtils');
+const { formatToISOString, getToday, parseDate } = require('../config/timezone');
 
 // 创建ShippingRecord实例用于访问实例方法
 const shippingRecordInstance = new ShippingRecord();
@@ -749,13 +750,17 @@ class StatsController {
   
   /**
    * 处理层级结构
-   * @param {Array} results 结果数组
+   * @param {Array|Object} results 结果数组或对象
    * @returns {Array} 处理后的数组
    */
   processHierarchy(results) {
-    // 这里简化处理，只返回原始数据
+    // 确保传入的结果是数组
+    const dataArray = Array.isArray(results) ? results : 
+                     (results && typeof results === 'object' ? [results] : []);
+    
+    // 这里简化处理，只返回处理后的数组
     // 实际项目中可能需要根据parent_id构建层级结构
-    return results;
+    return dataArray;
   }
 }
 
