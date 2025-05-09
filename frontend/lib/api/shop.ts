@@ -19,6 +19,7 @@ export const getShops = async (params?: {
   search?: string;
   sort?: string;
   order?: 'ASC' | 'DESC';
+  withCategory?: boolean;
 }): Promise<Shop[]> => {
   const url = new URL(API_URL, window.location.origin);
   
@@ -41,6 +42,10 @@ export const getShops = async (params?: {
     
     if (params.order) {
       url.searchParams.append('order', params.order);
+    }
+    
+    if (params.withCategory) {
+      url.searchParams.append('with_category', '1');
     }
   }
   

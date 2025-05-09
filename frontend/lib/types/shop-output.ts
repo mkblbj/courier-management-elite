@@ -9,6 +9,7 @@ export interface ShopOutput {
   updated_at?: string;
   shop_name?: string;
   courier_name?: string;
+  category_name?: string;
 }
 
 export interface ShopOutputFormData {
@@ -24,7 +25,9 @@ export interface ShopOutputFilter {
   courier_id?: number;
   date_from?: string;
   date_to?: string;
+  output_date?: string;
   search?: string;
+  category_id?: number;
 }
 
 export interface ShopOutputStats {

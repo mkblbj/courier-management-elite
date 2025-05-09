@@ -1,9 +1,9 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { format, addDays, isAfter, startOfDay, isSameDay } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { zhCN, enUS, ja } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
-import { DATE_FORMAT } from "@/lib/constants";
+import { DATE_FORMAT, DATE_WITH_WEEKDAY_FORMAT } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,8 +48,44 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
     setOpen(false);
   };
 
-  const isDateDisabled = (date: Date) => {
-    return isAfter(today, date) && !isSameDay(today, date);
+  // 根据当前语言选择locale
+  const getLocale = () => {
+    switch (i18n.language) {
+      case 'zh-CN':
+        return zhCN;
+      case 'ja':
+        return ja;
+      case 'en':
+      case 'en-US':
+        return enUS;
+      default:
+        return undefined;
+    }
+  };
+
+  // 格式化日期，添加星期信息
+  const formatDateWithWeekday = (date: Date) => {
+    const locale = getLocale();
+    const dateString = format(date, DATE_FORMAT);
+
+    // 根据当前语言格式化星期
+    let weekdayFormat;
+    switch (i18n.language) {
+      case 'zh-CN':
+        weekdayFormat = 'eeee';
+        break;
+      case 'ja':
+        weekdayFormat = 'eeeeee曜日';
+        break;
+      case 'en':
+      case 'en-US':
+      default:
+        weekdayFormat = 'eeee';
+        break;
+    }
+
+    const weekday = format(date, weekdayFormat, { locale });
+    return `${dateString} ${weekday}`;
   };
 
   return (
@@ -60,28 +96,33 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
           <Button
             variant="outline"
             className={cn(
-              "w-full justify-start text-left font-normal",
+              "w-full h-10 px-3 py-2 justify-between text-left font-normal",
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, DATE_FORMAT) : (placeholder || defaultPlaceholder)}
+            <div className="flex items-center">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date ? formatDateWithWeekday(date) : (placeholder || defaultPlaceholder)}
+            </div>
+            <span className="opacity-50">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0"><path d="m6 9 6 6 6-6" /></svg>
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           {showQuickButtons && (
             <div className="flex border-b p-2 gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="flex-1"
                 onClick={handleSelectToday}
               >
                 {t('shop:today')}
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="flex-1"
                 onClick={handleSelectTomorrow}
               >
@@ -94,9 +135,16 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
             selected={date}
             onSelect={onDateChange}
             initialFocus
-            locale={i18n.language === 'zh-CN' ? zhCN : undefined}
-            disabled={isDateDisabled}
+            locale={getLocale()}
             defaultMonth={date || today}
+            formatters={{
+              formatCaption: (date, options) => {
+                return format(date, 'yyyy年MM月', { locale: options?.locale });
+              },
+              formatDay: (date, options) => {
+                return format(date, 'd', { locale: options?.locale });
+              }
+            }}
           />
         </PopoverContent>
       </Popover>

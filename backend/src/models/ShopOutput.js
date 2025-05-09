@@ -31,6 +31,11 @@ class ShopOutput {
       params.push(options.courier_id);
     }
 
+    if (options.output_date) {
+      whereClauses.push('so.output_date = ?');
+      params.push(options.output_date);
+    }
+
     if (options.date_from) {
       whereClauses.push('so.output_date >= ?');
       params.push(options.date_from);

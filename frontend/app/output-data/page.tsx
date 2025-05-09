@@ -13,8 +13,11 @@ import OutputList from "./components/OutputList";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { toast } from "@/components/ui/use-toast";
-import { createShopOutput } from "@/lib/api/shop-output";
+import { createShopOutput, updateShopOutput, deleteShopOutput } from "@/lib/api/shop-output";
 import { Loader2 } from "lucide-react";
+import { ShopOutput } from "@/lib/types/shop-output";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function OutputDataPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -24,6 +27,10 @@ export default function OutputDataPage() {
   const [notes, setNotes] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [refreshKey, setRefreshKey] = useState<number>(0);
+
+  // 用于编辑和删除的状态
+  const [editingOutput, setEditingOutput] = useState<ShopOutput | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleAddRecord = async () => {
     if (!selectedDate || !selectedShopId || !selectedCourierId || !quantity || parseInt(quantity) <= 0) {
@@ -59,6 +66,67 @@ export default function OutputDataPage() {
       toast({
         title: "添加失败",
         description: "无法添加出力数据记录",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditOutput = async (output: ShopOutput) => {
+    setEditingOutput(output);
+    // 设置表单初始值将在编辑对话框组件中处理
+  };
+
+  const handleUpdateOutput = async (updatedOutput: ShopOutput) => {
+    if (!updatedOutput.id) return;
+
+    setIsLoading(true);
+    try {
+      await updateShopOutput(Number(updatedOutput.id), updatedOutput);
+
+      setRefreshKey(prev => prev + 1);
+      setEditingOutput(null);
+
+      toast({
+        title: "更新成功",
+        description: "出力数据已成功更新",
+      });
+    } catch (error) {
+      console.error("Failed to update output record:", error);
+      toast({
+        title: "更新失败",
+        description: "无法更新出力数据记录",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteOutput = async (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    setIsLoading(true);
+    try {
+      await deleteShopOutput(Number(deleteId));
+
+      setRefreshKey(prev => prev + 1);
+      setDeleteId(null);
+
+      toast({
+        title: "删除成功",
+        description: "出力数据已成功删除",
+      });
+    } catch (error) {
+      console.error("Failed to delete output record:", error);
+      toast({
+        title: "删除失败",
+        description: "无法删除出力数据记录",
         variant: "destructive",
       });
     } finally {
@@ -176,12 +244,162 @@ export default function OutputDataPage() {
           </CardHeader>
           <CardContent className="px-6 pb-6">
             <Suspense fallback={<ListSkeleton />}>
-              <OutputList selectedDate={selectedDate} key={`list-${refreshKey}`} />
+              <OutputList
+                key={`list-${refreshKey}`}
+                onEdit={handleEditOutput}
+                onDelete={handleDeleteOutput}
+              />
             </Suspense>
           </CardContent>
         </Card>
       </main>
+
+      {/* 编辑出力数据对话框 */}
+      <Dialog open={!!editingOutput} onOpenChange={(open) => !open && setEditingOutput(null)}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>编辑出力数据</DialogTitle>
+          </DialogHeader>
+          {editingOutput && (
+            <OutputEditForm
+              output={editingOutput}
+              onSubmit={handleUpdateOutput}
+              isLoading={isLoading}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除确认对话框 */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogDescription>
+              您确定要删除这条出力数据记录吗？此操作无法撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isLoading}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  删除中...
+                </>
+              ) : "删除"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  );
+}
+
+// 编辑表单组件
+function OutputEditForm({
+  output,
+  onSubmit,
+  isLoading
+}: {
+  output: ShopOutput,
+  onSubmit: (output: ShopOutput) => Promise<void>,
+  isLoading: boolean
+}) {
+  const [editedOutput, setEditedOutput] = useState<ShopOutput>({ ...output });
+  const [editDate, setEditDate] = useState<Date>(new Date(output.output_date));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSubmit({
+      ...editedOutput,
+      output_date: editDate.toISOString().split('T')[0]
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <DateSelector
+            date={editDate}
+            onDateChange={(date) => date && setEditDate(date)}
+            showQuickButtons={true}
+            label="日期"
+            className="w-full"
+          />
+        </div>
+        <div>
+          <CategoryShopSelector
+            selectedShopId={editedOutput.shop_id}
+            onSelectShop={(id) => setEditedOutput({ ...editedOutput, shop_id: id })}
+            label="店铺选择"
+            onlyActive={true}
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <CourierSelector
+            selectedCourierId={editedOutput.courier_id}
+            onSelectCourier={(id) => setEditedOutput({ ...editedOutput, courier_id: id })}
+            label="快递类型"
+            onlyActive={true}
+            className="w-full"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">数量</label>
+          <Input
+            type="number"
+            placeholder="请输入数量"
+            value={editedOutput.quantity.toString()}
+            onChange={(e) => setEditedOutput({ ...editedOutput, quantity: parseInt(e.target.value) || 0 })}
+            min="1"
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">备注</label>
+        <Textarea
+          placeholder="请输入备注（可选）"
+          value={editedOutput.notes || ''}
+          onChange={(e) => setEditedOutput({ ...editedOutput, notes: e.target.value })}
+          className="w-full resize-none"
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onSubmit(null as any)}
+          disabled={isLoading}
+        >
+          取消
+        </Button>
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              保存中...
+            </>
+          ) : "保存更改"}
+        </Button>
+      </div>
+    </form>
   );
 }
 

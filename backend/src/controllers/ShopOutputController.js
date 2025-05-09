@@ -29,6 +29,7 @@ class ShopOutputControllerClass {
         courier_id: req.query.courier_id ? parseInt(req.query.courier_id) : null,
         date_from: req.query.date_from,
         date_to: req.query.date_to,
+        output_date: req.query.output_date,
         sort_by: req.query.sort || 'output_date',
         sort_order: req.query.order || 'DESC',
         search: req.query.search || '',

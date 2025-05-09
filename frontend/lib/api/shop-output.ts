@@ -6,9 +6,6 @@ import {
   ShopOutputStats,
   ShopOutputTotal,
   DashboardData,
-  ShopOutputForm,
-  ShopOutputStat,
-  ShopOutputStatFilter,
 } from "../types/shop-output";
 
 const API_URL = `${API_BASE_URL}/shop-outputs`;
@@ -77,7 +74,7 @@ export async function getShopOutput(id: number): Promise<ShopOutput> {
  * 创建店铺出力数据
  * @param output 出力数据
  */
-export async function createShopOutput(output: ShopOutputForm): Promise<ShopOutput> {
+export async function createShopOutput(output: ShopOutputFormData): Promise<ShopOutput> {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -104,7 +101,7 @@ export async function createShopOutput(output: ShopOutputForm): Promise<ShopOutp
  * @param id 出力数据ID
  * @param output 出力数据
  */
-export async function updateShopOutput(id: number, output: Partial<ShopOutputForm>): Promise<ShopOutput> {
+export async function updateShopOutput(id: number | string, output: Partial<ShopOutputFormData>): Promise<ShopOutput> {
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'PUT',
     headers: {
@@ -130,7 +127,7 @@ export async function updateShopOutput(id: number, output: Partial<ShopOutputFor
  * 删除店铺出力数据
  * @param id 出力数据ID
  */
-export async function deleteShopOutput(id: number): Promise<void> {
+export async function deleteShopOutput(id: number | string): Promise<void> {
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'DELETE',
   });
@@ -204,7 +201,7 @@ export async function exportShopOutputs(params?: ShopOutputFilter): Promise<Blob
  * 获取店铺出力统计数据
  * @param params 查询参数
  */
-export async function getShopOutputStats(params?: ShopOutputStatFilter): Promise<ShopOutputStat[]> {
+export async function getShopOutputStats(params?: ShopOutputFilter): Promise<ShopOutputStats[]> {
   const queryParams = new URLSearchParams();
   
   if (params) {
@@ -223,7 +220,7 @@ export async function getShopOutputStats(params?: ShopOutputStatFilter): Promise
     throw new Error(`获取店铺出力统计数据失败: ${response.statusText}`);
   }
   
-  const data: ApiResponse<ShopOutputStat[]> = await response.json();
+  const data: ApiResponse<ShopOutputStats[]> = await response.json();
   
   if (data.code !== 0) {
     throw new Error(data.message || '获取店铺出力统计数据失败');
