@@ -702,7 +702,7 @@ export default function DashboardPage() {
 
         {/* 店铺出力数据卡片区域 */}
         <div className="mb-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* 今日店铺出力卡片 */}
             <div className={cn(
               "transition-all duration-500",
