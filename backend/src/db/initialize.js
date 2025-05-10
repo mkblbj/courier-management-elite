@@ -12,6 +12,8 @@ const path = require('path');
 const shopsTableMigration = require('./migrations/create_shops_table');
 const shopOutputsTableMigration = require('./migrations/create_shop_outputs_table');
 const shopCategoriesMigration = require('./migrations/create_shop_categories');
+const courierCategoriesMigration = require('./migrations/create_courier_categories');
+const addCategoryIdMigration = require('./migrations/add_category_id');
 
 async function initializeDatabase() {
   let connection;
@@ -43,7 +45,8 @@ async function initializeDatabase() {
         is_active BOOLEAN DEFAULT TRUE,
         sort_order INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        category_id INT DEFAULT NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     console.log('快递类型表 couriers 创建成功');
@@ -104,6 +107,44 @@ async function initializeDatabase() {
       console.log('执行店铺出力表创建迁移...');
       await shopOutputsTableMigration.migrate();
       
+      // 执行快递类别相关迁移
+      console.log('执行快递类别相关迁移脚本...');
+      
+      // 1. 创建快递类别表
+      console.log('执行快递类别表创建迁移...');
+      await courierCategoriesMigration.migrate();
+      
+      // 2. 为couriers表添加category_id字段
+      console.log('执行添加category_id字段迁移...');
+      await addCategoryIdMigration.migrate();
+      
+      // 3. 检查是否至少有一个类别存在
+      const [categoryRows] = await connection.query(`
+        SELECT COUNT(*) as count FROM courier_categories
+      `);
+      
+      // 如果没有类别，创建一个默认类别
+      if (categoryRows[0].count === 0) {
+        console.log('未找到任何快递类别，创建默认类别...');
+        const result = await connection.execute(`
+          INSERT INTO courier_categories (name, sort_order) 
+          VALUES ('默认类别', 1)
+        `);
+        
+        // 使用结果的第一项的insertId
+        // @ts-ignore - 忽略类型错误，mysql2的返回类型与TypeScript定义不匹配
+        const defaultCategoryId = result[0].insertId;
+        
+        // 将所有未分类的快递类型关联到默认类别
+        await connection.execute(`
+          UPDATE couriers 
+          SET category_id = ? 
+          WHERE category_id IS NULL
+        `, [defaultCategoryId]);
+        
+        console.log(`已创建默认类别并关联未分类的快递类型`);
+      }
+      
       console.log('所有迁移脚本执行完成');
     } catch (migrationError) {
       console.error('迁移脚本执行失败:', migrationError);
@@ -115,16 +156,44 @@ async function initializeDatabase() {
     if (courierRows[0].count === 0) {
       console.log('添加测试数据...');
       
+      // 先添加一个默认类别
+      const [categoryRows] = await connection.query(`
+        SELECT COUNT(*) as count FROM courier_categories WHERE name = '默认类别'
+      `);
+      
+      let defaultCategoryId = null;
+      
+      if (categoryRows[0].count === 0) {
+        // 使用execute方法而不是query，返回格式更一致
+        const result = await connection.execute(`
+          INSERT INTO courier_categories (name, sort_order) 
+          VALUES ('默认类别', 1)
+        `);
+        // @ts-ignore - 忽略类型错误，mysql2的返回类型与TypeScript定义不匹配
+        defaultCategoryId = result[0].insertId;
+      } else {
+        const [rows] = await connection.query(`
+          SELECT id FROM courier_categories WHERE name = '默认类别'
+        `);
+        defaultCategoryId = rows[0].id;
+      }
+      
       // 添加测试快递类型
       const couriersSql = `
-        INSERT INTO couriers (name, code, remark, is_active, sort_order) VALUES
-        ('ゆうパケット (1CM)', 'up1', '国内知名快递类型，速度快，价格较高', 1, 1),
-        ('ゆうパケット (2CM)', 'up2', '全国性快递类型，性价比高', 1, 2),
-        ('ゆうパケットパフ', 'ypp', '电商自营物流，配送稳定', 1, 3),
-        ('クリップポスト (3CM)', 'cp3', '全国连锁快递企业', 1, 4),
-        ('ゆうパック', 'upk', '全国性快递企业，服务范围广', 1, 5)
+        INSERT INTO couriers (name, code, remark, is_active, sort_order, category_id) VALUES
+        ('ゆうパケット (1CM)', 'up1', '国内知名快递类型，速度快，价格较高', 1, 1, ?),
+        ('ゆうパケット (2CM)', 'up2', '全国性快递类型，性价比高', 1, 2, ?),
+        ('ゆうパケットパフ', 'ypp', '电商自营物流，配送稳定', 1, 3, ?),
+        ('クリップポスト (3CM)', 'cp3', '全国连锁快递企业', 1, 4, ?),
+        ('ゆうパック', 'upk', '全国性快递企业，服务范围广', 1, 5, ?)
       `;
-      await connection.query(couriersSql);
+      await connection.execute(couriersSql, [
+        defaultCategoryId, 
+        defaultCategoryId, 
+        defaultCategoryId, 
+        defaultCategoryId, 
+        defaultCategoryId
+      ]);
       console.log('测试快递类型数据添加成功');
       
       // 添加测试发货记录
@@ -139,7 +208,7 @@ async function initializeDatabase() {
         (?, 1, 6, '昨日测试数据'),
         (?, 1, 4, '前天测试数据')
       `;
-      await connection.query(recordsSql, [today, today, yesterday, twoDaysAgo]);
+      await connection.execute(recordsSql, [today, today, yesterday, twoDaysAgo]);
       console.log('测试发货记录数据添加成功');
     } else {
       console.log('发现数据已存在，跳过测试数据添加');
