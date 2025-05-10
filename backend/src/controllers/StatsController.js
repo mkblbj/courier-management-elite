@@ -351,117 +351,6 @@ class StatsController {
   }
 
   /**
-   * 获取快递类型层级结构统计数据
-   * @param {Object} req 请求对象
-   * @param {Object} res 响应对象
-   */
-  async getHierarchicalStats(req, res) {
-    try {
-      // 解析请求参数
-      const date = req.query.date || null;
-      const dateFrom = req.query.date_from || null;
-      const dateTo = req.query.date_to || null;
-      const week = req.query.week ? parseInt(req.query.week) : null;
-      const month = req.query.month ? parseInt(req.query.month) : null;
-      const quarter = req.query.quarter ? parseInt(req.query.quarter) : null;
-      const year = req.query.year ? parseInt(req.query.year) : null;
-      
-      // 处理按年、月、季度、周筛选，转换为date_from和date_to
-      let calculatedDateFrom = null;
-      let calculatedDateTo = null;
-      
-      // 使用dateUtils工具函数获取日期范围
-      const currentYear = new Date().getFullYear();
-      
-      // 根据参数组合确定日期范围
-      if (year) {
-        if (month) {
-          // 年+月
-          const dateRange = dateUtils.getMonthDateRange(year, month);
-          calculatedDateFrom = dateRange.start;
-          calculatedDateTo = dateRange.end;
-        } else if (quarter) {
-          // 年+季度
-          const dateRange = dateUtils.getQuarterDateRange(year, quarter);
-          calculatedDateFrom = dateRange.start;
-          calculatedDateTo = dateRange.end;
-        } else if (week) {
-          // 年+周
-          const dateRange = dateUtils.getWeekDateRange(year, week);
-          calculatedDateFrom = dateRange.start;
-          calculatedDateTo = dateRange.end;
-        } else {
-          // 仅年份
-          const dateRange = dateUtils.getYearDateRange(year);
-          calculatedDateFrom = dateRange.start;
-          calculatedDateTo = dateRange.end;
-        }
-      } else if (month) {
-        // 仅月份，使用当前年
-        const dateRange = dateUtils.getMonthDateRange(currentYear, month);
-        calculatedDateFrom = dateRange.start;
-        calculatedDateTo = dateRange.end;
-      } else if (quarter) {
-        // 仅季度，使用当前年
-        const dateRange = dateUtils.getQuarterDateRange(currentYear, quarter);
-        calculatedDateFrom = dateRange.start;
-        calculatedDateTo = dateRange.end;
-      } else if (week) {
-        // 仅周数，使用当前年
-        const dateRange = dateUtils.getWeekDateRange(currentYear, week);
-        calculatedDateFrom = dateRange.start;
-        calculatedDateTo = dateRange.end;
-      }
-      
-      // 原有日期筛选优先级高于计算的日期范围
-      const finalDateFrom = dateFrom || calculatedDateFrom;
-      const finalDateTo = dateTo || calculatedDateTo;
-      
-      const options = {
-        date,
-        date_from: finalDateFrom,
-        date_to: finalDateTo
-      };
-      
-      try {
-        // 获取层级结构的统计数据
-        const hierarchicalStats = await ShippingRecord.getHierarchicalStats(options);
-        const statsTotal = await shippingRecordInstance.getStatsTotal(options);
-        
-        // 返回统计结果
-        res.status(200).json({
-          success: true,
-          data: {
-            total: statsTotal || { total: 0 },
-            hierarchical: hierarchicalStats || []
-          }
-        });
-      } catch (error) {
-        console.error('获取层级统计数据查询错误:', error);
-        // 即使查询出错，也返回一个一致的数据结构
-        res.status(200).json({
-          success: true,
-          data: {
-            total: { total: 0 },
-            hierarchical: []
-          }
-        });
-      }
-    } catch (error) {
-      console.error('获取层级统计数据失败:', error);
-      // 返回服务器错误，但保持数据结构一致
-      res.status(500).json({
-        success: false,
-        message: '获取层级统计数据失败',
-        data: {
-          total: { total: 0 },
-          hierarchical: []
-        }
-      });
-    }
-  }
-
-  /**
    * 获取店铺出力数据按店铺统计
    * @param {Object} req 请求对象
    * @param {Object} res 响应对象
@@ -543,7 +432,6 @@ class StatsController {
         SELECT 
           c.id as courier_id, 
           c.name as courier_name, 
-          c.parent_id,
           SUM(so.quantity) as total_quantity,
           COUNT(DISTINCT so.output_date) as days_count
         FROM 
@@ -573,20 +461,17 @@ class StatsController {
       
       sql += `
         GROUP BY 
-          c.id, c.name, c.parent_id
+          c.id, c.name
         ORDER BY 
           total_quantity DESC
       `;
       
       const results = await db.query(sql, params);
       
-      // 处理层级结构，如果需要
-      const hierarchyResults = this.processHierarchy(results);
-      
       res.status(200).json({
         code: 0,
         message: '获取成功',
-        data: hierarchyResults
+        data: results
       });
     } catch (error) {
       console.error('按快递类型统计出力数据失败:', error);
@@ -748,21 +633,6 @@ class StatsController {
     }
   }
   
-  /**
-   * 处理层级结构
-   * @param {Array|Object} results 结果数组或对象
-   * @returns {Array} 处理后的数组
-   */
-  processHierarchy(results) {
-    // 确保传入的结果是数组
-    const dataArray = Array.isArray(results) ? results : 
-                     (results && typeof results === 'object' ? [results] : []);
-    
-    // 这里简化处理，只返回处理后的数组
-    // 实际项目中可能需要根据parent_id构建层级结构
-    return dataArray;
-  }
-
   /**
    * 获取按类别分组的发货统计数据
    * @param {Object} req 请求对象

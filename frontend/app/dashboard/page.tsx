@@ -439,62 +439,22 @@ export default function DashboardPage() {
             {todayStats && (todayStats.by_courier || []).length > 0 ? (
               <div className="flex flex-col">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {/* 对快递类型进行分组，按照有无父类型分类 */}
-                  {(() => {
-                    // 对快递类型按照层级分组
-                    const parentTypes = activeCourierTypes.filter(type => !type.parent_id);
-                    const childTypes = activeCourierTypes.filter(type => type.parent_id);
+                  {/* 渲染所有快递类型 */}
+                  {activeCourierTypes.map((courierType) => {
+                    // 获取该快递类型的统计数据
+                    const typeStat = (todayStats.by_courier || []).find(
+                      (stat) => stat.courier_id.toString() === courierType.id.toString()
+                    );
+                    const typeQuantity = typeStat ? typeStat.total : 0;
 
-                    // 渲染所有父级类型
-                    return parentTypes.map((parentType) => {
-                      // 获取该父类型的所有子类型
-                      const children = childTypes.filter(child => child.parent_id === parentType.id);
-
-                      // 获取父类型的统计数据
-                      const parentStat = (todayStats.by_courier || []).find(
-                        (stat) => stat.courier_id.toString() === parentType.id.toString()
-                      );
-                      const parentQuantity = parentStat ? parentStat.total : 0;
-
-                      // 如果有子类型，创建一个带有子类型的卡片
-                      if (children.length > 0) {
-                        return (
-                          <div key={parentType.id} className="border rounded-lg p-3 flex flex-col">
-                            <div className="flex justify-between items-center mb-2">
-                              <div className="text-sm font-medium text-gray-700">{parentType.name}</div>
-                              <div className="text-xl font-bold">{parentQuantity}</div>
-                            </div>
-                            <div className="mt-2 space-y-2 pl-2 border-l-2 border-blue-200">
-                              {children.map(child => {
-                                const childStat = (todayStats.by_courier || []).find(
-                                  (stat) => stat.courier_id.toString() === child.id.toString()
-                                );
-                                const childQuantity = childStat ? childStat.total : 0;
-
-                                return (
-                                  <div key={child.id} className="flex justify-between items-center">
-                                    <div className="text-xs text-gray-600 flex items-center">
-                                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-1.5"></span>
-                                      {child.name}
-                                    </div>
-                                    <div className="text-sm font-semibold">{childQuantity}</div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      } else {
-                        // 如果没有子类型，创建一个普通卡片
-                        return (
-                          <div key={parentType.id} className="border rounded-lg p-3 flex flex-col items-center">
-                            <div className="text-sm font-medium text-gray-700 mb-2">{parentType.name}</div>
-                            <div className="text-2xl font-bold">{parentQuantity}</div>
-                          </div>
-                        );
-                      }
-                    });
-                  })()}
+                    // 创建快递类型卡片
+                    return (
+                      <div key={courierType.id} className="border rounded-lg p-3 flex flex-col items-center">
+                        <div className="text-sm font-medium text-gray-700 mb-2">{courierType.name}</div>
+                        <div className="text-2xl font-bold">{typeQuantity}</div>
+                      </div>
+                    );
+                  })}
 
                   {activeCourierTypes.length === 0 && (
                     <div className="col-span-3 text-center text-gray-500 py-2">{t("暂无活跃快递类型")}</div>
@@ -639,39 +599,15 @@ export default function DashboardPage() {
 
               {/* 层级展示快递类型 */}
               <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
-                {(() => {
-                  // 对快递类型按照层级分组
-                  const parentTypes = activeCourierTypes.filter(type => !type.parent_id);
-                  const childTypes = activeCourierTypes.filter(type => type.parent_id);
-
-                  return parentTypes.map(parent => {
-                    const children = childTypes.filter(child => child.parent_id === parent.id);
-
-                    return (
-                      <div key={parent.id} className="space-y-1">
-                        <div className="flex items-center">
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 mr-1">
-                            {parent.name}
-                          </Badge>
-                          {children.length > 0 && (
-                            <span className="text-xs text-gray-500">({children.length})</span>
-                          )}
-                        </div>
-
-                        {children.length > 0 && (
-                          <div className="pl-3 border-l border-gray-200 ml-2 space-y-1">
-                            {children.map(child => (
-                              <div key={child.id} className="flex items-center">
-                                <div className="w-1.5 h-1.5 bg-gray-300 rounded-full mr-1.5"></div>
-                                <span className="text-xs text-gray-600">{child.name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  });
-                })()}
+                {activeCourierTypes.map(courierType => (
+                  <div key={courierType.id} className="space-y-1">
+                    <div className="flex items-center">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 mr-1">
+                        {courierType.name}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex justify-end">
@@ -720,7 +656,7 @@ export default function DashboardPage() {
                       <SelectItem value="all">{t("所有类型")}</SelectItem>
                       {activeCourierTypes.map((type) => (
                         <SelectItem key={type.id} value={type.id.toString()}>
-                          {!type.parent_id ? type.name : `— ${type.name}`}
+                          {type.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -743,7 +679,6 @@ export default function DashboardPage() {
                     timeRange={selectedTimeRange}
                     courierType={selectedCourierType}
                     isLoading={isLoading}
-                    showHierarchy={true}
                   />
                 </div>
 

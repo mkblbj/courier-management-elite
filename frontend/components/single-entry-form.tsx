@@ -77,9 +77,9 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
         })
         return;
       }
-      
+
       const courierType = courierTypes.find((ct) => ct.id.toString() === values.courierTypeId)
-      
+
       const result = await onSubmit({
         id: initialData?.id || Date.now().toString(),
         date: values.date.toISOString(),
@@ -128,11 +128,11 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
       quantity: initialData?.quantity?.toString() || "",
       remarks: initialData?.remarks || "",
     });
-    
+
     setTimeout(() => {
       form.trigger();
     }, 0);
-    
+
     setShowResetConfirm(false);
   }
 
@@ -230,6 +230,7 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
                         <SelectContent>
                           {courierTypes
                             .filter((courierType) => Boolean(courierType.is_active)) // 只显示激活的快递类型
+                            .filter((courierType) => !courierType.name.includes("未指定")) // 过滤掉未指定的快递类型
                             .map((courierType) => (
                               <SelectItem key={courierType.id} value={courierType.id.toString()}>
                                 {courierType.name}

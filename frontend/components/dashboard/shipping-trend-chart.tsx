@@ -13,10 +13,9 @@ interface ShippingTrendChartProps {
   timeRange: string
   courierType: string
   isLoading: boolean
-  showHierarchy?: boolean // 控制是否显示层级数据
 }
 
-export function ShippingTrendChart({ timeRange, courierType, isLoading, showHierarchy = false }: ShippingTrendChartProps) {
+export function ShippingTrendChart({ timeRange, courierType, isLoading }: ShippingTrendChartProps) {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const { courierTypes: courierTypesList } = useCourierTypes(); // 重命名为避免冲突
@@ -54,7 +53,6 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading, showHier
           date_from: format(startDate, "yyyy-MM-dd"),
           date_to: format(today, "yyyy-MM-dd"),
           chart_type: "shipping_trend", // 指定图表类型，帮助后端区分
-          include_details: "true" // 请求包含详细数据，按快递类型划分
         }
 
         // 如果选择了特定快递类型
@@ -126,40 +124,6 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading, showHier
               "发货总数": value || 0
             };
 
-            // 如果需要展示层级数据并且API返回了详细数据
-            if (showHierarchy && chartData.details && Array.isArray(chartData.details)) {
-              // 查找当前日期的详细数据
-              const dateDetails = chartData.details.find(detail =>
-                format(new Date(detail.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-              );
-
-              if (dateDetails && dateDetails.courierData && Array.isArray(dateDetails.courierData)) {
-                // 添加每种快递类型的数据
-                dateDetails.courierData.forEach(courierItem => {
-                  const courierName = courierItem.name || `未知类型${courierItem.id}`;
-                  dataItem[courierName] = courierItem.count || 0;
-                });
-              }
-            }
-            // 模拟层级数据（如果API未返回详细数据）
-            else if (showHierarchy && !chartData.details) {
-              // 为测试添加一些模拟数据
-              const mockCourierTypes = ["顺丰", "申通", "圆通", "韵达", "中通"];
-              const total = value || 0;
-
-              // 随机分配总数到各个快递类型
-              let remaining = total;
-              mockCourierTypes.forEach((type, idx) => {
-                if (idx === mockCourierTypes.length - 1) {
-                  dataItem[type] = remaining;
-                } else {
-                  const share = Math.floor(remaining * Math.random() * 0.5);
-                  dataItem[type] = share;
-                  remaining -= share;
-                }
-              });
-            }
-
             formattedData.push(dataItem);
           } catch (err) {
             console.error(`日期处理错误[${i}]:`, err);
@@ -184,7 +148,7 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading, showHier
     }
 
     fetchChartData()
-  }, [timeRange, courierType, t, showHierarchy, courierTypesList])
+  }, [timeRange, courierType, t, courierTypesList])
 
   if (loading || isLoading) {
     return (
@@ -193,17 +157,6 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading, showHier
       </div>)
     );
   }
-
-  // 从图表数据中获取所有数据键
-  const dataKeys = chartData.length > 0
-    ? Object.keys(chartData[0]).filter(key => key !== 'date' && key !== 'weekday' && key !== 'fullDate')
-    : []
-
-  // 动态颜色配置
-  const COLORS = [
-    "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8",
-    "#82CA9D", "#FF6B6B", "#6A7FDB", "#41B3A3", "#E27D60"
-  ];
 
   // 自定义工具提示内容
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -284,28 +237,14 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading, showHier
           <Tooltip content={<CustomTooltip />} />
           <Legend />
 
-          {/* 如果启用层级显示，添加堆叠柱状图 */}
-          {showHierarchy && dataKeys.length > 1 ? (
-            // 堆叠柱状图模式 - 展示各个快递类型
-            dataKeys.filter(key => key !== "发货总数").map((key, index) => (
-              <Bar
-                key={`bar-${key}-${index}`}
-                dataKey={key}
-                stackId="a"
-                fill={COLORS[index % COLORS.length]}
-                name={key}
-              />
-            ))
-          ) : (
-            // 非堆叠模式 - 仅展示总数
-            <Bar
-              dataKey="发货总数"
-              fill={theme === "dark" ? "#8884d8" : "#6366f1"}
-              radius={[4, 4, 0, 0]}
-              animationDuration={800}
-              name={t('dashboard.shipping_trend.count')}
-            />
-          )}
+          {/* 仅展示总数 */}
+          <Bar
+            dataKey="发货总数"
+            fill={theme === "dark" ? "#8884d8" : "#6366f1"}
+            radius={[4, 4, 0, 0]}
+            animationDuration={800}
+            name={t('dashboard.shipping_trend.count')}
+          />
 
           {/* 添加折线展示趋势 */}
           <Line

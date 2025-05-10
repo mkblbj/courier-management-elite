@@ -19,8 +19,6 @@ interface FormattedChartData {
   name: string;
   fullName: string;
   value: number;
-  isChild?: boolean; // 新增属性，表示是否为子类型
-  parentName?: string; // 新增属性，父类型名称
 }
 
 export function CourierDistributionChart({ timeRange, isLoading, showHierarchy = false }: CourierDistributionChartProps) {
@@ -33,10 +31,8 @@ export function CourierDistributionChart({ timeRange, isLoading, showHierarchy =
   // 保存代码到完整名称的映射
   const [codeToFullNameMap, setCodeToFullNameMap] = useState<Record<string, string>>({})
 
-  // 扩展颜色数组
+  // 颜色数组
   const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#6366f1", "#14b8a6", "#f43f5e", "#d946ef", "#84cc16", "#0ea5e9", "#a855f7"]
-  // 子类型颜色，比父类型颜色稍浅
-  const CHILD_COLORS = ["#60a5fa", "#34d399", "#fbbf24", "#a78bfa", "#f472b6", "#818cf8", "#2dd4bf", "#fb7185", "#e879f9", "#a3e635", "#38bdf8", "#c084fc"]
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -152,61 +148,6 @@ export function CourierDistributionChart({ timeRange, isLoading, showHierarchy =
           }
         }).filter(item => item.value > 0)
 
-        // 如果需要显示层级关系，处理父子类型
-        if (showHierarchy) {
-          // 创建父类型ID到类型对象的映射
-          const typeIdMap = new Map(courierTypes.map(type => [type.id, type]))
-
-          // 创建一个临时对象，将快递类型名称映射到其数据
-          const nameToDataMap = new Map(formattedData.map(item => [item.fullName, item]))
-
-          // 整理后的数据
-          const hierarchicalData: FormattedChartData[] = []
-
-          // 对于每个有父类型的快递类型，找到其父类型，并标记为子类型
-          courierTypes.forEach(type => {
-            const typeName = type.name
-            const typeData = nameToDataMap.get(typeName)
-
-            if (typeData) {
-              // 如果有父类型ID
-              if (type.parent_id) {
-                const parentType = typeIdMap.get(type.parent_id)
-                if (parentType) {
-                  // 标记为子类型，并记录父类型名称
-                  typeData.isChild = true
-                  typeData.parentName = parentType.name
-
-                  // 尝试找到父类型的数据
-                  let parentData = nameToDataMap.get(parentType.name)
-
-                  // 如果父类型没有数据，创建一个
-                  if (!parentData) {
-                    parentData = {
-                      name: parentType.code || parentType.name,
-                      fullName: parentType.name,
-                      value: 0, // 初始值为0
-                    }
-                    nameToDataMap.set(parentType.name, parentData)
-                    hierarchicalData.push(parentData)
-                  }
-                }
-              }
-
-              hierarchicalData.push(typeData)
-            }
-          })
-
-          // 没有找到对应类型数据的，保持原样
-          formattedData.forEach(item => {
-            if (!hierarchicalData.some(d => d.fullName === item.fullName)) {
-              hierarchicalData.push(item)
-            }
-          })
-
-          formattedData = hierarchicalData.filter(item => item.value > 0)
-        }
-
         console.log("最终格式化的饼图数据:", formattedData)
 
         if (formattedData.length === 0) {
@@ -227,16 +168,9 @@ export function CourierDistributionChart({ timeRange, isLoading, showHierarchy =
     fetchChartData()
   }, [timeRange, courierTypes, t, showHierarchy])
 
-  // 图例格式化函数，将code转换为完整名称，并为子类型添加缩进
+  // 图例格式化函数，将code转换为完整名称
   const renderLegendText = (value: string, entry: any) => {
-    const item = entry.payload;
     const fullName = codeToFullNameMap[value] || value;
-
-    // 如果是子类型，添加前缀
-    if (item.isChild) {
-      return `— ${fullName}`;
-    }
-
     return fullName;
   }
 
@@ -282,7 +216,7 @@ export function CourierDistributionChart({ timeRange, isLoading, showHierarchy =
             {chartData.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={entry.isChild ? CHILD_COLORS[index % CHILD_COLORS.length] : COLORS[index % COLORS.length]}
+                fill={COLORS[index % COLORS.length]}
               />
             ))}
           </Pie>
