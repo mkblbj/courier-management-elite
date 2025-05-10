@@ -1,40 +1,25 @@
 const db = require('../db');
 
-class Courier {
+class CourierCategory {
   constructor() {
-    this.table = 'couriers';
+    this.table = 'courier_categories';
   }
 
   /**
-   * 获取所有快递类型
+   * 获取所有快递类别
    * @param {Object} options 过滤和排序选项
    * @returns {Promise<Array>} 
    */
   async getAll(options = {}) {
-    let sql = `
-      SELECT c.*, cc.name as category_name
-      FROM ${this.table} c
-      LEFT JOIN courier_categories cc ON c.category_id = cc.id
-    `;
+    let sql = `SELECT * FROM ${this.table}`;
     const params = [];
     const whereClauses = [];
 
-    // 添加过滤条件
-    if (options.is_active !== null && options.is_active !== undefined) {
-      whereClauses.push('c.is_active = ?');
-      params.push(options.is_active ? 1 : 0);
-    }
-
+    // 添加搜索过滤条件
     if (options.search) {
-      whereClauses.push('(c.name LIKE ? OR c.code LIKE ? OR c.remark LIKE ?)');
+      whereClauses.push('name LIKE ?');
       const searchTerm = `%${options.search}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
-    }
-    
-    // 添加类别过滤
-    if (options.category_id !== undefined) {
-      whereClauses.push('c.category_id = ?');
-      params.push(options.category_id);
+      params.push(searchTerm);
     }
 
     // 添加WHERE子句
@@ -43,7 +28,7 @@ class Courier {
     }
 
     // 添加排序
-    const allowedSortFields = ['id', 'name', 'code', 'is_active', 'sort_order', 'created_at', 'updated_at'];
+    const allowedSortFields = ['id', 'name', 'sort_order', 'created_at', 'updated_at'];
     const sortBy = allowedSortFields.includes(options.sort_by) ? options.sort_by : 'sort_order';
     const sortOrder = options.sort_order === 'DESC' ? 'DESC' : 'ASC';
     
@@ -53,49 +38,37 @@ class Courier {
   }
 
   /**
-   * 根据ID获取快递类型
-   * @param {number} id 快递类型ID
+   * 根据ID获取快递类别
+   * @param {number} id 快递类别ID
    * @returns {Promise<Object|null>}
    */
   async getById(id) {
-    const sql = `
-      SELECT c.*, cc.name as category_name
-      FROM ${this.table} c
-      LEFT JOIN courier_categories cc ON c.category_id = cc.id
-      WHERE c.id = ?
-    `;
+    const sql = `SELECT * FROM ${this.table} WHERE id = ?`;
     const results = await db.query(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
 
   /**
-   * 添加快递类型
-   * @param {Object} data 快递类型数据
+   * 添加快递类别
+   * @param {Object} data 快递类别数据
    * @returns {Promise<number>} 新创建的ID
    */
   async add(data) {
-    const sql = `INSERT INTO ${this.table} (name, code, remark, is_active, sort_order, category_id) VALUES (?, ?, ?, ?, ?, ?)`;
+    const sql = `INSERT INTO ${this.table} (name, sort_order) VALUES (?, ?)`;
     
-    const isActive = data.is_active !== undefined ? data.is_active : true;
     const sortOrder = data.sort_order !== undefined ? data.sort_order : 0;
-    const remark = data.remark || null;
-    const categoryId = data.category_id || null;
 
     const result = await db.query(sql, [
       data.name,
-      data.code,
-      remark,
-      isActive ? 1 : 0,
-      sortOrder,
-      categoryId
+      sortOrder
     ]);
 
     return result.insertId;
   }
 
   /**
-   * 更新快递类型
-   * @param {number} id 快递类型ID
+   * 更新快递类别
+   * @param {number} id 快递类别ID
    * @param {Object} data 更新的数据
    * @returns {Promise<boolean>} 是否更新成功
    */
@@ -109,29 +82,9 @@ class Courier {
       params.push(data.name);
     }
     
-    if (data.code !== undefined) {
-      setClauses.push("code = ?");
-      params.push(data.code);
-    }
-    
-    if (data.remark !== undefined) {
-      setClauses.push("remark = ?");
-      params.push(data.remark);
-    }
-    
-    if (data.is_active !== undefined) {
-      setClauses.push("is_active = ?");
-      params.push(data.is_active ? 1 : 0);
-    }
-    
     if (data.sort_order !== undefined) {
       setClauses.push("sort_order = ?");
       params.push(data.sort_order);
-    }
-    
-    if (data.category_id !== undefined) {
-      setClauses.push("category_id = ?");
-      params.push(data.category_id);
     }
     
     // 如果没有需要更新的字段，直接返回成功
@@ -149,25 +102,26 @@ class Courier {
   }
 
   /**
-   * 删除快递类型
-   * @param {number} id 快递类型ID
+   * 删除快递类别
+   * @param {number} id 快递类别ID
    * @returns {Promise<boolean>} 是否删除成功
    */
   async delete(id) {
+    // 由于有外键约束，如果存在关联快递类型，数据库会拒绝删除
     const sql = `DELETE FROM ${this.table} WHERE id = ?`;
     const result = await db.query(sql, [id]);
     return result.affectedRows > 0;
   }
 
   /**
-   * 切换快递类型启用状态
-   * @param {number} id 快递类型ID
-   * @returns {Promise<boolean>} 是否成功
+   * 检查类别是否被快递类型使用
+   * @param {number} id 类别ID
+   * @returns {Promise<boolean>} 是否被使用
    */
-  async toggleActive(id) {
-    const sql = `UPDATE ${this.table} SET is_active = NOT is_active WHERE id = ?`;
-    const result = await db.query(sql, [id]);
-    return result.affectedRows > 0;
+  async isBeingUsed(id) {
+    const sql = `SELECT COUNT(*) as count FROM couriers WHERE category_id = ?`;
+    const rows = await db.query(sql, [id]);
+    return rows[0].count > 0;
   }
 
   /**
@@ -193,15 +147,59 @@ class Courier {
       return true;
     });
   }
-  
+
   /**
-   * 根据类别获取所有快递类型
+   * 获取类别的统计数据
    * @param {number} categoryId 类别ID
-   * @returns {Promise<Array>} 快递类型列表
+   * @param {Object} options 过滤选项
+   * @returns {Promise<Object>} 类别的统计数据
    */
-  async getByCategoryId(categoryId) {
-    return await this.getAll({ category_id: categoryId });
+  async getCategoryStats(categoryId, options = {}) {
+    // 构造基础SQL
+    let sql = `
+      SELECT 
+        cc.id as category_id,
+        cc.name as category_name,
+        SUM(so.quantity) as total_quantity
+      FROM ${this.table} cc
+      LEFT JOIN couriers c ON c.category_id = cc.id
+      LEFT JOIN shop_outputs so ON so.courier_id = c.id
+      WHERE cc.id = ?
+    `;
+    const params = [categoryId];
+
+    // 添加日期过滤
+    if (options.start_date && options.end_date) {
+      sql += ` AND so.output_date BETWEEN ? AND ?`;
+      params.push(options.start_date, options.end_date);
+    } else if (options.start_date) {
+      sql += ` AND so.output_date >= ?`;
+      params.push(options.start_date);
+    } else if (options.end_date) {
+      sql += ` AND so.output_date <= ?`;
+      params.push(options.end_date);
+    }
+
+    // 添加店铺过滤
+    if (options.shop_id) {
+      sql += ` AND so.shop_id = ?`;
+      params.push(options.shop_id);
+    }
+
+    sql += ` GROUP BY cc.id, cc.name`;
+
+    const rows = await db.query(sql, params);
+    if (rows && rows.length > 0) {
+      return rows[0];
+    }
+    
+    const category = await this.getById(categoryId);
+    return { 
+      category_id: categoryId, 
+      category_name: category ? category.name : 'Unknown',
+      total_quantity: 0 
+    };
   }
 }
 
-module.exports = new Courier(); 
+module.exports = new CourierCategory(); 

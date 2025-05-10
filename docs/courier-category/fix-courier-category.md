@@ -56,7 +56,7 @@ Story Points: 8
    5. - [ ] 确保 shop_outputs 表中与 couriers 表的外键关系保持正确
    6. - [ ] 为 courier_categories 表创建索引，优化查询性能
 
-2. - [ ] 模型开发
+2. - [x] 模型开发
 
    1. - [ ] 更新 Courier.js 模型，移除 getParentTypes()和相关的层级查询方法
    2. - [ ] 移除模型中与 parent_id 相关的字段处理
