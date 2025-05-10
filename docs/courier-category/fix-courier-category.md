@@ -74,7 +74,7 @@ Story Points: 8
    5. - [ ] 创建 CourierCategoryController.js，实现类别管理 API
    6. - [ ] 实现按类别获取统计数据的 API 端点
 
-4. - [ ] 前端服务和接口更新
+4. - [x] 前端服务和接口更新
 
    1. - [ ] 更新 api.ts 中的 CourierType 接口定义，移除 parent_id 字段，添加 category_id 字段
    2. - [ ] 修改 CreateCourierTypeRequest 接口，更新相关字段

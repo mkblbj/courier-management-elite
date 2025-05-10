@@ -762,6 +762,119 @@ class StatsController {
     // 实际项目中可能需要根据parent_id构建层级结构
     return dataArray;
   }
+
+  /**
+   * 获取按类别分组的发货统计数据
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async getCategoryStats(req, res) {
+    try {
+      // 解析请求参数
+      const date = req.query.date || null;
+      const dateFrom = req.query.date_from || null;
+      const dateTo = req.query.date_to || null;
+      const categoryId = req.query.category_id ? parseInt(req.query.category_id) : null;
+      const week = req.query.week ? parseInt(req.query.week) : null;
+      const month = req.query.month ? parseInt(req.query.month) : null;
+      const quarter = req.query.quarter ? parseInt(req.query.quarter) : null;
+      const year = req.query.year ? parseInt(req.query.year) : null;
+      
+      // 处理按年、月、季度、周筛选，转换为date_from和date_to
+      let calculatedDateFrom = null;
+      let calculatedDateTo = null;
+      
+      // 使用dateUtils工具函数获取日期范围
+      const currentYear = new Date().getFullYear();
+      
+      // 根据参数组合确定日期范围
+      if (year) {
+        if (month) {
+          // 年+月
+          const dateRange = dateUtils.getMonthDateRange(year, month);
+          calculatedDateFrom = dateRange.start;
+          calculatedDateTo = dateRange.end;
+        } else if (quarter) {
+          // 年+季度
+          const dateRange = dateUtils.getQuarterDateRange(year, quarter);
+          calculatedDateFrom = dateRange.start;
+          calculatedDateTo = dateRange.end;
+        } else if (week) {
+          // 年+周
+          const dateRange = dateUtils.getWeekDateRange(year, week);
+          calculatedDateFrom = dateRange.start;
+          calculatedDateTo = dateRange.end;
+        } else {
+          // 仅年份
+          const dateRange = dateUtils.getYearDateRange(year);
+          calculatedDateFrom = dateRange.start;
+          calculatedDateTo = dateRange.end;
+        }
+      } else if (month) {
+        // 仅月份，使用当前年
+        const dateRange = dateUtils.getMonthDateRange(currentYear, month);
+        calculatedDateFrom = dateRange.start;
+        calculatedDateTo = dateRange.end;
+      } else if (quarter) {
+        // 仅季度，使用当前年
+        const dateRange = dateUtils.getQuarterDateRange(currentYear, quarter);
+        calculatedDateFrom = dateRange.start;
+        calculatedDateTo = dateRange.end;
+      } else if (week) {
+        // 仅周数，使用当前年
+        const dateRange = dateUtils.getWeekDateRange(currentYear, week);
+        calculatedDateFrom = dateRange.start;
+        calculatedDateTo = dateRange.end;
+      }
+      
+      // 原有日期筛选优先级高于计算的日期范围
+      const finalDateFrom = dateFrom || calculatedDateFrom;
+      const finalDateTo = dateTo || calculatedDateTo;
+      
+      const options = {
+        date,
+        date_from: finalDateFrom,
+        date_to: finalDateTo,
+        category_id: categoryId
+      };
+      
+      try {
+        // 获取各项统计数据
+        const statsByCategory = await shippingRecordInstance.getStatsByCategory(options);
+        const statsTotal = await shippingRecordInstance.getStatsTotal(options);
+        
+        // 返回统计结果
+        res.status(200).json({
+          success: true,
+          data: {
+            by_category: statsByCategory || [],
+            total: statsTotal || { total: 0 }
+          }
+        });
+      } catch (error) {
+        console.error('获取类别统计数据查询错误:', error);
+        // 即使查询出错，也返回一个一致的数据结构
+        res.status(200).json({
+          success: true,
+          data: {
+            by_category: [],
+            total: { total: 0 }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('获取类别统计数据失败:', error);
+      // 返回服务器错误，但保持数据结构一致
+      res.status(500).json({
+        success: false,
+        message: '获取类别统计数据失败',
+        data: {
+          by_category: [],
+          total: { total: 0 }
+        }
+      });
+    }
+  }
 }
 
 module.exports = new StatsController(); 
