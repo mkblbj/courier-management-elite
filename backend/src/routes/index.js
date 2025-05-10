@@ -1,5 +1,6 @@
 const express = require('express');
 const courierRoutes = require('./courierRoutes');
+const courierCategoryRoutes = require('./courierCategoryRoutes');
 const shippingRoutes = require('./shippingRoutes');
 const shopRoutes = require('./shopRoutes');
 const shopCategoryRoutes = require('./shopCategoryRoutes');
@@ -20,6 +21,9 @@ router.get('/', (req, res) => {
 
 // 快递类型API路由
 router.use('/couriers', courierRoutes);
+
+// 快递类别API路由
+router.use('/courier-categories', courierCategoryRoutes);
 
 // 发货记录API路由
 router.use('/shipping', shippingRoutes);
@@ -45,13 +49,26 @@ router.get('/docs', (req, res) => {
     message: 'API文档',
     apis: [
       {
+        name: '快递类别API',
+        description: '快递类别的CRUD操作',
+        basePath: '/api/courier-categories',
+        endpoints: [
+          { method: 'GET', path: '/', description: '获取所有快递类别' },
+          { method: 'GET', path: '/:id', description: '获取单个快递类别详情' },
+          { method: 'POST', path: '/', description: '创建快递类别' },
+          { method: 'PUT', path: '/:id', description: '更新快递类别' },
+          { method: 'DELETE', path: '/:id', description: '删除快递类别' },
+          { method: 'POST', path: '/sort', description: '更新快递类别排序' },
+          { method: 'GET', path: '/:id/stats', description: '获取类别统计信息' }
+        ]
+      },
+      {
         name: '快递类型API',
         description: '快递类型的CRUD操作',
         basePath: '/api/couriers',
         endpoints: [
           { method: 'GET', path: '/', description: '获取所有快递类型' },
-          { method: 'GET', path: '/hierarchy', description: '获取快递类型层级结构(母子类型)' },
-          { method: 'GET', path: '/:parentId/children', description: '获取特定母类型的所有子类型' },
+          { method: 'GET', path: '/category/:categoryId', description: '获取特定类别的所有快递类型' },
           { method: 'GET', path: '/:id', description: '获取单个快递类型详情' },
           { method: 'POST', path: '/', description: '创建快递类型' },
           { method: 'PUT', path: '/:id', description: '更新快递类型' },

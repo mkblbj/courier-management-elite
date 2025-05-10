@@ -11,7 +11,7 @@ const validateCourier = [
   body('remark').optional(),
   body('is_active').optional().isBoolean().withMessage('状态必须是布尔值'),
   body('sort_order').optional().isInt().withMessage('排序值必须是整数'),
-  body('parent_id').optional().isInt().withMessage('父类型ID必须是整数')
+  body('category_id').optional().isInt().withMessage('类别ID必须是整数')
 ];
 
 class CourierController {
@@ -27,7 +27,8 @@ class CourierController {
         is_active: isActive,
         sort_by: req.query.sort || 'sort_order',
         sort_order: req.query.order || 'ASC',
-        search: req.query.search || ''
+        search: req.query.search || '',
+        category_id: req.query.category_id ? parseInt(req.query.category_id) : undefined
       };
 
       const couriers = await Courier.getAll(options);
@@ -210,15 +211,6 @@ class CourierController {
         });
       }
       
-      // 检查是否有子类型
-      const hasChildren = await Courier.hasChildren(id);
-      if (hasChildren) {
-        return res.status(400).json({
-          code: 400,
-          message: '不能删除有子类型的母类型'
-        });
-      }
-      
       // TODO: 这里应该检查是否有关联的发货记录，如有则不允许删除
       // 暂时不实现，后续需要时可添加
       
@@ -329,67 +321,24 @@ class CourierController {
   }
 
   /**
-   * 获取快递类型层级结构(包括母子类型关系)
+   * 根据类别获取快递类型
    */
-  async getTypeHierarchy(req, res) {
+  async getByCategoryId(req, res) {
     try {
-      const typeHierarchy = await Courier.getTypeHierarchy();
+      const categoryId = parseInt(req.params.categoryId);
+      
+      const couriers = await Courier.getByCategoryId(categoryId);
       
       res.status(200).json({
         code: 0,
         message: '获取成功',
-        data: typeHierarchy
+        data: couriers
       });
     } catch (error) {
-      console.error('获取快递类型层级结构失败:', error);
+      console.error('获取类别快递类型失败:', error);
       res.status(500).json({
         code: 500,
-        message: '获取快递类型层级结构失败'
-      });
-    }
-  }
-
-  /**
-   * 获取特定母类型的所有子类型
-   */
-  async getChildTypes(req, res) {
-    try {
-      const parentId = parseInt(req.params.parentId);
-      
-      // 验证母类型是否存在
-      const parentType = await Courier.getById(parentId);
-      if (!parentType) {
-        return res.status(404).json({
-          code: 404,
-          message: '母类型不存在'
-        });
-      }
-      
-      // 验证是否为母类型(parent_id为null)
-      if (parentType.parent_id !== null) {
-        return res.status(400).json({
-          code: 400,
-          message: '指定的类型不是母类型'
-        });
-      }
-      
-      const childTypes = await Courier.getChildren(parentId);
-      const totalCount = await Courier.getChildrenSum(parentId);
-      
-      res.status(200).json({
-        code: 0,
-        message: '获取成功',
-        data: {
-          parentType,
-          childTypes,
-          totalCount
-        }
-      });
-    } catch (error) {
-      console.error('获取子类型列表失败:', error);
-      res.status(500).json({
-        code: 500,
-        message: '获取子类型列表失败'
+        message: '获取类别快递类型失败'
       });
     }
   }
