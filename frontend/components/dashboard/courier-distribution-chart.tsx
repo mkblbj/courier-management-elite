@@ -11,7 +11,6 @@ import { useCourierTypes } from "@/hooks/use-courier-types"
 interface CourierDistributionChartProps {
   timeRange: string
   isLoading: boolean
-  showHierarchy?: boolean // 新增属性，表示是否显示层级结构
 }
 
 // 创建一个格式化后的数据类型
@@ -21,7 +20,7 @@ interface FormattedChartData {
   value: number;
 }
 
-export function CourierDistributionChart({ timeRange, isLoading, showHierarchy = false }: CourierDistributionChartProps) {
+export function CourierDistributionChart({ timeRange, isLoading }: CourierDistributionChartProps) {
   const { t } = useTranslation();
 
   const [chartData, setChartData] = useState<FormattedChartData[]>([])
@@ -147,6 +146,7 @@ export function CourierDistributionChart({ timeRange, isLoading, showHierarchy =
             value: Number(validData[index]) || 0,
           }
         }).filter(item => item.value > 0)
+          .filter(item => !item.fullName.includes("未指定")) // 过滤掉"未指定"的快递类型
 
         console.log("最终格式化的饼图数据:", formattedData)
 
@@ -166,7 +166,7 @@ export function CourierDistributionChart({ timeRange, isLoading, showHierarchy =
     }
 
     fetchChartData()
-  }, [timeRange, courierTypes, t, showHierarchy])
+  }, [timeRange, courierTypes, t])
 
   // 图例格式化函数，将code转换为完整名称
   const renderLegendText = (value: string, entry: any) => {
@@ -226,7 +226,12 @@ export function CourierDistributionChart({ timeRange, isLoading, showHierarchy =
               return [`${value} 件`, item.fullName || name];
             }}
           />
-          <Legend formatter={renderLegendText} />
+          <Legend
+            formatter={renderLegendText}
+            verticalAlign="bottom"
+            height={36}
+            wrapperStyle={{ bottom: 0, paddingTop: 15 }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { shippingApi } from "@/services/shipping-api"
 import { format, subDays } from "date-fns"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart, Cell } from "recharts"
 import { useCourierTypes } from "@/hooks/use-courier-types"
 
 interface ShippingTrendChartProps {
@@ -22,6 +22,12 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
 
   const [chartData, setChartData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  // 为柱状图定义一组颜色
+  const BAR_COLORS = [
+    "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899",
+    "#6366f1", "#14b8a6", "#f43f5e", "#d946ef", "#84cc16"
+  ];
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -220,7 +226,7 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }}>
+        <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
@@ -235,16 +241,26 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
             tickFormatter={(value) => value === 0 ? '0' : `${value}`}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend />
+          <Legend
+            wrapperStyle={{ bottom: 0, paddingTop: 20 }}
+            verticalAlign="bottom"
+            height={36}
+          />
 
-          {/* 仅展示总数 */}
+          {/* 每根柱子使用不同的颜色 */}
           <Bar
             dataKey="发货总数"
-            fill={theme === "dark" ? "#8884d8" : "#6366f1"}
             radius={[4, 4, 0, 0]}
             animationDuration={800}
             name={t('dashboard.shipping_trend.count')}
-          />
+          >
+            {chartData.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={BAR_COLORS[index % BAR_COLORS.length]}
+              />
+            ))}
+          </Bar>
 
           {/* 添加折线展示趋势 */}
           <Line
