@@ -17,8 +17,6 @@ import { ShippingTrendChart } from "@/components/dashboard/shipping-trend-chart"
 import { CourierDistributionChart } from "@/components/dashboard/courier-distribution-chart"
 import { QuickActionCard } from "@/components/dashboard/quick-action-card"
 import { StatCard } from "@/components/dashboard/stat-card"
-import { ShopOutputCard } from "@/components/dashboard/shop-output-card"
-import { ShopOutputTomorrowCard } from "@/components/dashboard/shop-output-tomorrow-card"
 import { useCourierTypes } from "@/hooks/use-courier-types"
 import { shippingApi } from "@/services/shipping-api"
 import { useShippingData } from "@/hooks/use-shipping-data"
@@ -701,38 +699,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 店铺出力数据卡片区域 */}
-        <div className="mb-6">
-          <div className="grid grid-cols-1 gap-6">
-            {/* 今日店铺出力卡片 */}
-            <div className={cn(
-              "transition-all duration-500",
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            )}
-              style={{ transitionDelay: "600ms" }}>
-              <ShopOutputCard
-                title={t("今日店铺出力情况")}
-                data={shopOutputData}
-                isLoading={isLoadingShopOutput}
-                onRefresh={fetchShopOutputData}
-              />
-            </div>
 
-            {/* 明日店铺出力预测卡片 */}
-            <div className={cn(
-              "transition-all duration-500",
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            )}
-              style={{ transitionDelay: "700ms" }}>
-              <ShopOutputTomorrowCard
-                title={t("明日店铺出力预测")}
-                data={shopOutputTomorrowData}
-                isLoading={isLoadingShopOutput}
-                onRefresh={fetchShopOutputData}
-                confidenceScore={82}
-              />
-            </div>
-          </div>
-        </div>
 
         {/* 快速操作区域 - 占满整行 */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
