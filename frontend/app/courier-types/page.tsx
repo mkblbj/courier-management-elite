@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useSearchParams, useRouter } from "next/navigation"
 import { CategoryManagementTab } from "@/components/shop-category/CategoryManagementTab"
 import { ShopManagementTab } from "@/components/shop/ShopManagementTab"
+import { CourierCategoryManagementTab } from "@/components/courier-category/CourierCategoryManagementTab"
 
 export default function CourierTypesPage() {
   const { debug } = useEnvStore()
@@ -24,11 +25,13 @@ export default function CourierTypesPage() {
   const { t } = useTranslation(['common', 'courier', 'shop'])
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   // 获取当前激活的标签
   const activeTab = searchParams.get('tab') || 'courier-types'
   // 获取商店管理子标签
   const shopTab = searchParams.get('shopTab') || 'categories'
+  // 获取快递管理子标签
+  const courierTab = searchParams.get('courierTab') || 'types'
 
   // 切换标签时更新URL参数
   const handleTabChange = (value: string) => {
@@ -41,6 +44,13 @@ export default function CourierTypesPage() {
   const handleShopTabChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString())
     params.set('shopTab', value)
+    router.push(`?${params.toString()}`)
+  }
+
+  // 切换快递管理子标签
+  const handleCourierTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('courierTab', value)
     router.push(`?${params.toString()}`)
   }
 
@@ -57,7 +67,7 @@ export default function CourierTypesPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
       <DashboardNav />
-      
+
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
         <PageHeader
           title={t('courier:courier_management')}
@@ -81,27 +91,40 @@ export default function CourierTypesPage() {
           <div className="bg-white shadow rounded-lg p-6 max-w-5xl mx-auto">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="mb-6">
-                <TabsTrigger value="courier-types">{t('courier:courier_types')}</TabsTrigger>
+                <TabsTrigger value="courier-management">{t('courier:courier_management')}</TabsTrigger>
                 <TabsTrigger value="shop-management">{t('shop:shop_management')}</TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="courier-types">
-                <Suspense fallback={<CourierTypesSkeleton />}>
-                  <CourierTypeManagement />
-                </Suspense>
+
+              <TabsContent value="courier-management">
+                <Tabs value={courierTab} onValueChange={handleCourierTabChange}>
+                  <TabsList className="mb-6">
+                    <TabsTrigger value="types">{t('courier:courier_types')}</TabsTrigger>
+                    <TabsTrigger value="categories">{t('courier:category_list')}</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="types">
+                    <Suspense fallback={<CourierTypesSkeleton />}>
+                      <CourierTypeManagement />
+                    </Suspense>
+                  </TabsContent>
+
+                  <TabsContent value="categories">
+                    <CourierCategoryManagementTab />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
-              
+
               <TabsContent value="shop-management">
                 <Tabs value={shopTab} onValueChange={handleShopTabChange}>
                   <TabsList className="mb-6">
                     <TabsTrigger value="categories">{t('shop:category_list')}</TabsTrigger>
                     <TabsTrigger value="shops">{t('shop:shop_management')}</TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="categories">
                     <CategoryManagementTab />
                   </TabsContent>
-                  
+
                   <TabsContent value="shops">
                     <ShopManagementTab />
                   </TabsContent>

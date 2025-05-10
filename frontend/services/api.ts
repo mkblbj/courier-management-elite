@@ -90,25 +90,16 @@ export interface CourierType {
   sort_order: number
   created_at?: string
   updated_at?: string
-  parent_id?: number | string | null
+  category_id?: number | string | null
 }
 
-// 定义子类型接口，继承自CourierType
-export interface ChildCourierType extends CourierType {
-  parent_id: number | string
-}
-
-// 定义层级结构中的快递类型
-export interface CourierTypeHierarchyItem extends CourierType {
-  children: CourierType[]
-  totalCount: number
-}
-
-// 定义子类型查询结果
-export interface ChildTypesResult {
-  parentType: CourierType
-  childTypes: CourierType[]
-  totalCount: number
+// 定义快递类别接口
+export interface CourierCategory {
+  id: number | string
+  name: string
+  sort_order: number
+  created_at?: string
+  updated_at?: string
 }
 
 // 定义发货记录
@@ -120,37 +111,13 @@ export interface ShippingRecord {
   date: string
 }
 
-// 定义发货记录层级数据
-export interface ShippingHierarchyItem {
-  id: number | string
-  name: string
-  parent_id: number | string | null
-  children?: CourierType[]
-  shipping: {
-    own: ShippingRecord[]
-    children: ShippingRecord[]
-    total: ShippingRecord[]
-  }
-}
-
-// 定义特定母类型的发货统计
-export interface ParentTypeShippingStats {
-  courierType: CourierType
-  children: CourierType[]
-  shipping: {
-    own: ShippingRecord[]
-    children: ShippingRecord[]
-    total: ShippingRecord[]
-  }
-}
-
 // 创建快递类型的请求体类型
 export interface CreateCourierTypeRequest {
   name: string
   code: string
   remark?: string
   is_active: boolean
-  parent_id?: number | string
+  category_id?: number | string
 }
 
 // 更新快递类型的请求体类型
@@ -159,6 +126,7 @@ export interface UpdateCourierTypeRequest {
   code: string
   remark?: string
   is_active: boolean
+  category_id?: number | string
 }
 
 // API服务对象
@@ -171,9 +139,71 @@ export const api = {
     // 构建查询参数
     const queryParams = new URLSearchParams()
     if (params?.active_only) queryParams.append("active_only", "true")
+    if (params?.search) queryParams.append("search", params.search)
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
     return fetchWithErrorHandling<CourierType[]>(`${COURIERS_ENDPOINT}${queryString}`)
+  },
+
+  // 获取快递类别列表
+  async getCourierCategories(): Promise<CourierCategory[]> {
+    const API_BASE_URL = getApiBaseUrl()
+    const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
+
+    return fetchWithErrorHandling<CourierCategory[]>(CATEGORIES_ENDPOINT, {
+      method: "GET",
+    })
+  },
+
+  // 获取单个快递类别
+  async getCourierCategory(id: number | string): Promise<CourierCategory> {
+    const API_BASE_URL = getApiBaseUrl()
+    const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
+
+    return fetchWithErrorHandling<CourierCategory>(`${CATEGORIES_ENDPOINT}/${id}`)
+  },
+
+  // 创建快递类别
+  async createCourierCategory(data: { name: string; sort_order?: number }): Promise<CourierCategory> {
+    const API_BASE_URL = getApiBaseUrl()
+    const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
+
+    return fetchWithErrorHandling<CourierCategory>(CATEGORIES_ENDPOINT, {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  },
+
+  // 更新快递类别
+  async updateCourierCategory(id: number | string, data: { name: string; sort_order?: number }): Promise<CourierCategory> {
+    const API_BASE_URL = getApiBaseUrl()
+    const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
+
+    return fetchWithErrorHandling<CourierCategory>(`${CATEGORIES_ENDPOINT}/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+  },
+
+  // 删除快递类别
+  async deleteCourierCategory(id: number | string): Promise<void> {
+    const API_BASE_URL = getApiBaseUrl()
+    const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
+
+    return fetchWithErrorHandling<void>(`${CATEGORIES_ENDPOINT}/${id}`, {
+      method: "DELETE",
+    })
+  },
+
+  // 更新快递类别排序
+  async updateCourierCategoriesOrder(items: { id: number | string; sort_order: number }[]): Promise<void> {
+    const API_BASE_URL = getApiBaseUrl()
+    const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
+
+    return fetchWithErrorHandling<void>(`${CATEGORIES_ENDPOINT}/sort`, {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    })
   },
 
   // 获取单个快递类型
@@ -237,53 +267,14 @@ export const api = {
     })
   },
 
-  // 获取快递类型层级结构
-  async getCourierTypeHierarchy(): Promise<CourierTypeHierarchyItem[]> {
+  // 更新快递类别排序
+  async updateCourierCategorySort(items: { id: number | string; sort_order: number }[]): Promise<void> {
     const API_BASE_URL = getApiBaseUrl()
-    const HIERARCHY_ENDPOINT = `${API_BASE_URL}/api/couriers/hierarchy`
+    const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
 
-    return fetchWithErrorHandling<CourierTypeHierarchyItem[]>(HIERARCHY_ENDPOINT)
-  },
-
-  // 获取特定母类型的子类型
-  async getChildTypes(parentId: number | string): Promise<ChildTypesResult> {
-    const API_BASE_URL = getApiBaseUrl()
-    const CHILDREN_ENDPOINT = `${API_BASE_URL}/api/couriers/${parentId}/children`
-
-    return fetchWithErrorHandling<ChildTypesResult>(CHILDREN_ENDPOINT)
-  },
-
-  // 获取发货记录层级数据
-  async getShippingHierarchy(params?: { date?: string; date_from?: string; date_to?: string }): Promise<ShippingHierarchyItem[]> {
-    const API_BASE_URL = getApiBaseUrl()
-    const SHIPPING_HIERARCHY_ENDPOINT = `${API_BASE_URL}/api/shipping/hierarchy`
-
-    // 构建查询参数
-    const queryParams = new URLSearchParams()
-    if (params?.date) queryParams.append("date", params.date)
-    if (params?.date_from) queryParams.append("date_from", params.date_from)
-    if (params?.date_to) queryParams.append("date_to", params.date_to)
-    queryParams.append("includeHierarchy", "true")
-
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
-    return fetchWithErrorHandling<ShippingHierarchyItem[]>(`${SHIPPING_HIERARCHY_ENDPOINT}${queryString}`)
-  },
-
-  // 获取特定母类型的发货统计
-  async getParentTypeShippingStats(
-    parentId: number | string,
-    params?: { date?: string; date_from?: string; date_to?: string }
-  ): Promise<ParentTypeShippingStats> {
-    const API_BASE_URL = getApiBaseUrl()
-    const PARENT_STATS_ENDPOINT = `${API_BASE_URL}/api/shipping/stats/parent/${parentId}`
-
-    // 构建查询参数
-    const queryParams = new URLSearchParams()
-    if (params?.date) queryParams.append("date", params.date)
-    if (params?.date_from) queryParams.append("date_from", params.date_from)
-    if (params?.date_to) queryParams.append("date_to", params.date_to)
-
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
-    return fetchWithErrorHandling<ParentTypeShippingStats>(`${PARENT_STATS_ENDPOINT}${queryString}`)
-  },
+    return fetchWithErrorHandling<void>(`${CATEGORIES_ENDPOINT}/sort`, {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    })
+  }
 }
