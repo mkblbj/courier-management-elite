@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { RefreshCw, TrendingUp, Package, ChevronRight, Calendar, PlusCircle, BarChart2, Download, AlertCircle } from "lucide-react"
+import { RefreshCw, TrendingUp, Package, ChevronRight, Calendar, PlusCircle, BarChart2, Download, AlertCircle, ChevronDown, Store } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -17,9 +17,10 @@ import { ShippingTrendChart } from "@/components/dashboard/shipping-trend-chart"
 import { CourierDistributionChart } from "@/components/dashboard/courier-distribution-chart"
 import { QuickActionCard } from "@/components/dashboard/quick-action-card"
 import { StatCard } from "@/components/dashboard/stat-card"
+import { ShopOutputCard } from "@/components/dashboard/shop-output-card"
+import { ShopOutputTomorrowCard } from "@/components/dashboard/shop-output-tomorrow-card"
 import { useCourierTypes } from "@/hooks/use-courier-types"
 import { shippingApi } from "@/services/shipping-api"
-import { RecentEntries } from "@/components/recent-entries"
 import { useShippingData } from "@/hooks/use-shipping-data"
 
 export default function DashboardPage() {
@@ -42,6 +43,11 @@ export default function DashboardPage() {
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const shippingData = useShippingData()
+
+  // 新增店铺出力相关状态
+  const [shopOutputData, setShopOutputData] = useState<any[]>([])
+  const [shopOutputTomorrowData, setShopOutputTomorrowData] = useState<any[]>([])
+  const [isLoadingShopOutput, setIsLoadingShopOutput] = useState(true)
 
   // 获取今日日期
   const today = format(new Date(), "yyyy-MM-dd")
@@ -73,7 +79,7 @@ export default function DashboardPage() {
           year: new Date().getFullYear(),
         })
         setMonthlyStats(monthlyStatsResponse || { total: { total: 0 } }) // 添加默认值
-        
+
         // 获取上月统计数据
         const lastMonth = new Date().getMonth() === 0 ? 12 : new Date().getMonth()
         const lastMonthYear = new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()
@@ -82,7 +88,7 @@ export default function DashboardPage() {
           year: lastMonthYear,
         }).catch(() => null)
         setLastMonthStats(lastMonthStatsResponse || { total: { total: 0 } }) // 添加默认值
-        
+
         // 获取近7日统计数据
         const sevenDaysAgo = new Date()
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -91,7 +97,7 @@ export default function DashboardPage() {
           date_to: today,
         })
         setWeeklyStats(weeklyStatsResponse || { total: { total: 0 }, by_date: [] }) // 添加默认值
-        
+
         // 获取上周统计数据
         const fourteenDaysAgo = new Date()
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
@@ -100,7 +106,7 @@ export default function DashboardPage() {
           date_to: format(sevenDaysAgo, "yyyy-MM-dd"),
         }).catch(() => null)
         setLastWeekStats(lastWeekStatsResponse || { total: { total: 0 } }) // 添加默认值
-        
+
         // 获取最近录入数据
         const recentEntriesResponse = await shippingApi.getShippingRecords({
           page: 1,
@@ -143,7 +149,7 @@ export default function DashboardPage() {
       const tomorrowStatsResponse = await shippingApi.getShippingStats({
         date: tomorrow,
       })
-      
+
       // 更新shippingData中的明日数据
       if (shippingData.fetchTomorrowData) {
         await shippingData.fetchTomorrowData()
@@ -154,7 +160,7 @@ export default function DashboardPage() {
         year: new Date().getFullYear(),
       })
       setMonthlyStats(monthlyStatsResponse || { total: { total: 0 } }) // 添加默认值
-      
+
       // 获取上月统计数据
       const lastMonth = new Date().getMonth() === 0 ? 12 : new Date().getMonth()
       const lastMonthYear = new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()
@@ -163,7 +169,7 @@ export default function DashboardPage() {
         year: lastMonthYear,
       }).catch(() => null)
       setLastMonthStats(lastMonthStatsResponse || { total: { total: 0 } }) // 添加默认值
-      
+
       // 获取近7日统计数据
       const sevenDaysAgo = new Date()
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -172,7 +178,7 @@ export default function DashboardPage() {
         date_to: today,
       })
       setWeeklyStats(weeklyStatsResponse || { total: { total: 0 }, by_date: [] }) // 添加默认值
-      
+
       // 获取上周统计数据
       const fourteenDaysAgo = new Date()
       fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
@@ -233,7 +239,7 @@ export default function DashboardPage() {
       const date = new Date()
       date.setDate(date.getDate() - i)
       const dateStr = format(date, "yyyy-MM-dd")
-      
+
       // 尝试从API响应中找到对应日期的数据
       let dayTotal = 0
       if (weeklyStats.by_date && Array.isArray(weeklyStats.by_date)) {
@@ -242,7 +248,7 @@ export default function DashboardPage() {
           dayTotal = dayData.total
         }
       }
-      
+
       daily.push({
         date: dateStr,
         total: dayTotal
@@ -260,7 +266,7 @@ export default function DashboardPage() {
     try {
       // 获取当前日期（确保始终使用最新日期）
       const currentDate = format(new Date(), "yyyy-MM-dd")
-      
+
       // 获取今日统计数据
       const todayStatsResponse = await shippingApi.getShippingStats({
         date: currentDate,
@@ -324,6 +330,49 @@ export default function DashboardPage() {
     return `${minutes}${t("分")} ${remainingSeconds}${t("秒")}`
   }
 
+  // 添加获取店铺出力数据的模拟函数
+  const fetchShopOutputData = async () => {
+    setIsLoadingShopOutput(true)
+    try {
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // 模拟今日店铺出力数据 - 后续将替换为真实API调用
+      const mockShopData = [
+        { id: "1", name: "北京店", category: "一线城市", output: 345 },
+        { id: "2", name: "上海店", category: "一线城市", output: 289 },
+        { id: "3", name: "广州店", category: "一线城市", output: 254 },
+        { id: "4", name: "深圳店", category: "一线城市", output: 267 },
+        { id: "5", name: "杭州店", category: "二线城市", output: 187 },
+        { id: "6", name: "成都店", category: "二线城市", output: 176 },
+        { id: "7", name: "南京店", category: "二线城市", output: 164 },
+        { id: "8", name: "武汉店", category: "二线城市", output: 156 },
+        { id: "9", name: "西安店", category: "二线城市", output: 143 },
+        { id: "10", name: "长沙店", category: "三线城市", output: 95 },
+        { id: "11", name: "合肥店", category: "三线城市", output: 87 },
+        { id: "12", name: "济南店", category: "三线城市", output: 92 },
+      ]
+
+      // 模拟明日预测数据 - 基于今日数据略微增加或减少
+      const mockTomorrowData = mockShopData.map(shop => ({
+        ...shop,
+        output: Math.round(shop.output * (0.9 + Math.random() * 0.3)) // 在90%-120%之间随机浮动
+      }))
+
+      setShopOutputData(mockShopData)
+      setShopOutputTomorrowData(mockTomorrowData)
+    } catch (error) {
+      console.error("获取店铺出力数据失败:", error)
+    } finally {
+      setIsLoadingShopOutput(false)
+    }
+  }
+
+  // 初始化加载店铺出力数据
+  useEffect(() => {
+    fetchShopOutputData()
+  }, [])
+
   return (
     (<div className="min-h-screen bg-gray-50">
       <DashboardHeader />
@@ -336,9 +385,9 @@ export default function DashboardPage() {
             <div>
               <h3 className="font-medium">{t("数据加载失败")}</h3>
               <p className="text-sm mt-1">{error}</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="mt-2 text-red-700 border-red-300 hover:bg-red-100"
                 onClick={handleRefresh}
               >
@@ -346,7 +395,7 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-        
+
         {/* 今日各快递类型实时发货量 - 单独占一行 */}
         <div className="mb-6">
           <StatCard
@@ -371,14 +420,14 @@ export default function DashboardPage() {
                     <SelectItem value="120000">{t("2分钟")}</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="h-8 w-8" 
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
                   onClick={() => {
                     refreshTodayStats();
                     setNextRefreshTime(parseInt(refreshInterval) / 1000);
-                  }} 
+                  }}
                   disabled={isRefreshingTodayStats}
                 >
                   <RefreshCw className={cn("h-4 w-4", isRefreshingTodayStats && "animate-spin")} />
@@ -386,23 +435,66 @@ export default function DashboardPage() {
               </div>
             }
           >
-            {/* 卡片内容 */}
+            {/* 卡片内容，分层级显示快递类型 */}
             {todayStats && (todayStats.by_courier || []).length > 0 ? (
               <div className="flex flex-col">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {activeCourierTypes.map((type) => {
-                    const courierStat = (todayStats.by_courier || []).find(
-                      (stat) => stat.courier_id.toString() === type.id.toString(),
-                    )
-                    const quantity = courierStat ? courierStat.total : 0
+                  {/* 对快递类型进行分组，按照有无父类型分类 */}
+                  {(() => {
+                    // 对快递类型按照层级分组
+                    const parentTypes = activeCourierTypes.filter(type => !type.parent_id);
+                    const childTypes = activeCourierTypes.filter(type => type.parent_id);
 
-                    return (
-                      <div key={type.id} className="border rounded-lg p-3 flex flex-col items-center">
-                        <div className="text-sm font-medium text-gray-700 mb-2">{type.name}</div>
-                        <div className="text-2xl font-bold">{quantity}</div>
-                      </div>
-                    )
-                  })}
+                    // 渲染所有父级类型
+                    return parentTypes.map((parentType) => {
+                      // 获取该父类型的所有子类型
+                      const children = childTypes.filter(child => child.parent_id === parentType.id);
+
+                      // 获取父类型的统计数据
+                      const parentStat = (todayStats.by_courier || []).find(
+                        (stat) => stat.courier_id.toString() === parentType.id.toString()
+                      );
+                      const parentQuantity = parentStat ? parentStat.total : 0;
+
+                      // 如果有子类型，创建一个带有子类型的卡片
+                      if (children.length > 0) {
+                        return (
+                          <div key={parentType.id} className="border rounded-lg p-3 flex flex-col">
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="text-sm font-medium text-gray-700">{parentType.name}</div>
+                              <div className="text-xl font-bold">{parentQuantity}</div>
+                            </div>
+                            <div className="mt-2 space-y-2 pl-2 border-l-2 border-blue-200">
+                              {children.map(child => {
+                                const childStat = (todayStats.by_courier || []).find(
+                                  (stat) => stat.courier_id.toString() === child.id.toString()
+                                );
+                                const childQuantity = childStat ? childStat.total : 0;
+
+                                return (
+                                  <div key={child.id} className="flex justify-between items-center">
+                                    <div className="text-xs text-gray-600 flex items-center">
+                                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-1.5"></span>
+                                      {child.name}
+                                    </div>
+                                    <div className="text-sm font-semibold">{childQuantity}</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        // 如果没有子类型，创建一个普通卡片
+                        return (
+                          <div key={parentType.id} className="border rounded-lg p-3 flex flex-col items-center">
+                            <div className="text-sm font-medium text-gray-700 mb-2">{parentType.name}</div>
+                            <div className="text-2xl font-bold">{parentQuantity}</div>
+                          </div>
+                        );
+                      }
+                    });
+                  })()}
 
                   {activeCourierTypes.length === 0 && (
                     <div className="col-span-3 text-center text-gray-500 py-2">{t("暂无活跃快递类型")}</div>
@@ -430,7 +522,7 @@ export default function DashboardPage() {
             )}
           </StatCard>
         </div>
-        
+
         {/* 数据概览区域 - 三个卡片同行显示 */}
         <div className="grid grid-cols-1 md:grid-cols-10 gap-4 mb-6">
           {/* 近7日发货量 */}
@@ -449,8 +541,8 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-center text-sm mb-4">
                     <span className="text-gray-500 mr-2">{t("同比上周:")}</span>
                     {weeklyGrowth !== null ? (
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={cn(
                           weeklyGrowth >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
                         )}
@@ -464,7 +556,7 @@ export default function DashboardPage() {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-7 gap-1 mt-auto">
                   {dailyData.map((day, index) => {
                     const dayDate = new Date(day.date);
@@ -508,17 +600,17 @@ export default function DashboardPage() {
                 <div className="text-center">
                   <div className="text-3xl font-bold mb-1">{monthlyStats.total.total || 0}</div>
                   <div className="text-sm text-gray-500">{t("上月同期:")}{lastMonthStats && lastMonthStats.total ? (
-                      <span className="font-medium text-gray-700">{lastMonthStats.total.total || 0}</span>
-                    ) : (
-                      <span className="font-medium text-gray-500">--</span>
-                    )}
+                    <span className="font-medium text-gray-700">{lastMonthStats.total.total || 0}</span>
+                  ) : (
+                    <span className="font-medium text-gray-500">--</span>
+                  )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 h-24">
                   <div className="h-full w-4 bg-gray-100 rounded-full relative">
-                    <div 
-                      className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-full" 
+                    <div
+                      className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-full"
                       style={{ height: `${monthProgress}%` }}
                     ></div>
                   </div>
@@ -544,17 +636,50 @@ export default function DashboardPage() {
           >
             <div className="space-y-3">
               <div className="text-3xl font-bold">{activeCourierTypes.length}</div>
-              <div className="flex flex-wrap gap-2">
-                {activeCourierTypes.slice(0, 5).map((type) => (
-                  <Badge key={type.id} variant="outline" className="bg-blue-50 text-blue-700">
-                    {type.name}
-                  </Badge>
-                ))}
-                {activeCourierTypes.length > 5 && (
-                  <Badge variant="outline" className="bg-gray-100 text-gray-700">
-                    +{activeCourierTypes.length - 5}
-                  </Badge>
-                )}
+
+              {/* 层级展示快递类型 */}
+              <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                {(() => {
+                  // 对快递类型按照层级分组
+                  const parentTypes = activeCourierTypes.filter(type => !type.parent_id);
+                  const childTypes = activeCourierTypes.filter(type => type.parent_id);
+
+                  return parentTypes.map(parent => {
+                    const children = childTypes.filter(child => child.parent_id === parent.id);
+
+                    return (
+                      <div key={parent.id} className="space-y-1">
+                        <div className="flex items-center">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 mr-1">
+                            {parent.name}
+                          </Badge>
+                          {children.length > 0 && (
+                            <span className="text-xs text-gray-500">({children.length})</span>
+                          )}
+                        </div>
+
+                        {children.length > 0 && (
+                          <div className="pl-3 border-l border-gray-200 ml-2 space-y-1">
+                            {children.map(child => (
+                              <div key={child.id} className="flex items-center">
+                                <div className="w-1.5 h-1.5 bg-gray-300 rounded-full mr-1.5"></div>
+                                <span className="text-xs text-gray-600">{child.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              <div className="flex justify-end">
+                <Link href="/courier-types">
+                  <Button variant="ghost" size="sm" className="text-xs text-blue-600">
+                    {t("管理快递类型")} <ChevronRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </StatCard>
@@ -595,7 +720,7 @@ export default function DashboardPage() {
                       <SelectItem value="all">{t("所有类型")}</SelectItem>
                       {activeCourierTypes.map((type) => (
                         <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name}
+                          {!type.parent_id ? type.name : `— ${type.name}`}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -618,6 +743,7 @@ export default function DashboardPage() {
                     timeRange={selectedTimeRange}
                     courierType={selectedCourierType}
                     isLoading={isLoading}
+                    showHierarchy={true}
                   />
                 </div>
 
@@ -627,57 +753,53 @@ export default function DashboardPage() {
                     <div className="text-sm font-medium">{t("快递类型分布")}</div>
                     <div className="text-xs text-gray-500">{t("按快递类型统计的发货占比")}</div>
                   </div>
-                  <CourierDistributionChart timeRange={selectedTimeRange} isLoading={isLoading} />
+                  <CourierDistributionChart
+                    timeRange={selectedTimeRange}
+                    isLoading={isLoading}
+                    showHierarchy={true}
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* 操作区域 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 最近录入数据 */}
-          <div className="lg:col-span-2">
-            <Card
-              className={cn(
-                "transition-all duration-500",
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
-              )}
-              style={{ transitionDelay: "700ms" }}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{t("最近录入数据")}</CardTitle>
-                    <CardDescription>{t("发货记录管理")}</CardDescription>
-                  </div>
-                  <Link href="/shipping-data">
-                    <Button variant="outline" size="sm" className="gap-1">{t("查看全部")}<ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <RecentEntries
-                  entries={shippingData.entries}
-                  totalRecords={shippingData.totalRecords}
-                  currentPage={shippingData.currentPage}
-                  totalPages={shippingData.totalPages}
-                  pageSize={shippingData.pageSize}
-                  dateFilter={shippingData.dateFilter}
-                  onUpdate={shippingData.updateEntry}
-                  onDelete={shippingData.deleteEntry}
-                  onRefresh={shippingData.refetch}
-                  onPageChange={shippingData.changePage}
-                  onPageSizeChange={shippingData.changePageSize}
-                  onFilterChange={shippingData.setFilter}
-                  onClearFilters={shippingData.clearFilters}
-                  isLoading={shippingData.isLoading}
-                />
-              </CardContent>
-            </Card>
-          </div>
+        {/* 店铺出力数据卡片区域 */}
+        <div className="mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 今日店铺出力卡片 */}
+            <div className={cn(
+              "transition-all duration-500",
+              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            )}
+              style={{ transitionDelay: "600ms" }}>
+              <ShopOutputCard
+                title={t("今日店铺出力情况")}
+                data={shopOutputData}
+                isLoading={isLoadingShopOutput}
+                onRefresh={fetchShopOutputData}
+              />
+            </div>
 
+            {/* 明日店铺出力预测卡片 */}
+            <div className={cn(
+              "transition-all duration-500",
+              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            )}
+              style={{ transitionDelay: "700ms" }}>
+              <ShopOutputTomorrowCard
+                title={t("明日店铺出力预测")}
+                data={shopOutputTomorrowData}
+                isLoading={isLoadingShopOutput}
+                onRefresh={fetchShopOutputData}
+                confidenceScore={82}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 快速操作区域 - 占满整行 */}
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {/* 快速操作 */}
           <div>
             <Card
@@ -690,7 +812,7 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="text-lg">{t("快速操作")}</CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 gap-4">
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <QuickActionCard
                   title={t("添加今日发货数据")}
                   description={t("录入今日的发货数量")}
@@ -704,10 +826,10 @@ export default function DashboardPage() {
                   href="/stats"
                 />
                 <QuickActionCard
-                  title={t("导出报表")}
-                  description={t("导出发货数据报表")}
-                  icon={<Download className="h-5 w-5" />}
-                  href="/stats"
+                  title={t("管理店铺出力")}
+                  description={t("查看和管理店铺出力数据")}
+                  icon={<Store className="h-5 w-5" />}
+                  href="/shop-output"
                 />
                 <QuickActionCard
                   title={t("管理快递类型")}
