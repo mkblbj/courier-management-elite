@@ -65,7 +65,7 @@ Story Points: 8
    5. - [ ] 实现按类别获取快递类型的方法
    6. - [ ] 开发类别数据统计方法，计算类别下所有快递类型的发货数据总和
 
-3. - [ ] API 控制器修改
+3. - [x] API 控制器修改
 
    1. - [ ] 更新 CourierController.js，移除处理层级关系的逻辑
    2. - [ ] 移除 validateCourier 中的 parent_id 验证，添加 category_id 验证
