@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 数据库初始化脚本
  * 此脚本用于初始化数据库结构，会自动执行全部必要的表创建和索引添加操作
@@ -14,6 +15,7 @@ const shopOutputsTableMigration = require('./migrations/create_shop_outputs_tabl
 const shopCategoriesMigration = require('./migrations/create_shop_categories');
 const courierCategoriesMigration = require('./migrations/create_courier_categories');
 const addCategoryIdMigration = require('./migrations/add_category_id');
+const unspecifiedCourierTypesMigration = require('./migrations/create_unspecified_courier_types');
 
 async function initializeDatabase() {
   let connection;
@@ -117,6 +119,10 @@ async function initializeDatabase() {
       // 2. 为couriers表添加category_id字段
       console.log('执行添加category_id字段迁移...');
       await addCategoryIdMigration.migrate();
+      
+      // 3. 添加"未指定"快递类型记录
+      console.log('执行添加"未指定"快递类型记录迁移...');
+      await unspecifiedCourierTypesMigration.migrate();
       
       console.log('所有迁移脚本执行完成');
     } catch (migrationError) {
