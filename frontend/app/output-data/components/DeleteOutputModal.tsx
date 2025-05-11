@@ -30,7 +30,7 @@ export default function DeleteOutputModal({
                         <AlertDialogHeader>
                               <AlertDialogTitle className="flex items-center">
                                     <ShieldAlert className="h-5 w-5 text-destructive mr-2" />{t("删除出力数据")}</AlertDialogTitle>
-                              <AlertDialogDescription className="pb-2">{t("此操作不可逆，删除后数据将无法恢复。请确认是否要删除以下出力数据？")}</AlertDialogDescription>
+                              <AlertDialogDescription className="pb-2">{t("此操作不可逆，删除后数据将无法恢复。请确认是否要删除以下出力数据?")}</AlertDialogDescription>
 
                               <div className="mt-4 border rounded-md p-3 bg-muted/50">
                                     <div className="grid grid-cols-2 gap-2 text-sm">
@@ -68,7 +68,7 @@ export default function DeleteOutputModal({
                                     {isLoading ? (
                                           <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("删除中...")}</>
-                                    ) : "确认删除"}
+                                    ) : t("确认删除")}
                               </AlertDialogAction>
                         </AlertDialogFooter>
                   </AlertDialogContent>

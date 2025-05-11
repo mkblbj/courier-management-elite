@@ -5,11 +5,6 @@
   "code_description": "文字と数字のみ、最大10文字",
   "code_format_invalid": "コードには文字と数字のみ使用できます",
   "code_too_long": "コードは10文字を超えることはできません",
-  "common:cancel": "キャンセル",
-  "common:delete": "削除",
-  "common:no_data": "データなし",
-  "common:save": "保存",
-  "common:saving": "保存中...",
   "courier_code": "配送業者コード",
   "courier_code_required": "配送業者コードは必須です",
   "courier_list": "配送業者リスト",
@@ -94,5 +89,13 @@
   "error_updating_category": "カテゴリの更新エラー",
   "adjust_category_order_description": "カテゴリの表示順をドラッグで調整してください",
   "error_updating_sort": "並び順の更新エラー",
-  "sort_order": "並び順"
+  "sort_order": "並び順",
+  "category_list": "カテゴリリスト",
+  "adjust_sort": "並び順を調整",
+  "search_category": "カテゴリを検索",
+  "status": "ステータス",
+  "type_name": "タイプ名",
+  "delete_courier_type": "配送タイプを削除",
+  "delete_courier_type_confirm": "配送タイプを削除すると、関連する出力データも削除されます。この操作は元に戻すことができません。配送タイプを削除しますか？",
+  "shop_name": "店舗名"
 }
