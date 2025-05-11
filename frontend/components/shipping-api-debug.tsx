@@ -54,7 +54,7 @@ const handleApiRequest = async <T,>(
 
 export function ShippingApiDebug() {
   const { t } = useTranslation();
-  
+
   // 将所有的useState hooks移到组件顶部，确保每次渲染的调用顺序一致
   const [isMounted, setIsMounted] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -62,7 +62,7 @@ export function ShippingApiDebug() {
   const [isLoading, setIsLoading] = useState(false);
   const [requestLogs, setRequestLogs] = useState<any[]>([]);
   const [selectedTab, setSelectedTab] = useState("test");
-  
+
   // 发货数据相关表单状态
   const [shippingDate, setShippingDate] = useState<Date | undefined>(new Date());
   const [shippingFormData, setShippingFormData] = useState({
@@ -70,7 +70,7 @@ export function ShippingApiDebug() {
     quantity: "10",
     notes: "测试发货记录",
   });
-  
+
   const [shippingUpdateFormData, setShippingUpdateFormData] = useState({
     id: "",
     date: new Date(),
@@ -78,7 +78,7 @@ export function ShippingApiDebug() {
     quantity: "",
     notes: "",
   });
-  
+
   const [shippingDeleteId, setShippingDeleteId] = useState("");
   const [batchShippingData, setBatchShippingData] = useState("");
 

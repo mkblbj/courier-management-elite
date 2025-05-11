@@ -7,18 +7,55 @@ import { CourierTypesSkeleton } from "@/components/courier-types-skeleton"
 import { ApiDebug } from "@/components/api-debug" // 导入调试组件
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { FileInput } from "lucide-react"
+import { FileInput, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEnvStore } from "@/lib/env-config"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { useTranslation } from "react-i18next"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useSearchParams, useRouter } from "next/navigation"
+import { CategoryManagementTab } from "@/components/shop-category/CategoryManagementTab"
+import { ShopManagementTab } from "@/components/shop/ShopManagementTab"
+import { CourierCategoryManagementTab } from "@/components/courier-category/CourierCategoryManagementTab"
 
-export default function CourierTypesPage() {
+// 创建一个包装组件来使用 useSearchParams
+function CourierTypesContent() {
   const { debug } = useEnvStore()
   const [isVisible, setIsVisible] = useState(false)
-  const { t } = useTranslation(['common', 'courier'])
+  const { t } = useTranslation(['common', 'courier', 'shop'])
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
+  // 获取当前激活的标签
+  const activeTab = searchParams.get('tab') || 'courier-management'
+  // 获取商店管理子标签
+  const shopTab = searchParams.get('shopTab') || 'categories'
+  // 获取快递管理子标签
+  const courierTab = searchParams.get('courierTab') || 'types'
+
+  // 切换标签时更新URL参数
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', value)
+    router.push(`?${params.toString()}`)
+  }
+
+  // 切换商店管理子标签
+  const handleShopTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('shopTab', value)
+    router.push(`?${params.toString()}`)
+  }
+
+  // 切换快递管理子标签
+  const handleCourierTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('courierTab', value)
+    router.push(`?${params.toString()}`)
+  }
+
+  // 初始加载
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true)
@@ -28,10 +65,74 @@ export default function CourierTypesPage() {
   }, [])
 
   return (
+    <div
+      className={cn(
+        "transition-all duration-500",
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+      )}
+    >
+      <div className="bg-white shadow rounded-lg p-6 max-w-5xl mx-auto">
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="courier-management">{t('courier:courier_management')}</TabsTrigger>
+            <TabsTrigger value="shop-management">{t('shop:shop_management')}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="courier-management">
+            <Tabs value={courierTab} onValueChange={handleCourierTabChange}>
+              <TabsList className="mb-6">
+                <TabsTrigger value="types">{t('courier:courier_types')}</TabsTrigger>
+                <TabsTrigger value="categories">{t('courier:category_list')}</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="types">
+                <Suspense fallback={<CourierTypesSkeleton />}>
+                  <CourierTypeManagement />
+                </Suspense>
+              </TabsContent>
+
+              <TabsContent value="categories">
+                <CourierCategoryManagementTab />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          <TabsContent value="shop-management">
+            <Tabs value={shopTab} onValueChange={handleShopTabChange}>
+              <TabsList className="mb-6">
+                <TabsTrigger value="categories">{t('shop:category_list')}</TabsTrigger>
+                <TabsTrigger value="shops">{t('shop:shop_management')}</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="categories">
+                <CategoryManagementTab />
+              </TabsContent>
+
+              <TabsContent value="shops">
+                <ShopManagementTab />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+        </Tabs>
+      </div>
+      {debug && (
+        <div className="mt-8 max-w-5xl mx-auto">
+          <ApiDebug />
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function CourierTypesPage() {
+  const { debug } = useEnvStore()
+  const { t } = useTranslation(['common', 'courier', 'shop'])
+
+  return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
       <DashboardNav />
-      
+
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
         <PageHeader
           title={t('courier:courier_management')}
@@ -46,27 +147,10 @@ export default function CourierTypesPage() {
             </Link>
           }
         />
-        <div
-          className={cn(
-            "transition-all duration-500",
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
-          )}
-        >
-          <Suspense fallback={<CourierTypesSkeleton />}>
-            <CourierTypeManagement />
-          </Suspense>
-        </div>
-        {/* 添加API调试组件 - 只在开发模式下显示 */}
-        {debug && process.env.NODE_ENV !== "production" && (
-          <div
-            className={cn(
-              "transition-all duration-500 delay-300",
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
-            )}
-          >
-            <ApiDebug />
-          </div>
-        )}
+
+        <Suspense fallback={<CourierTypesSkeleton />}>
+          <CourierTypesContent />
+        </Suspense>
       </main>
     </div>
   )

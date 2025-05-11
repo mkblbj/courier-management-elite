@@ -30,7 +30,8 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
   // 保存代码到完整名称的映射
   const [codeToFullNameMap, setCodeToFullNameMap] = useState<Record<string, string>>({})
 
-  const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#6366f1"]
+  // 颜色数组
+  const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#6366f1", "#14b8a6", "#f43f5e", "#d946ef", "#84cc16", "#0ea5e9", "#a855f7"]
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -40,14 +41,14 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
         // 创建快递类型名称到code的映射和code到完整名称的映射
         const courierCodeMap: Record<string, string> = {}
         const newCodeToFullNameMap: Record<string, string> = {}
-        
+
         courierTypes.forEach(courier => {
           if (courier.name && courier.code) {
             courierCodeMap[courier.name] = courier.code
             newCodeToFullNameMap[courier.code] = courier.name
           }
         })
-        
+
         // 更新代码到完整名称的映射
         setCodeToFullNameMap(newCodeToFullNameMap)
 
@@ -83,12 +84,12 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
 
         // 获取图表数据
         const response = await shippingApi.getChartData(params)
-        
+
         console.log("饼图API原始响应:", response)
 
         // 确保响应是对象类型
         let processedResponse = response || { labels: [], datasets: [{ data: [] }] }
-        
+
         // 如果响应是null或undefined，使用默认值
         if (!processedResponse) {
           console.warn("饼图API返回空响应")
@@ -107,8 +108,8 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
 
         // 检查必要的数据字段
         if (!processedResponse.labels || !Array.isArray(processedResponse.labels) ||
-            !processedResponse.datasets || !Array.isArray(processedResponse.datasets) ||
-            !processedResponse.datasets[0] || !Array.isArray(processedResponse.datasets[0].data)) {
+          !processedResponse.datasets || !Array.isArray(processedResponse.datasets) ||
+          !processedResponse.datasets[0] || !Array.isArray(processedResponse.datasets[0].data)) {
           console.error("饼图数据格式无效:", processedResponse)
           setError(t("返回的数据格式无效"))
           setChartData([])
@@ -117,9 +118,9 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
         }
 
         // 检查数据是否实际包含值
-        const hasData = processedResponse.labels.length > 0 && 
-                        processedResponse.datasets[0].data.some((value: number) => value > 0)
-        
+        const hasData = processedResponse.labels.length > 0 &&
+          processedResponse.datasets[0].data.some((value: number) => value > 0)
+
         if (!hasData) {
           console.log("饼图没有有效数据")
           setChartData([])
@@ -132,22 +133,23 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
         const labelsLength = processedResponse.labels.length
         const validLabels = processedResponse.labels.slice(0, dataLength)
         const validData = processedResponse.datasets[0].data.slice(0, labelsLength)
-        
-        // 处理数据格式以适应图表组件 - 使用快递类型的code
-        const formattedData = validLabels.map((label: string, index: number) => {
-          const fullName = label || `未知类型${index+1}`
+
+        // 基本格式化数据处理
+        let formattedData: FormattedChartData[] = validLabels.map((label: string, index: number) => {
+          const fullName = label || `未知类型${index + 1}`
           // 使用映射表获取code，如果没有对应的code则使用原名称
           const code = courierCodeMap[fullName] || fullName
-          
+
           return {
             name: code, // 使用code作为显示名称
             fullName: fullName, // 保存完整名称
             value: Number(validData[index]) || 0,
           }
         }).filter(item => item.value > 0)
-        
+          .filter(item => !item.fullName.includes(t("未指定"))) // 过滤掉"未指定"的快递类型
+
         console.log("最终格式化的饼图数据:", formattedData)
-        
+
         if (formattedData.length === 0) {
           console.log("没有非零数据可显示")
           setChartData([])
@@ -167,8 +169,9 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
   }, [timeRange, courierTypes, t])
 
   // 图例格式化函数，将code转换为完整名称
-  const renderLegendText = (value: string) => {
-    return codeToFullNameMap[value] || value;
+  const renderLegendText = (value: string, entry: any) => {
+    const fullName = codeToFullNameMap[value] || value;
+    return fullName;
   }
 
   // 检查是否真的有数据要显示
@@ -211,16 +214,24 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
             label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
           >
             {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
+              />
             ))}
           </Pie>
-          <Tooltip 
+          <Tooltip
             formatter={(value, name, props) => {
               const item = props.payload;
               return [`${value} 件`, item.fullName || name];
             }}
           />
-          <Legend formatter={renderLegendText} />
+          <Legend
+            formatter={renderLegendText}
+            verticalAlign="bottom"
+            height={36}
+            wrapperStyle={{ bottom: 0, paddingTop: 15 }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>

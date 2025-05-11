@@ -65,7 +65,10 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
 
   // 修改formSchema创建，传入t函数
   const formSchema = createBatchFormSchema(
-    courierTypes.filter((ct) => Boolean(ct.is_active)).map((ct) => ct.id.toString()),
+    courierTypes
+      .filter((ct) => Boolean(ct.is_active))
+      .filter((ct) => !ct.name.includes(t("未指定"))) // 过滤掉未指定的快递类型
+      .map((ct) => ct.id.toString()),
     t
   )
 
@@ -77,6 +80,7 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
 
     courierTypes
       .filter((ct) => Boolean(ct.is_active))
+      .filter((ct) => !ct.name.includes("未指定")) // 过滤掉未指定的快递类型
       .forEach((ct) => {
         values[`quantity_${ct.id}`] = ""
         values[`remarks_${ct.id}`] = ""
@@ -100,6 +104,7 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
 
       courierTypes
         .filter((ct) => Boolean(ct.is_active))
+        .filter((ct) => !ct.name.includes("未指定")) // 过滤掉未指定的快递类型
         .forEach((courierType) => {
           const id = courierType.id.toString()
           const quantity = values[`quantity_${id}` as keyof typeof values] as string
@@ -224,6 +229,7 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
                 <TableBody>
                   {courierTypes
                     .filter((courierType) => Boolean(courierType.is_active)) // 只显示激活的快递类型
+                    .filter((courierType) => !courierType.name.includes("未指定")) // 过滤掉未指定的快递类型
                     .map((courierType) => (
                       <TableRow key={courierType.id}>
                         <TableCell className="font-medium">{courierType.name}</TableCell>

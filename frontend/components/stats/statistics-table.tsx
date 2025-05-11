@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { ApiError } from "@/components/api-error"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { format } from "date-fns"
+import { formatDisplayDate } from "@/lib/date-utils"
 import type { StatisticsData } from "@/hooks/use-statistics-data"
 import React from "react"
 import { Button } from "@/components/ui/button"
@@ -25,10 +25,10 @@ interface StatisticsTableProps {
   onToggleAllExpanded?: (expand: boolean) => void
 }
 
-export function StatisticsTable({ 
-  data, 
-  isLoading, 
-  error, 
+export function StatisticsTable({
+  data,
+  isLoading,
+  error,
   onRetry,
   viewMode = "flat",
   onViewModeChange,
@@ -63,7 +63,7 @@ export function StatisticsTable({
     return items.map(item => {
       const isExpanded = expandedItems.has(item.id);
       const hasChildren = item.children && item.children.length > 0;
-      
+
       return (
         <React.Fragment key={item.id}>
           <TableRow className={cn(
@@ -111,7 +111,7 @@ export function StatisticsTable({
               )}
             </TableCell>
           </TableRow>
-          
+
           {isExpanded && hasChildren && (
             renderHierarchicalRows(item.children, level + 1)
           )}
@@ -151,12 +151,11 @@ export function StatisticsTable({
           </CardContent>
         </Card>
       </div>
-      
       {/* 按快递类型统计表格 */}
       <div>
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-lg font-medium">{t("按快递类型统计")}</h3>
-          
+
           <div className="flex items-center gap-2">
             {viewMode === "hierarchical" && onToggleAllExpanded && (
               <div className="flex items-center gap-1 mr-2">
@@ -171,7 +170,7 @@ export function StatisticsTable({
                 </Button>
               </div>
             )}
-            
+
             {onViewModeChange && (
               <div className="flex items-center border rounded-md overflow-hidden">
                 <Button
@@ -200,7 +199,7 @@ export function StatisticsTable({
             )}
           </div>
         </div>
-        
+
         <div className="border rounded-md overflow-hidden">
           <Table>
             <TableHeader>
@@ -214,7 +213,7 @@ export function StatisticsTable({
             <TableBody>
               {viewMode === "flat" ? (
                 // 平铺视图
-                <>
+                (<>
                   {data.byCourier.map((item) => (
                     <TableRow key={item.courierId}>
                       <TableCell className="font-medium">{item.courierName}</TableCell>
@@ -225,18 +224,14 @@ export function StatisticsTable({
                       <TableCell className="text-right">{item.recordCount}</TableCell>
                     </TableRow>
                   ))}
-                </>
+                </>)
               ) : (
                 // 层级视图
-                data.hierarchical && data.hierarchical.length > 0 ? (
-                  renderHierarchicalRows(data.hierarchical)
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
-                      {t("暂无层级数据")}
-                    </TableCell>
-                  </TableRow>
-                )
+                (data.hierarchical && data.hierarchical.length > 0 ? (renderHierarchicalRows(data.hierarchical)) : (<TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                    {t("暂无层级数据")}
+                  </TableCell>
+                </TableRow>))
               )}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-bold">{t("总计")}</TableCell>
@@ -248,7 +243,6 @@ export function StatisticsTable({
           </Table>
         </div>
       </div>
-      
       {/* 按日期统计表格 */}
       <div>
         <div className="flex justify-between items-center mb-3">
@@ -276,9 +270,9 @@ export function StatisticsTable({
                 <React.Fragment key={dateItem.date}>
                   <TableRow key={`row-${dateItem.date}`}>
                     <TableCell className="font-medium">
-                      {format(new Date(dateItem.date), "yyyy-MM-dd")}
+                      {formatDisplayDate(new Date(dateItem.date), "yyyy-MM-dd")}
                       <div className="text-xs text-gray-500">
-                        {t(`weekday.full.${format(new Date(dateItem.date), 'EEEE').toLowerCase()}`)}
+                        {t(`weekday.full.${formatDisplayDate(new Date(dateItem.date), 'EEEE').toLowerCase()}`)}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">{dateItem.total}</TableCell>

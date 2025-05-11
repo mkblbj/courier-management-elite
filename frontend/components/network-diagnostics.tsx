@@ -11,9 +11,7 @@ import { useEnvStore } from "@/lib/env-config"
 import { Wifi, WifiOff, Server, Globe, AlertCircle, CheckCircle, RefreshCw } from "lucide-react"
 
 export function NetworkDiagnostics() {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const { apiBaseUrl } = useEnvStore()
   const [diagnosticResults, setDiagnosticResults] = useState<any>(null)
@@ -29,10 +27,6 @@ export function NetworkDiagnostics() {
   }, [])
 
   const runDiagnostics = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setIsRunning(true)
     try {
       const results = await runNetworkDiagnostics(apiBaseUrl)
@@ -46,9 +40,9 @@ export function NetworkDiagnostics() {
 
   return (
     (<Card
-        className="border shadow-md transition-all duration-500 opacity-0 translate-y-4"
-        style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(16px)" }}
-      >
+      className="border shadow-md transition-all duration-500 opacity-0 translate-y-4"
+      style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? "translateY(0)" : "translateY(16px)" }}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Server className="h-5 w-5 text-blue-500" />{t("网络连接诊断")}</CardTitle>

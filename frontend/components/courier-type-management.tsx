@@ -1,18 +1,20 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { CourierTypeTable } from "@/components/courier-type-table"
+import { CourierTypeList } from "@/components/courier-type-list"
 import { CourierTypeDialog } from "@/components/courier-type-dialog"
+import { CourierTypeSortModal } from "@/components/courier-type-sort-modal"
 import { useCourierTypes } from "@/hooks/use-courier-types"
-import { Plus, RefreshCw, Search, Bell } from "lucide-react"
+import { Plus, RefreshCw, Search, Bell, ArrowUpDown } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import type { CourierType } from "@/services/api"
+import type { CourierType, CourierCategory } from "@/services/api"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
+import { api } from "@/services/api"
 
 // 调试模式开关，与API调试工具保持一致
 const showDebugTool = false // 设置为true可以启用调试功能
@@ -45,22 +47,42 @@ export function CourierTypeManagement() {
     toggleCourierTypeStatus,
     reorderCourierTypes,
     fetchCourierTypes,
-    getParentTypeCount,
-    isParentType,
-    getAllChildTypes,
-    courierTypeHierarchy,
-    fetchCourierTypeHierarchy,
+    categories,
+    categoriesLoading,
   } = useCourierTypes()
 
   const [open, setOpen] = useState(false)
+  const [sortModalOpen, setSortModalOpen] = useState(false)
   const [editingCourierType, setEditingCourierType] = useState<CourierType | null>(null)
+  const [categoryFilter, setCategoryFilter] = useState<string>("all_categories")
+
+  // 将快递类型按类别分组
+  const groupedTypes = useMemo(() => {
+    // 先过滤
+    const filteredTypes = courierTypes.filter(type =>
+      type.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      type.code.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // 根据状态过滤
+    const statusFilteredTypes = filteredTypes.filter(type => {
+      if (statusFilter === "all") return true;
+      return statusFilter === "active" ? Boolean(type.is_active) : !Boolean(type.is_active);
+    });
+
+    // 根据类别过滤
+    return categoryFilter === "all_categories"
+      ? statusFilteredTypes
+      : statusFilteredTypes.filter(type =>
+        type.category_id && type.category_id.toString() === categoryFilter
+      );
+  }, [courierTypes, searchQuery, statusFilter, categoryFilter]);
 
   useEffect(() => {
     const loadInitialData = async () => {
       await fetchCourierTypes()
-      await fetchCourierTypeHierarchy()
     }
-    
+
     loadInitialData()
   }, [])
 
@@ -79,7 +101,7 @@ export function CourierTypeManagement() {
     code: string
     remark?: string
     is_active: boolean
-    parent_id?: number | string | null
+    category_id?: number | string | null
   }) => {
     try {
       if (editingCourierType) {
@@ -99,8 +121,6 @@ export function CourierTypeManagement() {
         })
       }
       setOpen(false)
-      
-      fetchCourierTypeHierarchy()
     } catch (err) {
       toast({
         title: t('common:operation_failed'),
@@ -128,7 +148,7 @@ export function CourierTypeManagement() {
     try {
       await toggleCourierTypeStatus(id)
       toast({
-        title: active 
+        title: active
           ? t('courier:courier_status_active') + t('common:success')
           : t('courier:courier_status_inactive') + t('common:success'),
         variant: "default",
@@ -200,13 +220,21 @@ export function CourierTypeManagement() {
     setStatusFilter(value as "all" | "active" | "inactive");
   };
 
-  const getChildCount = (id: number | string): number => {
-    return getParentTypeCount(id)
+  const handleCategoryFilterChange = (value: string) => {
+    setCategoryFilter(value);
+  };
+
+  const getAvailableCategories = () => {
+    return categories
   }
 
-  const getAvailableParentTypes = () => {
-    return courierTypes.filter(type => !type.parent_id)
-  }
+  const handleOpenSortModal = () => {
+    setSortModalOpen(true);
+  };
+
+  const handleCloseSortModal = () => {
+    setSortModalOpen(false);
+  };
 
   return (
     <>
@@ -219,21 +247,35 @@ export function CourierTypeManagement() {
         <CardHeader className="pb-3">
           <div
             className={cn(
-              "flex flex-col sm:flex-row justify-between gap-4 transition-all duration-300 delay-100",
+              "flex flex-col gap-4 transition-all duration-300 delay-100",
               isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
             )}
           >
-            <div className="flex-1 flex flex-col gap-2 sm:flex-row items-start sm:items-center">
+            {/* 第一行：搜索框和选择框 */}
+            <div className="flex flex-col gap-2 sm:flex-row items-start sm:items-center">
               <div className="relative max-w-sm w-full">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   type="search"
-                  placeholder={t('common:search')}
+                  placeholder={t('courier:search_courier_type')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8 bg-white text-black"
                 />
               </div>
+              <Select value={categoryFilter} onValueChange={handleCategoryFilterChange}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder={t('courier:category')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_categories">{t('courier:all_categories')}</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={String(category.id)}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder={t('courier:courier_status')} />
@@ -245,7 +287,17 @@ export function CourierTypeManagement() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* 第二行：按钮组 */}
+            <div className="flex justify-start items-center gap-2">
+              <Button onClick={handleAddClick}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('courier:add_courier_type')}
+              </Button>
+              <Button variant="outline" onClick={handleOpenSortModal}>
+                <ArrowUpDown className="mr-2 h-4 w-4" />
+                {t('courier:sort_courier_types')}
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
@@ -255,32 +307,39 @@ export function CourierTypeManagement() {
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button onClick={handleAddClick}>
-                <Plus className="mr-2 h-4 w-4" />
-                {t('courier:add_courier')}
-              </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <CourierTypeTable
-            courierTypes={filteredCourierTypes}
+          <CourierTypeList
+            courierTypes={groupedTypes}
+            categories={categories}
             isLoading={isLoading}
-            onEdit={handleEditClick}
+            onAdd={handleSave}
+            onEdit={async (id, type) => {
+              await updateCourierType({
+                id,
+                ...type,
+                sort_order: courierTypes.find(ct => ct.id === id)?.sort_order || 0
+              });
+            }}
             onDelete={handleDelete}
-            onReorder={handleReorder}
-            onStatusChange={handleStatusChange}
-            onRetry={handleRefresh}
-            error={error}
-            searchQuery={searchQuery}
-            getChildCount={getChildCount}
+            onToggleStatus={async (id) => {
+              await toggleCourierTypeStatus(id);
+            }}
+            onRefresh={async () => {
+              await fetchCourierTypes();
+            }}
+            onSort={() => Promise.resolve()}
+            searchVisible={false}
+            addButtonVisible={false}
           />
         </CardContent>
         <CardFooter className="pb-6 pt-3 flex justify-between items-center">
           <div className="text-xs text-muted-foreground">
             {!error
-              ? filteredCourierTypes.length > 0
-                ? t('common:total_count', { count: filteredCourierTypes.length })
+              ? groupedTypes.length > 0
+                ? t('common:total_count', { count: groupedTypes.length })
                 : t('common:no_data')
               : t('common:loading_error')}
           </div>
@@ -299,7 +358,15 @@ export function CourierTypeManagement() {
         courierType={editingCourierType}
         onSave={handleSave}
         existingCourierTypes={courierTypes}
-        availableParentTypes={getAvailableParentTypes()}
+        availableCategories={getAvailableCategories()}
+      />
+
+      <CourierTypeSortModal
+        open={sortModalOpen}
+        courierTypes={groupedTypes}
+        categories={categories}
+        onClose={handleCloseSortModal}
+        onSort={handleReorder}
       />
     </>
   )

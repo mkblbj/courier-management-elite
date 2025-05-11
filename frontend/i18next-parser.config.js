@@ -41,6 +41,10 @@ module.exports = {
     {
       name: 'shipping',
       path: path.join(localesPath, '$LOCALE/shipping.json')
+    },
+    {
+      name: 'shop',
+      path: path.join(localesPath, '$LOCALE/shop.json')
     }
   ],
   

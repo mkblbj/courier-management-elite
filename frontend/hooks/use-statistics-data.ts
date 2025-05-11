@@ -28,18 +28,6 @@ export interface StatisticsData {
       total: number
     }[]
   }[]
-  hierarchical?: {
-    id: number | string
-    name: string
-    parent_id: number | string | null
-    own_total: number
-    own_record_count: number
-    children_total: number
-    children_record_count: number
-    total_with_children: number
-    record_count_with_children: number
-    children: any[]
-  }[]
 }
 
 export function useStatisticsData() {
@@ -60,8 +48,8 @@ export function useStatisticsData() {
   // 默认快递类型筛选：全部
   const [courierTypeFilter, setCourierTypeFilter] = useState<string[]>([])
 
-  // 添加视图模式状态 - "flat"平铺视图, "hierarchical"层级视图
-  const [viewMode, setViewMode] = useState<"flat" | "hierarchical">("flat")
+  // 添加视图模式状态 - "flat"平铺视图
+  const [viewMode, setViewMode] = useState<"flat">("flat")
   
   // 添加展开状态管理
   const [expandedItems, setExpandedItems] = useState<Set<string | number>>(new Set())
@@ -71,18 +59,6 @@ export function useStatisticsData() {
     if (expand) {
       // 展开所有项
       const allIds = new Set<string | number>()
-      if (data?.hierarchical) {
-        // 递归获取所有ID
-        const collectIds = (items: any[]) => {
-          items.forEach(item => {
-            allIds.add(item.id)
-            if (item.children && item.children.length > 0) {
-              collectIds(item.children)
-            }
-          })
-        }
-        collectIds(data.hierarchical)
-      }
       setExpandedItems(allIds)
     } else {
       // 折叠所有项
@@ -124,9 +100,6 @@ export function useStatisticsData() {
       // 获取统计数据
       const summaryResponse = await shippingApi.getShippingStats(params)
       const detailsResponse = await shippingApi.getShippingStatsDetails(params)
-      
-      // 获取层级统计数据
-      const hierarchicalResponse = await shippingApi.getHierarchicalStats(params)
 
       // 处理数据格式
       const formattedData: StatisticsData = {
@@ -142,7 +115,6 @@ export function useStatisticsData() {
           recordCount: Number(item.record_count) || 0,
         })) : [],
         byDate: [],
-        hierarchical: hierarchicalResponse?.hierarchical || []
       }
 
       // 处理按日期的数据

@@ -1,0 +1,575 @@
+
+ PASS  tests/routes/statsRoutes.test.js
+ PASS  src/tests/integration/courierRoutes.test.js
+  ● Console
+
+    console.log
+      开始初始化数据库...
+
+      at log (src/db/initialize.js:13:13)
+
+    console.log
+      尝试创建数据库 uostock...
+
+      at log (src/db/initialize.js:19:13)
+
+    console.log
+      数据库 uostock 创建成功或已存在
+
+      at log (src/db/initialize.js:21:13)
+
+    console.log
+      创建所需的数据表...
+
+      at log (src/db/initialize.js:27:13)
+
+    console.log
+      快递类型表 couriers 创建成功
+
+      at log (src/db/initialize.js:42:13)
+
+    console.log
+      发货记录表 shipping_records 创建成功
+
+      at log (src/db/initialize.js:57:13)
+
+    console.log
+      添加必要的索引和约束...
+
+      at log (src/db/initialize.js:60:13)
+
+    console.log
+      唯一约束 unique_date_courier 已存在，跳过添加
+
+      at log (src/db/initialize.js:81:15)
+
+ PASS  tests/routes/shopOutputRoutes.test.js
+
+  ●  Cannot log after tests are done. Did you forget to wait for something async in your test?
+    Attempted to log "发现数据已存在，跳过测试数据添加".
+
+      114 |       console.log('测试发货记录数据添加成功');
+      115 |     } else {
+    > 116 |       console.log('发现数据已存在，跳过测试数据添加');
+          |               ^
+      117 |     }
+      118 |     
+      119 |     console.log('数据库初始化完成！✅');
+
+      at console.log (node_modules/@jest/console/build/BufferedConsole.js:156:10)
+      at log (src/db/initialize.js:116:15)
+      at startServer (src/index.js:21:5)
+
+
+  ●  Cannot log after tests are done. Did you forget to wait for something async in your test?
+    Attempted to log "数据库初始化完成！✅".
+
+      117 |     }
+      118 |     
+    > 119 |     console.log('数据库初始化完成！✅');
+          |             ^
+      120 |
+      121 |   } catch (error) {
+      122 |     console.error('数据库初始化失败:', error);
+
+      at console.log (node_modules/@jest/console/build/BufferedConsole.js:156:10)
+      at log (src/db/initialize.js:119:13)
+      at startServer (src/index.js:21:5)
+
+
+  ●  Cannot log after tests are done. Did you forget to wait for something async in your test?
+    Attempted to log "数据库连接已关闭".
+
+      125 |     if (connection) {
+      126 |       await connection.end();
+    > 127 |       console.log('数据库连接已关闭');
+          |               ^
+      128 |     }
+      129 |   }
+      130 | }
+
+      at console.log (node_modules/@jest/console/build/BufferedConsole.js:156:10)
+      at log (src/db/initialize.js:127:15)
+      at startServer (src/index.js:21:5)
+
+
+  ●  Cannot log after tests are done. Did you forget to wait for something async in your test?
+    Attempted to log "数据库连接池已创建".
+
+      11 |       try {
+      12 |         this.pool = mysql.createPool(poolConfig);
+    > 13 |         console.log('数据库连接池已创建');
+         |                 ^
+      14 |       } catch (error) {
+      15 |         console.error('创建数据库连接池失败:', error);
+      16 |         throw error;
+
+      at console.log (node_modules/@jest/console/build/BufferedConsole.js:156:10)
+      at Database.connect (src/db/index.js:13:17)
+      at connect (src/index.js:24:14)
+
+
+  ●  Cannot log after tests are done. Did you forget to wait for something async in your test?
+    Attempted to log "数据库连接成功".
+
+      23 |     // 测试数据库连接
+      24 |     await db.connect();
+    > 25 |     console.log('数据库连接成功');
+         |             ^
+      26 |
+      27 |     // 启动服务器
+      28 |     app.listen(PORT, () => {
+
+      at console.log (node_modules/@jest/console/build/BufferedConsole.js:156:10)
+      at log (src/index.js:25:13)
+
+
+  ●  Cannot log after tests are done. Did you forget to wait for something async in your test?
+    Attempted to log "服务器运行在 http://localhost:3000".
+
+      27 |     // 启动服务器
+      28 |     app.listen(PORT, () => {
+    > 29 |       console.log(`服务器运行在 http://localhost:${PORT}`);
+         |               ^
+      30 |       console.log(`API根路径: http://localhost:${PORT}/api`);
+      31 |     });
+      32 |   } catch (error) {
+
+      at console.log (node_modules/@jest/console/build/BufferedConsole.js:156:10)
+      at Server.log (src/index.js:29:15)
+      at Server.f (node_modules/once/once.js:25:25)
+
+
+  ●  Cannot log after tests are done. Did you forget to wait for something async in your test?
+    Attempted to log "API根路径: http://localhost:3000/api".
+
+      28 |     app.listen(PORT, () => {
+      29 |       console.log(`服务器运行在 http://localhost:${PORT}`);
+    > 30 |       console.log(`API根路径: http://localhost:${PORT}/api`);
+         |               ^
+      31 |     });
+      32 |   } catch (error) {
+      33 |     console.error('服务器启动失败:', error);
+
+      at console.log (node_modules/@jest/console/build/BufferedConsole.js:156:10)
+      at Server.log (src/index.js:30:15)
+      at Server.f (node_modules/once/once.js:25:25)
+
+ PASS  src/tests/integration/migrations.test.js
+  ● Console
+
+    console.log
+      开始执行迁移脚本: 创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:12:13)
+
+    console.log
+      检查shops表是否已存在...
+
+      at log (src/db/migrations/create_shops_table.js:21:13)
+
+    console.log
+      创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:34:15)
+
+    console.log
+      shops表创建成功
+
+      at log (src/db/migrations/create_shops_table.js:46:15)
+
+    console.log
+      创建索引...
+
+      at log (src/db/migrations/create_shops_table.js:49:15)
+
+    console.log
+      索引创建成功
+
+      at log (src/db/migrations/create_shops_table.js:54:15)
+
+    console.log
+      迁移脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shops_table.js:57:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shops_table.js:65:15)
+
+    console.log
+      开始执行迁移脚本: 创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:12:13)
+
+    console.log
+      检查shops表是否已存在...
+
+      at log (src/db/migrations/create_shops_table.js:21:13)
+
+    console.log
+      创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:34:15)
+
+    console.log
+      shops表创建成功
+
+      at log (src/db/migrations/create_shops_table.js:46:15)
+
+    console.log
+      创建索引...
+
+      at log (src/db/migrations/create_shops_table.js:49:15)
+
+    console.log
+      索引创建成功
+
+      at log (src/db/migrations/create_shops_table.js:54:15)
+
+    console.log
+      迁移脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shops_table.js:57:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shops_table.js:65:15)
+
+    console.log
+      开始执行回滚: 删除shops表...
+
+      at log (src/db/migrations/create_shops_table.js:77:13)
+
+    console.log
+      shops表已删除
+
+      at log (src/db/migrations/create_shops_table.js:112:15)
+
+    console.log
+      回滚脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shops_table.js:117:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shops_table.js:125:15)
+
+    console.log
+      开始执行迁移脚本: 创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:12:13)
+
+    console.log
+      检查shops表是否已存在...
+
+      at log (src/db/migrations/create_shops_table.js:21:13)
+
+    console.log
+      创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:34:15)
+
+    console.log
+      shops表创建成功
+
+      at log (src/db/migrations/create_shops_table.js:46:15)
+
+    console.log
+      创建索引...
+
+      at log (src/db/migrations/create_shops_table.js:49:15)
+
+    console.log
+      索引创建成功
+
+      at log (src/db/migrations/create_shops_table.js:54:15)
+
+    console.log
+      迁移脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shops_table.js:57:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shops_table.js:65:15)
+
+    console.log
+      开始执行迁移脚本: 创建shop_outputs表...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:12:13)
+
+    console.log
+      检查shop_outputs表是否已存在...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:21:13)
+
+    console.log
+      创建shop_outputs表...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:47:15)
+
+    console.log
+      shop_outputs表创建成功
+
+      at log (src/db/migrations/create_shop_outputs_table.js:62:15)
+
+    console.log
+      创建索引...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:65:15)
+
+    console.log
+      索引创建成功
+
+      at log (src/db/migrations/create_shop_outputs_table.js:73:15)
+
+    console.log
+      迁移脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shop_outputs_table.js:76:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shop_outputs_table.js:84:15)
+
+    console.log
+      开始执行迁移脚本: 创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:12:13)
+
+    console.log
+      检查shops表是否已存在...
+
+      at log (src/db/migrations/create_shops_table.js:21:13)
+
+    console.log
+      创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:34:15)
+
+    console.log
+      shops表创建成功
+
+      at log (src/db/migrations/create_shops_table.js:46:15)
+
+    console.log
+      创建索引...
+
+      at log (src/db/migrations/create_shops_table.js:49:15)
+
+    console.log
+      索引创建成功
+
+      at log (src/db/migrations/create_shops_table.js:54:15)
+
+    console.log
+      迁移脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shops_table.js:57:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shops_table.js:65:15)
+
+    console.log
+      开始执行迁移脚本: 创建shop_outputs表...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:12:13)
+
+    console.log
+      检查shop_outputs表是否已存在...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:21:13)
+
+    console.log
+      创建shop_outputs表...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:47:15)
+
+    console.log
+      shop_outputs表创建成功
+
+      at log (src/db/migrations/create_shop_outputs_table.js:62:15)
+
+    console.log
+      创建索引...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:65:15)
+
+    console.log
+      索引创建成功
+
+      at log (src/db/migrations/create_shop_outputs_table.js:73:15)
+
+    console.log
+      迁移脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shop_outputs_table.js:76:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shop_outputs_table.js:84:15)
+
+    console.log
+      开始执行回滚: 删除shop_outputs表...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:96:13)
+
+    console.log
+      shop_outputs表已删除
+
+      at log (src/db/migrations/create_shop_outputs_table.js:116:15)
+
+    console.log
+      回滚脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shop_outputs_table.js:121:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shop_outputs_table.js:129:15)
+
+    console.log
+      开始执行迁移脚本: 创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:12:13)
+
+    console.log
+      检查shops表是否已存在...
+
+      at log (src/db/migrations/create_shops_table.js:21:13)
+
+    console.log
+      创建shops表...
+
+      at log (src/db/migrations/create_shops_table.js:34:15)
+
+    console.log
+      shops表创建成功
+
+      at log (src/db/migrations/create_shops_table.js:46:15)
+
+    console.log
+      创建索引...
+
+      at log (src/db/migrations/create_shops_table.js:49:15)
+
+    console.log
+      索引创建成功
+
+      at log (src/db/migrations/create_shops_table.js:54:15)
+
+    console.log
+      迁移脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shops_table.js:57:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shops_table.js:65:15)
+
+    console.log
+      开始执行迁移脚本: 创建shop_outputs表...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:12:13)
+
+    console.log
+      检查shop_outputs表是否已存在...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:21:13)
+
+    console.log
+      创建shop_outputs表...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:47:15)
+
+    console.log
+      shop_outputs表创建成功
+
+      at log (src/db/migrations/create_shop_outputs_table.js:62:15)
+
+    console.log
+      创建索引...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:65:15)
+
+    console.log
+      索引创建成功
+
+      at log (src/db/migrations/create_shop_outputs_table.js:73:15)
+
+    console.log
+      迁移脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shop_outputs_table.js:76:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shop_outputs_table.js:84:15)
+
+    console.log
+      开始执行回滚: 删除shop_outputs表...
+
+      at log (src/db/migrations/create_shop_outputs_table.js:96:13)
+
+    console.log
+      shop_outputs表已删除
+
+      at log (src/db/migrations/create_shop_outputs_table.js:116:15)
+
+    console.log
+      回滚脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shop_outputs_table.js:121:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shop_outputs_table.js:129:15)
+
+    console.log
+      开始执行回滚: 删除shops表...
+
+      at log (src/db/migrations/create_shops_table.js:77:13)
+
+    console.log
+      shops表已删除
+
+      at log (src/db/migrations/create_shops_table.js:112:15)
+
+    console.log
+      回滚脚本执行完成 ✅
+
+      at log (src/db/migrations/create_shops_table.js:117:13)
+
+    console.log
+      数据库连接已关闭
+
+      at log (src/db/migrations/create_shops_table.js:125:15)
+
+ PASS  tests/routes/dashboardRoutes.test.js
+ PASS  tests/routes/shopRoutes.test.js
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking du
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensu
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+
+Test Suites: 6 passed, 6 total
+Tests:       31 passed, 31 total
+Snapshots:   0 total
+Time:        3.919 s, estimated 4 s
+Ran all test suites.
+
+
+
+

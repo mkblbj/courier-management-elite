@@ -48,9 +48,9 @@ function getTypeGroupColor(id: number | string): string {
   const numericId = typeof id === 'string' ? id.split('').reduce((a, b) => a + b.charCodeAt(0), 0) : id;
   // 选择一组柔和的颜色
   const colors = [
-    "border-blue-200 bg-blue-50/30", 
+    "border-blue-200 bg-blue-50/30",
     "border-green-200 bg-green-50/30",
-    "border-purple-200 bg-purple-50/30", 
+    "border-purple-200 bg-purple-50/30",
     "border-amber-200 bg-amber-50/30",
     "border-cyan-200 bg-cyan-50/30",
     "border-pink-200 bg-pink-50/30",
@@ -73,11 +73,6 @@ function SortableRow({
   isMobile = false,
   index = 0,
   getChildCount,
-  isChild = false,
-  groupId,
-  isLastInGroup = false,
-  isFirstInGroup = false,
-  groupIsActive = false,
 }: {
   courierType: CourierType
   searchQuery?: string
@@ -90,11 +85,6 @@ function SortableRow({
   isMobile?: boolean
   index?: number
   getChildCount?: (id: number | string) => number
-  isChild?: boolean
-  groupId?: number | string
-  isLastInGroup?: boolean
-  isFirstInGroup?: boolean
-  groupIsActive?: boolean
 }) {
   const { t } = useTranslation();
 
@@ -115,41 +105,28 @@ function SortableRow({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: (isDragging || groupIsActive) ? 10 : undefined,
-    opacity: isDragging ? 0.5 : groupIsActive ? 0.7 : undefined,
+    zIndex: (isDragging) ? 10 : undefined,
+    opacity: isDragging ? 0.5 : undefined,
   }
 
   // 获取组的样式
-  const groupStyle = groupId ? getTypeGroupColor(groupId) : "";
-  const borderRadius = isChild ? (isLastInGroup ? "rounded-b-md" : "") : "rounded-t-md";
+  const groupStyle = getTypeGroupColor(courierType.id);
 
   // 在return语句前添加桌面端和移动端的class定义
   // 处理桌面端样式
   const desktopClasses = cn(
     "last:border-b-0 transition-colors hover:bg-muted/30",
     groupStyle, // 应用组颜色
-    !isChild && "border-l-4", // 父类型左侧加粗边框
-    isChild && "-mt-px border-t-0", // 移除子类型的上边框，让它们无缝连接
-    isLastInGroup && "mb-1 border-b", // 组的最后一项添加底部边框和间距
-    !isLastInGroup && isChild && "border-b-0", // 组内子项之间不显示分隔边框
-    (isDragging || groupIsActive) ? "shadow-md" : "",
+    (isDragging) ? "shadow-md" : "",
     !courierType.is_active && "opacity-60",
-    // 如果整个组正在被拖动，添加视觉提示
-    groupIsActive && !isDragging && "outline outline-2 outline-offset-2 outline-primary/30"
   );
 
   // 处理移动端样式
   const mobileClasses = cn(
     "border overflow-hidden transition-all duration-300",
     groupStyle, // 应用组颜色
-    borderRadius, // 应用圆角
-    !isChild && "border-l-4", // 为父类型添加明显的边框
+    (isDragging) ? "shadow-lg" : "",
     !courierType.is_active && "opacity-60",
-    (isDragging || groupIsActive) && "shadow-lg", // 组拖动时添加阴影
-    isChild && "ml-6 -mt-px", // 子类型缩进并上移以连接边框
-    isLastInGroup && "mb-3", // 为组的最后一项添加底部间距
-    // 如果整个组正在被拖动，添加视觉提示
-    groupIsActive && !isDragging && "outline outline-2 outline-offset-2 outline-primary/30"
   );
 
   if (isMobile) {
@@ -158,7 +135,7 @@ function SortableRow({
         ref={setNodeRef}
         style={{
           ...style,
-          opacity: isVisible ? (isDragging ? 0.5 : groupIsActive ? 0.7 : 1) : 0,
+          opacity: isVisible ? (isDragging ? 0.5 : 1) : 0,
           transform: isVisible
             ? CSS.Transform.toString(transform)
             : `${CSS.Transform.toString(transform)} translateY(10px)`,
@@ -174,7 +151,7 @@ function SortableRow({
             <div className="font-medium truncate">
               {searchQuery ? highlightText(courierType.name, searchQuery) : courierType.name}
             </div>
-            {getChildCount && getChildCount(courierType.id) > 0 && !isChild && (
+            {getChildCount && getChildCount(courierType.id) > 0 && (
               <Badge variant="outline" className="text-xs">
                 {getChildCount(courierType.id)}
               </Badge>
@@ -259,7 +236,7 @@ function SortableRow({
       ref={setNodeRef}
       style={{
         ...style,
-        opacity: isVisible ? (isDragging ? 0.5 : groupIsActive ? 0.7 : 1) : 0,
+        opacity: isVisible ? (isDragging ? 0.5 : 1) : 0,
         transform: isVisible
           ? CSS.Transform.toString(transform)
           : `${CSS.Transform.toString(transform)} translateY(10px)`,
@@ -275,12 +252,11 @@ function SortableRow({
           {searchQuery ? highlightText(courierType.code, searchQuery) : courierType.code}
         </div>
         <div className="flex items-center">
-          {isChild && <div className="w-4 border-l-2 border-b-2 h-4 border-muted-foreground/30 mr-2"></div>}
           <Tooltip delayDuration={200}>
             <TooltipTrigger className="w-full text-left">
               <span className="truncate font-medium text-left">
                 {searchQuery ? highlightText(courierType.name, searchQuery) : courierType.name}
-                {getChildCount && getChildCount(courierType.id) > 0 && !isChild && (
+                {getChildCount && getChildCount(courierType.id) > 0 && (
                   <Badge variant="outline" className="ml-2 text-xs">
                     {getChildCount(courierType.id)}
                   </Badge>
@@ -290,7 +266,7 @@ function SortableRow({
             <TooltipContent side="top" align="start" className="bg-white border shadow-md p-3 z-50">
               <p className="text-sm text-gray-700">
                 {searchQuery ? highlightText(courierType.name, searchQuery) : courierType.name}
-                {getChildCount && getChildCount(courierType.id) > 0 && !isChild && (
+                {getChildCount && getChildCount(courierType.id) > 0 && (
                   <Badge variant="outline" className="ml-2 text-xs">
                     {getChildCount(courierType.id)}
                   </Badge>
@@ -381,7 +357,6 @@ export function CourierTypeTable({
   const [items, setItems] = useState(courierTypes)
   const [expandedItems, setExpandedItems] = useState<Set<string | number>>(new Set())
   const [activeId, setActiveId] = useState<string | number | null>(null)
-  const [activeGroupId, setActiveGroupId] = useState<string | number | null>(null)
   const [reorderedItems, setReorderedItems] = useState<CourierType[] | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
@@ -423,22 +398,7 @@ export function CourierTypeTable({
   const handleDragStart = (event: { active: { id: string | number } }) => {
     const { id } = event.active;
     setActiveId(id);
-    
-    // 查找当前拖动项
-    const draggedItem = hierarchicalItems.find(item => item.id === id);
-    
-    // 如果是父类型或有父类型，设置活动组ID
-    if (draggedItem) {
-      // 如果是父类型，使用自己的ID作为组ID
-      if (!draggedItem.parent_id) {
-        setActiveGroupId(draggedItem.id);
-      } 
-      // 如果是子类型，使用其父类型ID作为组ID
-      else if (draggedItem.groupId) {
-        setActiveGroupId(draggedItem.groupId);
-      }
-    }
-    
+
     toast({
       title: t("排序模式"),
       description: t("拖动项目调整顺序，松开后自动保存"),
@@ -446,11 +406,10 @@ export function CourierTypeTable({
     })
   }
 
-  // 修改handleDragEnd函数，清除活动组ID
+  // 修改handleDragEnd函数
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     setActiveId(null)
-    setActiveGroupId(null)
 
     if (over && active.id !== over.id) {
       const oldIndex = items.findIndex((item) => item.id === active.id)
@@ -505,73 +464,8 @@ export function CourierTypeTable({
     }
   }
 
-  // 显示层级结构中组的边框和背景
-  const handleRowHover = (id: string | number, isHover: boolean) => {
-    // 可以在这里添加高亮整个组的逻辑
-    // 暂时未实现
-  }
-
-  // 构建层级结构的子项，添加颜色标识
-  const buildHierarchicalItems = () => {
-    const parentMap = new Map<string | number, CourierType[]>();
-    const rootItems: CourierType[] = [];
-    
-    // 分类，找出所有父项和子项
-    items.forEach(item => {
-      if (item.parent_id) {
-        // 这是子项
-        if (!parentMap.has(item.parent_id)) {
-          parentMap.set(item.parent_id, []);
-        }
-        parentMap.get(item.parent_id)?.push(item);
-      } else {
-        // 这是父项
-        rootItems.push(item);
-      }
-    });
-    
-    // 展平为显示顺序，父项后面跟随其所有子项
-    const flattenedItems: (CourierType & { groupId?: number | string, isLastInGroup?: boolean })[] = [];
-    
-    rootItems.forEach(parent => {
-      // 添加父项，并标记其组ID
-      flattenedItems.push({ ...parent, groupId: parent.id });
-      
-      // 添加子项，并使用相同的组ID
-      if (parentMap.has(parent.id)) {
-        const children = parentMap.get(parent.id) || [];
-        children.forEach((child, idx) => {
-          flattenedItems.push({ 
-            ...child, 
-            groupId: parent.id,
-            isLastInGroup: idx === children.length - 1 // 标记组中的最后一项
-          });
-        });
-      }
-    });
-    
-    return flattenedItems;
-  }
-
-  // 使用层级结构
-  const hierarchicalItems = buildHierarchicalItems();
-
-  // 修改 renderRow 函数
-  const renderRow = (courierType: any, index: number, items: any[]) => {
-    const isChild = !!courierType.parent_id;
-    const isFirstInGroup = !isChild || (index > 0 && items[index-1].groupId !== courierType.groupId);
-    
-    // 判断整个组是否处于活动状态
-    const groupIsActive = 
-      // 当前项是活动项
-      (activeId === courierType.id) || 
-      // 当前项属于活动组
-      (activeGroupId !== null && 
-        // 当前项是父类型且是活动组
-        ((courierType.id === activeGroupId && !isChild) || 
-        // 当前项是子类型且属于活动组
-        (courierType.groupId === activeGroupId)));
-    
+  // 定义渲染单行的函数
+  const renderRow = (courierType: CourierType, index: number) => {
     return (
       <SortableRow
         key={courierType.id}
@@ -586,27 +480,12 @@ export function CourierTypeTable({
         isMobile={false}
         index={index}
         getChildCount={getChildCount}
-        isChild={isChild}
-        groupId={courierType.groupId}
-        isLastInGroup={courierType.isLastInGroup}
-        isFirstInGroup={isFirstInGroup}
-        groupIsActive={groupIsActive}
       />
-    )
+    );
   }
-  
-  // 修改 renderMobileRow 函数
-  const renderMobileRow = (courierType: any, index: number, items: any[]) => {
-    const isChild = !!courierType.parent_id;
-    const isFirstInGroup = !isChild || (index > 0 && items[index-1].groupId !== courierType.groupId);
-    
-    // 判断整个组是否处于活动状态（与renderRow相同逻辑）
-    const groupIsActive = 
-      (activeId === courierType.id) || 
-      (activeGroupId !== null && 
-        ((courierType.id === activeGroupId && !isChild) || 
-        (courierType.groupId === activeGroupId)));
-    
+
+  // 定义渲染移动端单行的函数
+  const renderMobileRow = (courierType: CourierType, index: number) => {
     return (
       <SortableRow
         key={courierType.id}
@@ -620,13 +499,8 @@ export function CourierTypeTable({
         isMobile={true}
         index={index}
         getChildCount={getChildCount}
-        isChild={isChild}
-        groupId={courierType.groupId}
-        isLastInGroup={courierType.isLastInGroup}
-        isFirstInGroup={isFirstInGroup}
-        groupIsActive={groupIsActive}
       />
-    )
+    );
   }
 
   if (isLoading && courierTypes.length === 0) {
@@ -679,10 +553,8 @@ export function CourierTypeTable({
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={hierarchicalItems.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-            {hierarchicalItems.map((courierType, index) => 
-              renderRow(courierType, index, hierarchicalItems)
-            )}
+          <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+            {items.map((courierType, index) => renderRow(courierType, index))}
           </SortableContext>
         </DndContext>
       </div>
@@ -699,10 +571,8 @@ export function CourierTypeTable({
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={hierarchicalItems.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-            {hierarchicalItems.map((courierType, index) => 
-              renderMobileRow(courierType, index, hierarchicalItems)
-            )}
+          <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+            {items.map((courierType, index) => renderMobileRow(courierType, index))}
           </SortableContext>
         </DndContext>
       </div>

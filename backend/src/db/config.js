@@ -1,6 +1,9 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
+// 导入自定义时区配置
+const { DB_TIMEZONE } = require('../config/timezone');
+
 // 基本配置
 const baseConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -16,13 +19,14 @@ const poolConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  timezone: '+09:00'
+  timezone: DB_TIMEZONE
 };
 
 // 初始化配置（用于创建数据库）
 const initConfig = {
   ...baseConfig,
-  multipleStatements: true
+  multipleStatements: true,
+  timezone: DB_TIMEZONE
 };
 
 // 数据库名称
