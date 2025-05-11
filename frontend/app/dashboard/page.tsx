@@ -20,6 +20,7 @@ import { StatCard } from "@/components/dashboard/stat-card"
 import { useCourierTypes } from "@/hooks/use-courier-types"
 import { shippingApi } from "@/services/shipping-api"
 import { useShippingData } from "@/hooks/use-shipping-data"
+import { ShopOutputCard } from "./components/ShopOutputCard"
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -699,7 +700,16 @@ export default function DashboardPage() {
         </div>
 
         {/* 店铺出力数据卡片区域 */}
-
+        <div className="mb-6">
+          <ShopOutputCard
+            title={t("今日店铺出力")}
+            className={cn(
+              "transition-all duration-500",
+              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            )}
+            style={{ transitionDelay: "600ms" }}
+          />
+        </div>
 
         {/* 快速操作区域 - 占满整行 */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
