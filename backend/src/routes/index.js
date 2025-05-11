@@ -147,8 +147,9 @@ router.get('/docs', (req, res) => {
         description: '数据仪表盘',
         basePath: '/api/dashboard',
         endpoints: [
-          { method: 'GET', path: '/shop-outputs/today', description: '获取今日出力概览' },
-          { method: 'GET', path: '/shop-outputs/tomorrow', description: '获取明日出力预测' }
+          { method: 'GET', path: '/shop-outputs/today', description: '获取今日出力概览', params: '?category_id - 可选，按类别筛选' },
+          { method: 'GET', path: '/shop-outputs/tomorrow', description: '获取明日出力预测', params: '?category_id - 可选，按类别筛选' },
+          { method: 'POST', path: '/cache/clear', description: '清除仪表盘数据缓存' }
         ]
       }
     ]
