@@ -213,7 +213,7 @@ export default function DashboardPage() {
   // 获取活跃的快递类型
   const activeCourierTypes = courierTypes
     .filter((type) => type.is_active)
-    .filter((type) => !type.name.includes("未指定")); // 过滤掉"未指定"的快递类型
+    .filter((type) => !type.name.includes(t("未指定"))); // 过滤掉"未指定"的快递类型
 
   // 计算本月进度
   const currentDate = new Date()

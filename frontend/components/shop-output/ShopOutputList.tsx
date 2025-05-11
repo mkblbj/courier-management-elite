@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import {
@@ -48,6 +49,10 @@ import { DateRange } from 'react-day-picker';
 import { dateToApiString } from '@/lib/date-utils';
 
 export function ShopOutputList() {
+  const {
+    t: t
+  } = useTranslation();
+
   const [outputs, setOutputs] = useState<ShopOutput[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const [categories, setCategories] = useState<ShopCategory[]>([]);
@@ -77,6 +82,10 @@ export function ShopOutputList() {
   }, [filter, currentPage, sort, order]);
 
   const fetchOutputs = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setIsLoading(true);
     try {
       const data = await getShopOutputs({
@@ -100,6 +109,10 @@ export function ShopOutputList() {
   };
 
   const fetchShops = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     try {
       const data = await getShops({ isActive: true }); // 只获取活跃的店铺
       setShops(data);
@@ -109,6 +122,10 @@ export function ShopOutputList() {
   };
 
   const fetchCategories = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     try {
       const data = await getShopCategories();
       setCategories(data);
@@ -118,6 +135,10 @@ export function ShopOutputList() {
   };
 
   const handleSearch = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setFilter(prev => ({
       ...prev,
       date_from: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
@@ -127,6 +148,10 @@ export function ShopOutputList() {
   };
 
   const handleSort = (column: string) => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (sort === column) {
       setOrder(order === 'ASC' ? 'DESC' : 'ASC');
     } else {
@@ -136,7 +161,11 @@ export function ShopOutputList() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('确定要删除这条出力数据吗？此操作不可撤销。')) {
+    const {
+      t: t
+    } = useTranslation();
+
+    if (!confirm(t("确定要删除这条出力数据吗？此操作不可撤销。"))) {
       return;
     }
 
@@ -158,10 +187,16 @@ export function ShopOutputList() {
   };
 
   const handleExport = () => {
-    // 导出功能实现
+    const {
+      t: t
+    } = useTranslation();
   };
 
   const handleDialogClose = (refresh?: boolean) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setIsDialogOpen(false);
     setEditOutput(null);
     if (refresh) {
@@ -170,6 +205,10 @@ export function ShopOutputList() {
   };
 
   const handleImportDialogClose = (refresh?: boolean) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setIsImportDialogOpen(false);
     if (refresh) {
       fetchOutputs();
@@ -180,11 +219,11 @@ export function ShopOutputList() {
   const paginatedOutputs = outputs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div className="space-y-4">
+    (<div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-4 justify-between items-end">
         <div className="flex flex-col md:flex-row gap-4 items-end">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="date-range" className="text-sm font-medium">日期范围</label>
+            <label htmlFor="date-range" className="text-sm font-medium">{t("日期范围")}</label>
             <DateRangePicker
               value={dateRange}
               onChange={setDateRange}
@@ -193,15 +232,15 @@ export function ShopOutputList() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="shop-category" className="text-sm font-medium">店铺类别</label>
+            <label htmlFor="shop-category" className="text-sm font-medium">{t("店铺类别")}</label>
             <Select
               onValueChange={(value) => setFilter(prev => ({ ...prev, shop_category_id: parseInt(value) || undefined }))}
             >
               <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="所有类别" />
+                <SelectValue placeholder={t("所有类别")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">所有类别</SelectItem>
+                <SelectItem value="0">{t("所有类别")}</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
@@ -212,15 +251,15 @@ export function ShopOutputList() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="shop" className="text-sm font-medium">店铺</label>
+            <label htmlFor="shop" className="text-sm font-medium">{t("店铺")}</label>
             <Select
               onValueChange={(value) => setFilter(prev => ({ ...prev, shop_id: parseInt(value) || undefined }))}
             >
               <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="所有店铺" />
+                <SelectValue placeholder={t("所有店铺")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">所有店铺</SelectItem>
+                <SelectItem value="0">{t("所有店铺")}</SelectItem>
                 {shops.map(shop => (
                   <SelectItem key={shop.id} value={shop.id.toString()}>
                     {shop.name}
@@ -231,27 +270,18 @@ export function ShopOutputList() {
           </div>
 
           <Button onClick={handleSearch}>
-            <Search className="h-4 w-4 mr-2" />
-            搜索
-          </Button>
+            <Search className="h-4 w-4 mr-2" />{t("搜索")}</Button>
         </div>
 
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            导入
-          </Button>
+            <Upload className="h-4 w-4 mr-2" />{t("导入")}</Button>
           <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            导出
-          </Button>
+            <Download className="h-4 w-4 mr-2" />{t("导出")}</Button>
           <Button onClick={() => setIsDialogOpen(true)}>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            添加
-          </Button>
+            <PlusCircle className="h-4 w-4 mr-2" />{t("添加")}</Button>
         </div>
       </div>
-
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -261,17 +291,17 @@ export function ShopOutputList() {
                   className="flex items-center space-x-1"
                   onClick={() => handleSort('date')}
                 >
-                  <span>日期</span>
+                  <span>{t("日期")}</span>
                   <ArrowUpDown className="h-4 w-4" />
                 </button>
               </TableHead>
-              <TableHead>店铺名称</TableHead>
+              <TableHead>{t("店铺名称")}</TableHead>
               <TableHead className="text-right">
                 <button
                   className="flex items-center space-x-1"
                   onClick={() => handleSort('output_count')}
                 >
-                  <span>出力件数</span>
+                  <span>{t("出力件数")}</span>
                   <ArrowUpDown className="h-4 w-4" />
                 </button>
               </TableHead>
@@ -280,14 +310,14 @@ export function ShopOutputList() {
                   className="flex items-center space-x-1"
                   onClick={() => handleSort('avg_time')}
                 >
-                  <span>平均制作时间</span>
+                  <span>{t("平均制作时间")}</span>
                   <ArrowUpDown className="h-4 w-4" />
                 </button>
               </TableHead>
-              <TableHead className="text-right">最短时间</TableHead>
-              <TableHead className="text-right">最长时间</TableHead>
-              <TableHead className="text-right">总时间</TableHead>
-              <TableHead className="text-right w-[120px]">操作</TableHead>
+              <TableHead className="text-right">{t("最短时间")}</TableHead>
+              <TableHead className="text-right">{t("最长时间")}</TableHead>
+              <TableHead className="text-right">{t("总时间")}</TableHead>
+              <TableHead className="text-right w-[120px]">{t("操作")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -305,7 +335,7 @@ export function ShopOutputList() {
                   <TableCell>{output.date}</TableCell>
                   <TableCell>{output.shop_name}</TableCell>
                   <TableCell className="text-right">{output.output_count}</TableCell>
-                  <TableCell className="text-right">{output.avg_time}分钟</TableCell>
+                  <TableCell className="text-right">{output.avg_time}{t("分钟")}</TableCell>
                   <TableCell className="text-right">{output.min_time}分钟</TableCell>
                   <TableCell className="text-right">{output.max_time}分钟</TableCell>
                   <TableCell className="text-right">{output.total_time}分钟</TableCell>
@@ -334,19 +364,16 @@ export function ShopOutputList() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
-                  没有找到出力数据
-                </TableCell>
+                <TableCell colSpan={8} className="h-24 text-center">{t("没有找到出力数据")}</TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            第 {currentPage} 页，共 {totalPages} 页
+            第 {currentPage}{t("页，共")}{totalPages} 页
           </div>
           <div className="flex gap-1">
             <Button
@@ -368,7 +395,6 @@ export function ShopOutputList() {
           </div>
         </div>
       )}
-
       {isDialogOpen && (
         <OutputDataDialog
           output={editOutput}
@@ -377,13 +403,12 @@ export function ShopOutputList() {
           onClose={handleDialogClose}
         />
       )}
-
       {isImportDialogOpen && (
         <ImportDataDialog
           open={isImportDialogOpen}
           onClose={handleImportDialogClose}
         />
       )}
-    </div>
+    </div>)
   );
 } 

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -14,12 +15,20 @@ interface ImportDataDialogProps {
 }
 
 export function ImportDataDialog({ open, onClose }: ImportDataDialogProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       // 检查文件类型
@@ -30,7 +39,7 @@ export function ImportDataDialog({ open, onClose }: ImportDataDialogProps) {
       ];
       
       if (!validTypes.includes(selectedFile.type)) {
-        setError('请上传Excel(.xlsx, .xls)或CSV文件');
+        setError(t("请上传Excel(.xlsx, .xls)或CSV文件"));
         setFile(null);
         return;
       }
@@ -41,14 +50,18 @@ export function ImportDataDialog({ open, onClose }: ImportDataDialogProps) {
   };
 
   const handleSubmit = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!file) {
-      setError('请选择要上传的文件');
+      setError(t("请选择要上传的文件"));
       return;
     }
 
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       const result = await importShopOutputs(file);
       toast({
@@ -70,23 +83,21 @@ export function ImportDataDialog({ open, onClose }: ImportDataDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+    (<Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>导入出力数据</DialogTitle>
+          <DialogTitle>{t("导入出力数据")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="file">选择Excel文件</Label>
+            <Label htmlFor="file">{t("选择Excel文件")}</Label>
             <Input
               id="file"
               type="file"
               accept=".xlsx, .xls, .csv"
               onChange={handleFileChange}
             />
-            <p className="text-sm text-muted-foreground">
-              支持.xlsx、.xls或.csv格式的文件
-            </p>
+            <p className="text-sm text-muted-foreground">{t("支持.xlsx、.xls或.csv格式的文件")}</p>
           </div>
           
           {error && (
@@ -97,34 +108,28 @@ export function ImportDataDialog({ open, onClose }: ImportDataDialogProps) {
           )}
           
           <div className="bg-muted rounded-md p-4">
-            <h4 className="text-sm font-medium mb-2">导入文件要求</h4>
+            <h4 className="text-sm font-medium mb-2">{t("导入文件要求")}</h4>
             <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
-              <li>Excel文件必须包含以下列：店铺ID、日期、出力件数、平均时间、最短时间、最长时间、总时间</li>
-              <li>日期格式应为YYYY-MM-DD</li>
-              <li>时间单位为分钟</li>
-              <li>首行应为列标题</li>
+              <li>{t("Excel文件必须包含以下列：店铺ID、日期、出力件数、平均时间、最短时间、最长时间、总时间")}</li>
+              <li>{t("日期格式应为YYYY-MM-DD")}</li>
+              <li>{t("时间单位为分钟")}</li>
+              <li>{t("首行应为列标题")}</li>
             </ul>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onClose()} disabled={isSubmitting}>
-            取消
-          </Button>
+          <Button variant="outline" onClick={() => onClose()} disabled={isSubmitting}>{t("取消")}</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting || !file}>
             {isSubmitting ? (
               <>
-                <Upload className="mr-2 h-4 w-4 animate-spin" />
-                导入中...
-              </>
+                <Upload className="mr-2 h-4 w-4 animate-spin" />{t("导入中...")}</>
             ) : (
               <>
-                <Upload className="mr-2 h-4 w-4" />
-                开始导入
-              </>
+                <Upload className="mr-2 h-4 w-4" />{t("开始导入")}</>
             )}
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+    </Dialog>)
   );
 } 

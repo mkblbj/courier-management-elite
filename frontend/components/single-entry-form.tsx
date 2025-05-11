@@ -230,7 +230,7 @@ export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntr
                         <SelectContent>
                           {courierTypes
                             .filter((courierType) => Boolean(courierType.is_active)) // 只显示激活的快递类型
-                            .filter((courierType) => !courierType.name.includes("未指定")) // 过滤掉未指定的快递类型
+                            .filter((courierType) => !courierType.name.includes(t("未指定"))) // 过滤掉未指定的快递类型
                             .map((courierType) => (
                               <SelectItem key={courierType.id} value={courierType.id.toString()}>
                                 {courierType.name}

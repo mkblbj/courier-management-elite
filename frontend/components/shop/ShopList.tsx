@@ -185,7 +185,7 @@ export const ShopList: React.FC<ShopListProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    (<div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex gap-4">
           <div className="relative w-64">
@@ -225,7 +225,6 @@ export const ShopList: React.FC<ShopListProps> = ({
           {t('shop:sort_shops')}
         </Button>
       </div>
-
       {isLoading ? (
         <div className="rounded-md border p-8 text-center">
           <p className="text-muted-foreground">{t('common:loading')}</p>
@@ -242,7 +241,7 @@ export const ShopList: React.FC<ShopListProps> = ({
         </div>
       ) : (
         // 按类别分组显示店铺
-        <div className="space-y-6">
+        (<div className="space-y-6">
           {Object.entries(groupedShops).map(([categoryId, shops]) => {
             if (shops.length === 0) return null;
 
@@ -318,9 +317,8 @@ export const ShopList: React.FC<ShopListProps> = ({
           <div className="text-sm text-muted-foreground text-right">
             {t('shop:total_shops', { count: totalShops })}
           </div>
-        </div>
+        </div>)
       )}
-
       {/* 添加店铺对话框 */}
       <AddShopDialog
         open={showAddDialog}
@@ -328,7 +326,6 @@ export const ShopList: React.FC<ShopListProps> = ({
         onSuccess={handleAddShop}
         categories={categories}
       />
-
       {/* 编辑店铺对话框 */}
       {selectedShop && (
         <EditShopDialog
@@ -339,7 +336,6 @@ export const ShopList: React.FC<ShopListProps> = ({
           categories={categories}
         />
       )}
-
       {/* 删除店铺对话框 */}
       {selectedShop && (
         <DeleteShopDialog
@@ -349,7 +345,7 @@ export const ShopList: React.FC<ShopListProps> = ({
           onDeleted={handleDeleteSuccess}
         />
       )}
-    </div>
+    </div>)
   );
 };
 

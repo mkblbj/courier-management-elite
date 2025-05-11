@@ -37,7 +37,7 @@ export function DeleteCategoryDialog({
     try {
       await onConfirm();
     } catch (err) {
-      if (err instanceof Error && err.message.includes('关联')) {
+      if (err instanceof Error && err.message.includes(t("关联"))) {
         setError(t('shop:category_has_shops_error'));
       } else {
         setError(err instanceof Error ? err.message : t('shop:delete_failed'));

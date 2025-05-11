@@ -119,7 +119,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
             [];
 
       return (
-            <div className={cn("flex flex-col space-y-1", className)}>
+            (<div className={cn("flex flex-col space-y-1", className)}>
                   {label && <span className="text-sm font-medium">{label}</span>}
                   <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
@@ -141,7 +141,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                                 )}
                                           </div>
                                     ) : (
-                                          <span className="text-muted-foreground">选择店铺</span>
+                                          <span className="text-muted-foreground">{t("选择店铺")}</span>
                                     )}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
@@ -151,7 +151,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                     <div className="flex items-center border-b px-3">
                                           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                                           <CommandInput
-                                                placeholder="搜索店铺..."
+                                                placeholder={t("搜索店铺...")}
                                                 value={searchTerm}
                                                 onValueChange={setSearchTerm}
                                                 className="h-9 border-0 outline-none focus-visible:ring-0"
@@ -161,8 +161,8 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                     <CommandList>
                                           {searchTerm ? (
                                                 <>
-                                                      <CommandEmpty>未找到店铺</CommandEmpty>
-                                                      <CommandGroup heading="搜索结果">
+                                                      <CommandEmpty>{t("未找到店铺")}</CommandEmpty>
+                                                      <CommandGroup heading={t("搜索结果")}>
                                                             {filteredShops.map((shop) => (
                                                                   <CommandItem
                                                                         key={shop.id}
@@ -199,7 +199,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                                             if (categoryShops.length === 0) return null;
 
                                                             return (
-                                                                  <div key={category.id}>
+                                                                  (<div key={category.id}>
                                                                         <HoverCard openDelay={300} closeDelay={200}>
                                                                               <HoverCardTrigger asChild>
                                                                                     <CommandItem
@@ -240,20 +240,20 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                                                                                                   </CommandItem>
                                                                                                             ))
                                                                                                       ) : (
-                                                                                                            <CommandItem disabled>没有可用店铺</CommandItem>
+                                                                                                            <CommandItem disabled>{t("没有可用店铺")}</CommandItem>
                                                                                                       )}
                                                                                                 </CommandGroup>
                                                                                           </CommandList>
                                                                                     </Command>
                                                                               </HoverCardContent>
                                                                         </HoverCard>
-                                                                  </div>
+                                                                  </div>)
                                                             );
                                                       })}
 
                                                       <CommandSeparator />
 
-                                                      <CommandGroup heading="所有店铺">
+                                                      <CommandGroup heading={t("所有店铺")}>
                                                             {allShops.map((shop) => (
                                                                   <CommandItem
                                                                         key={shop.id}
@@ -286,7 +286,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                               </Command>
                         </PopoverContent>
                   </Popover>
-            </div>
+            </div>)
       );
 };
 

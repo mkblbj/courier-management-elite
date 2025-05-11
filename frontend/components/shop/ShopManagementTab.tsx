@@ -159,7 +159,7 @@ export function ShopManagementTab() {
 
       // 检查错误信息是否表明店铺不存在
       const errorMessage = error instanceof Error ? error.message : '';
-      const isShopNotFoundError = errorMessage.includes('不存在');
+      const isShopNotFoundError = errorMessage.includes(t("不存在"));
 
       // 如果是因为店铺不存在而失败，仍然更新本地状态（因为店铺已经被删除）
       if (isShopNotFoundError) {

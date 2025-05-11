@@ -146,7 +146,7 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
             value: Number(validData[index]) || 0,
           }
         }).filter(item => item.value > 0)
-          .filter(item => !item.fullName.includes("未指定")) // 过滤掉"未指定"的快递类型
+          .filter(item => !item.fullName.includes(t("未指定"))) // 过滤掉"未指定"的快递类型
 
         console.log("最终格式化的饼图数据:", formattedData)
 

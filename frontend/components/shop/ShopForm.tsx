@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -19,7 +20,7 @@ import {
 
 // 表单验证schema
 const shopFormSchema = z.object({
-  name: z.string().min(1, '店铺名称不能为空').max(50, '店铺名称不能超过50个字符'),
+  name: z.string().min(1, t("店铺名称不能为空")).max(50, t("店铺名称不能超过50个字符")),
   category_id: z.number().optional().or(z.string().optional().transform(val => val ? Number(val) : undefined)),
   remark: z.string().optional(),
   is_active: z.boolean().default(true),
@@ -36,6 +37,10 @@ interface ShopFormProps {
 }
 
 const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmitting }: ShopFormProps) => {
+  const {
+    t: t
+  } = useTranslation();
+
   const form = useForm<ShopFormValues>({
     resolver: zodResolver(shopFormSchema),
     defaultValues: {
@@ -59,16 +64,16 @@ const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmit
   }, [initialValues, form]);
 
   return (
-    <Form {...form}>
+    (<Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>店铺名称 *</FormLabel>
+              <FormLabel>{t("店铺名称 *")}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="请输入店铺名称" />
+                <Input {...field} placeholder={t("请输入店铺名称")} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -80,14 +85,14 @@ const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmit
           name="category_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>所属类别</FormLabel>
+              <FormLabel>{t("所属类别")}</FormLabel>
               <Select
                 onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
                 value={field.value?.toString()}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="选择店铺所属类别" />
+                    <SelectValue placeholder={t("选择店铺所属类别")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -108,11 +113,11 @@ const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmit
           name="remark"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>备注</FormLabel>
+              <FormLabel>{t("备注")}</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
-                  placeholder="请输入备注信息（选填）"
+                  placeholder={t("请输入备注信息（选填）")}
                   className="resize-none"
                 />
               </FormControl>
@@ -126,7 +131,7 @@ const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmit
           name="is_active"
           render={({ field }) => (
             <FormItem className="space-y-3">
-              <FormLabel>状态</FormLabel>
+              <FormLabel>{t("状态")}</FormLabel>
               <FormControl>
                 <RadioGroup
                   onValueChange={(value) => field.onChange(value === 'true')}
@@ -135,11 +140,11 @@ const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmit
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="true" id="active" />
-                    <Label htmlFor="active">启用</Label>
+                    <Label htmlFor="active">{t("启用")}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="false" id="inactive" />
-                    <Label htmlFor="inactive">禁用</Label>
+                    <Label htmlFor="inactive">{t("禁用")}</Label>
                   </div>
                 </RadioGroup>
               </FormControl>
@@ -150,16 +155,14 @@ const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmit
 
         <div className="flex justify-end space-x-2 pt-4">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              取消
-            </Button>
+            <Button type="button" variant="outline" onClick={onCancel}>{t("取消")}</Button>
           )}
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? '提交中...' : initialValues?.id ? '更新' : '添加'}
           </Button>
         </div>
       </form>
-    </Form>
+    </Form>)
   );
 };
 

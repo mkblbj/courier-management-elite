@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
       Dialog,
@@ -30,6 +31,10 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 // 排序项组件
 const SortableShopItem = ({ shop }: { shop: Shop }) => {
+      const {
+            t: t
+      } = useTranslation();
+
       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
             id: shop.id.toString(),
       });
@@ -73,6 +78,10 @@ const CategoryShopList = ({
       shops: Shop[];
       onDragEnd: (event: DragEndEvent, categoryId: number) => void;
 }) => {
+      const {
+            t: t
+      } = useTranslation();
+
       const sensors = useSensors(
             useSensor(PointerSensor),
             useSensor(KeyboardSensor, {
@@ -81,10 +90,9 @@ const CategoryShopList = ({
       );
 
       return (
-            <div className="mb-4">
+            (<div className="mb-4">
                   <div className="bg-gray-100 p-2 font-medium text-gray-700 rounded-t-md">
-                        {category.name} ({shops.length}家店铺)
-                  </div>
+                        {category.name} ({shops.length}{t("家店铺)")}</div>
                   <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
@@ -100,12 +108,12 @@ const CategoryShopList = ({
                                           <SortableShopItem key={shop.id} shop={shop} />
                                     ))}
                                     {shops.length === 0 && (
-                                          <div className="p-3 text-gray-500 text-sm italic">此类别下暂无店铺</div>
+                                          <div className="p-3 text-gray-500 text-sm italic">{t("此类别下暂无店铺")}</div>
                                     )}
                               </div>
                         </SortableContext>
                   </DndContext>
-            </div>
+            </div>)
       );
 };
 
@@ -124,6 +132,10 @@ const ShopSortModal = ({
       categories,
       onSortSave,
 }: ShopSortModalProps) => {
+      const {
+            t: t
+      } = useTranslation();
+
       const [sortedShops, setSortedShops] = useState<Shop[]>([]);
       const [loading, setLoading] = useState(false);
 
@@ -135,6 +147,10 @@ const ShopSortModal = ({
       }, [open, shops]);
 
       const handleDragEnd = (event: DragEndEvent, categoryId: number) => {
+            const {
+                  t: t
+            } = useTranslation();
+
             const { active, over } = event;
             if (!over || active.id === over.id) return;
 
@@ -165,6 +181,10 @@ const ShopSortModal = ({
       };
 
       const handleSave = async () => {
+            const {
+                  t: t
+            } = useTranslation();
+
             try {
                   setLoading(true);
                   await onSortSave(sortedShops);
@@ -177,10 +197,10 @@ const ShopSortModal = ({
       };
 
       return (
-            <Dialog open={open} onOpenChange={onOpenChange}>
+            (<Dialog open={open} onOpenChange={onOpenChange}>
                   <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-2xl">
                         <DialogHeader>
-                              <DialogTitle>调整店铺排序</DialogTitle>
+                              <DialogTitle>{t("调整店铺排序")}</DialogTitle>
                         </DialogHeader>
                         <div className="max-h-[60vh] overflow-y-auto py-2">
                               {categories
@@ -194,7 +214,7 @@ const ShopSortModal = ({
                                           />
                                     ))}
                               {categories.length === 0 && (
-                                    <div className="text-center py-8 text-gray-500">暂无店铺类别</div>
+                                    <div className="text-center py-8 text-gray-500">{t("暂无店铺类别")}</div>
                               )}
                         </div>
                         <DialogFooter>
@@ -202,9 +222,7 @@ const ShopSortModal = ({
                                     variant="outline"
                                     onClick={() => onOpenChange(false)}
                                     disabled={loading}
-                              >
-                                    取消
-                              </Button>
+                              >{t("取消")}</Button>
                               <Button
                                     onClick={handleSave}
                                     disabled={loading}
@@ -213,7 +231,7 @@ const ShopSortModal = ({
                               </Button>
                         </DialogFooter>
                   </DialogContent>
-            </Dialog>
+            </Dialog>)
       );
 };
 

@@ -67,7 +67,7 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
   const formSchema = createBatchFormSchema(
     courierTypes
       .filter((ct) => Boolean(ct.is_active))
-      .filter((ct) => !ct.name.includes("未指定")) // 过滤掉未指定的快递类型
+      .filter((ct) => !ct.name.includes(t("未指定"))) // 过滤掉未指定的快递类型
       .map((ct) => ct.id.toString()),
     t
   )

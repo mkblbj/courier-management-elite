@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,10 @@ interface OutputDataDialogProps {
 }
 
 export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDialogProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   const isEditMode = !!output;
   const { toast } = useToast();
   const [couriers, setCouriers] = useState<{ id: number, name: string }[]>([]);
@@ -55,6 +60,10 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   useEffect(() => {
     // 获取快递类型数据
     const fetchCouriers = async () => {
+      const {
+        t: t
+      } = useTranslation();
+
       try {
         const data = await getCouriers(true);
         setCouriers(data);
@@ -72,6 +81,10 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   }, [toast]);
 
   const validate = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     const newErrors: Record<string, string> = {};
 
     if (!formData.shop_id) {
@@ -97,6 +110,10 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   };
 
   const handleChange = (name: string, value: string) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -104,6 +121,10 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   };
 
   const handleDateSelect = (date: Date | undefined) => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (date) {
       setSelectedDate(date);
       setFormData(prev => ({ ...prev, date: dateToApiString(date) }));
@@ -114,6 +135,10 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   };
 
   const handleSubmit = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!validate()) {
       return;
     }
@@ -157,21 +182,21 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+    (<Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{isEditMode ? '编辑出力数据' : '添加出力数据'}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="shop" className="text-right">店铺</Label>
+            <Label htmlFor="shop" className="text-right">{t("店铺")}</Label>
             <div className="col-span-3">
               <Select
                 value={formData.shop_id}
                 onValueChange={(value) => handleChange('shop_id', value)}
               >
                 <SelectTrigger id="shop">
-                  <SelectValue placeholder="选择店铺" />
+                  <SelectValue placeholder={t("选择店铺")} />
                 </SelectTrigger>
                 <SelectContent>
                   {shops.map(shop => (
@@ -186,14 +211,14 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="courier" className="text-right">快递类型</Label>
+            <Label htmlFor="courier" className="text-right">{t("快递类型")}</Label>
             <div className="col-span-3">
               <Select
                 value={formData.courier_id}
                 onValueChange={(value) => handleChange('courier_id', value)}
               >
                 <SelectTrigger id="courier">
-                  <SelectValue placeholder="选择快递类型" />
+                  <SelectValue placeholder={t("选择快递类型")} />
                 </SelectTrigger>
                 <SelectContent>
                   {couriers.map(courier => (
@@ -208,7 +233,7 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right">日期</Label>
+            <Label htmlFor="date" className="text-right">{t("日期")}</Label>
             <div className="col-span-3">
               <Popover>
                 <PopoverTrigger asChild>
@@ -220,7 +245,7 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? formatDisplayDate(selectedDate) : <span>选择日期</span>}
+                    {selectedDate ? formatDisplayDate(selectedDate) : <span>{t("选择日期")}</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -237,7 +262,7 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="output_count" className="text-right">出力件数</Label>
+            <Label htmlFor="output_count" className="text-right">{t("出力件数")}</Label>
             <div className="col-span-3">
               <Input
                 id="output_count"
@@ -251,14 +276,12 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onClose()} disabled={isSubmitting}>
-            取消
-          </Button>
+          <Button variant="outline" onClick={() => onClose()} disabled={isSubmitting}>{t("取消")}</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? '保存中...' : '保存'}
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+    </Dialog>)
   );
 } 

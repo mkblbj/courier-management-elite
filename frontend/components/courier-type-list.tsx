@@ -213,7 +213,7 @@ export const CourierTypeList: React.FC<CourierTypeListProps> = ({
       };
 
       return (
-            <div className="space-y-6">
+            (<div className="space-y-6">
                   <div className="flex justify-between items-center">
                         <div className="flex gap-4">
                               {searchVisible && (
@@ -238,7 +238,6 @@ export const CourierTypeList: React.FC<CourierTypeListProps> = ({
                               )}
                         </div>
                   </div>
-
                   {isLoading ? (
                         <div className="rounded-md border p-8 text-center">
                               <p className="text-muted-foreground">{t('common:loading')}</p>
@@ -255,7 +254,7 @@ export const CourierTypeList: React.FC<CourierTypeListProps> = ({
                         </div>
                   ) : (
                         // 按类别分组显示快递类型
-                        <div className="space-y-6">
+                        (<div className="space-y-6">
                               {Object.entries(groupedTypes).map(([categoryId, types]) => {
                                     if (types.length === 0) return null;
 
@@ -327,9 +326,8 @@ export const CourierTypeList: React.FC<CourierTypeListProps> = ({
                                           </div>
                                     );
                               })}
-                        </div>
+                        </div>)
                   )}
-
                   {/* 删除确认对话框 */}
                   {selectedType && (
                         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -349,7 +347,6 @@ export const CourierTypeList: React.FC<CourierTypeListProps> = ({
                               </AlertDialogContent>
                         </AlertDialog>
                   )}
-
                   {/* 添加和编辑对话框使用现有的 CourierTypeDialog 组件 */}
                   <CourierTypeDialog
                         open={showAddDialog}
@@ -359,7 +356,6 @@ export const CourierTypeList: React.FC<CourierTypeListProps> = ({
                         availableCategories={categories}
                         courierType={null}
                   />
-
                   {selectedType && (
                         <CourierTypeDialog
                               open={showEditDialog}
@@ -370,7 +366,7 @@ export const CourierTypeList: React.FC<CourierTypeListProps> = ({
                               availableCategories={categories}
                         />
                   )}
-            </div>
+            </div>)
       );
 };
 

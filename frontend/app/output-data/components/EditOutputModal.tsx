@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { useTranslation } from "react-i18next";
 
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -51,6 +52,10 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       onSave,
       isLoading
 }) => {
+      const {
+            t: t
+      } = useTranslation();
+
       const [editedOutput, setEditedOutput] = useState<ShopOutput>({ ...output });
       const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -74,6 +79,10 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       }, [open, output, form]);
 
       const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+            const {
+                  t: t
+            } = useTranslation();
+
             const { name, value } = e.target;
             setEditedOutput(prev => ({
                   ...prev,
@@ -82,6 +91,10 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       };
 
       const handleShopChange = (shopId: number | undefined) => {
+            const {
+                  t: t
+            } = useTranslation();
+
             setEditedOutput(prev => ({
                   ...prev,
                   shop_id: shopId as number
@@ -89,6 +102,10 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       };
 
       const handleCourierChange = (courierId: number | undefined) => {
+            const {
+                  t: t
+            } = useTranslation();
+
             setEditedOutput(prev => ({
                   ...prev,
                   courier_id: courierId as number
@@ -96,6 +113,10 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       };
 
       const handleSave = async () => {
+            const {
+                  t: t
+            } = useTranslation();
+
             if (!editedOutput.shop_id || !editedOutput.courier_id || !editedOutput.quantity) {
                   toast({
                         title: "表单不完整",
@@ -123,6 +144,10 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       };
 
       const onSubmit = async (data: FormData) => {
+            const {
+                  t: t
+            } = useTranslation();
+
             if (!output) return;
 
             // 保留原始output对象的所有字段，只更新quantity和notes
@@ -143,42 +168,40 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       if (!output) return null;
 
       return (
-            <Dialog open={open} onOpenChange={onOpenChange}>
+            (<Dialog open={open} onOpenChange={onOpenChange}>
                   <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
-                              <DialogTitle>编辑出力数据</DialogTitle>
-                              <DialogDescription>
-                                    修改店铺出力数据，只有数量和备注可以编辑
-                              </DialogDescription>
+                              <DialogTitle>{t("编辑出力数据")}</DialogTitle>
+                              <DialogDescription>{t("修改店铺出力数据，只有数量和备注可以编辑")}</DialogDescription>
                         </DialogHeader>
 
                         <Form {...form}>
                               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                                     {/* 日期 (只读显示) */}
                                     <div className="grid gap-2">
-                                          <label className="text-sm font-medium">日期</label>
+                                          <label className="text-sm font-medium">{t("日期")}</label>
                                           <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
                                                 {formattedDate}
                                           </div>
-                                          <p className="text-xs text-muted-foreground">日期不可编辑</p>
+                                          <p className="text-xs text-muted-foreground">{t("日期不可编辑")}</p>
                                     </div>
 
                                     {/* 店铺名称 (只读显示) */}
                                     <div className="grid gap-2">
-                                          <label className="text-sm font-medium">店铺名称</label>
+                                          <label className="text-sm font-medium">{t("店铺名称")}</label>
                                           <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
                                                 {output.shop_name || "未知"}
                                           </div>
-                                          <p className="text-xs text-muted-foreground">店铺不可编辑</p>
+                                          <p className="text-xs text-muted-foreground">{t("店铺不可编辑")}</p>
                                     </div>
 
                                     {/* 快递类型 (只读显示) */}
                                     <div className="grid gap-2">
-                                          <label className="text-sm font-medium">快递类型</label>
+                                          <label className="text-sm font-medium">{t("快递类型")}</label>
                                           <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
                                                 {output.courier_name || "未知"}
                                           </div>
-                                          <p className="text-xs text-muted-foreground">快递类型不可编辑</p>
+                                          <p className="text-xs text-muted-foreground">{t("快递类型不可编辑")}</p>
                                     </div>
 
                                     {/* 数量 (可编辑) */}
@@ -187,7 +210,7 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
                                           name="quantity"
                                           render={({ field }) => (
                                                 <FormItem>
-                                                      <FormLabel>数量</FormLabel>
+                                                      <FormLabel>{t("数量")}</FormLabel>
                                                       <FormControl>
                                                             <Input
                                                                   {...field}
@@ -207,11 +230,11 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
                                           name="notes"
                                           render={({ field }) => (
                                                 <FormItem>
-                                                      <FormLabel>备注</FormLabel>
+                                                      <FormLabel>{t("备注")}</FormLabel>
                                                       <FormControl>
                                                             <Textarea
                                                                   {...field}
-                                                                  placeholder="请输入备注（可选）"
+                                                                  placeholder={t("请输入备注（可选）")}
                                                                   className="resize-none"
                                                                   disabled={isLoading}
                                                             />
@@ -227,22 +250,18 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
                                                 variant="outline"
                                                 onClick={() => onOpenChange(false)}
                                                 disabled={isLoading}
-                                          >
-                                                取消
-                                          </Button>
+                                          >{t("取消")}</Button>
                                           <Button type="submit" disabled={isLoading}>
                                                 {isLoading ? (
                                                       <>
-                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                            保存中...
-                                                      </>
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("保存中...")}</>
                                                 ) : "保存"}
                                           </Button>
                                     </DialogFooter>
                               </form>
                         </Form>
                   </DialogContent>
-            </Dialog>
+            </Dialog>)
       );
 };
 

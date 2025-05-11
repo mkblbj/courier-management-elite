@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { useTranslation } from "react-i18next";
 
 import { Suspense, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +26,10 @@ import { isSameDay } from "date-fns";
 import { dateToApiString, apiStringToDate } from "@/lib/date-utils";
 
 export default function OutputDataPage() {
+  const {
+    t: t
+  } = useTranslation();
+
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedShopId, setSelectedShopId] = useState<number | undefined>(undefined);
   const [selectedCourierId, setSelectedCourierId] = useState<number | undefined>(undefined);
@@ -38,6 +43,10 @@ export default function OutputDataPage() {
   const [deletingOutput, setDeletingOutput] = useState<ShopOutput | null>(null);
 
   const handleAddRecord = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!selectedDate || !selectedShopId || !selectedCourierId || !quantity || parseInt(quantity) <= 0) {
       toast({
         title: "表单不完整",
@@ -81,11 +90,19 @@ export default function OutputDataPage() {
   };
 
   const handleEditOutput = async (output: ShopOutput) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setEditingOutput(output);
     // 设置表单初始值将在编辑对话框组件中处理
   };
 
   const handleUpdateOutput = async (updatedOutput: ShopOutput) => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!updatedOutput.id) return;
 
     // 保存当前选中的日期，以便在更新后恢复
@@ -171,6 +188,10 @@ export default function OutputDataPage() {
   };
 
   const handleDeleteOutput = async (id: string | number) => {
+    const {
+      t: t
+    } = useTranslation();
+
     try {
       // 根据 ID 获取要删除的出力数据详情
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shop-outputs/${id}`);
@@ -196,6 +217,10 @@ export default function OutputDataPage() {
   };
 
   const confirmDelete = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (!deletingOutput) return;
 
     // 保存当前选中的日期，以便在删除后恢复
@@ -228,6 +253,10 @@ export default function OutputDataPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (e.key === 'Enter' && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
       const activeElement = document.activeElement;
       const isTextarea = activeElement instanceof HTMLTextAreaElement;
@@ -240,15 +269,15 @@ export default function OutputDataPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    (<div className="min-h-screen bg-gray-50">
       <DashboardHeader />
       <DashboardNav />
       <main className="container mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold tracking-tight mb-6">出力数据</h1>
+        <h1 className="text-2xl font-bold tracking-tight mb-6">{t("出力数据")}</h1>
 
         <Card className="mb-6">
           <CardHeader className="px-6 py-4 border-b">
-            <CardTitle className="text-xl">录入出力数据</CardTitle>
+            <CardTitle className="text-xl">{t("录入出力数据")}</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
@@ -258,7 +287,7 @@ export default function OutputDataPage() {
                     date={selectedDate}
                     onDateChange={(date) => date && setSelectedDate(date)}
                     showQuickButtons={true}
-                    label="日期"
+                    label={t("日期")}
                     className="w-full"
                   />
                 </div>
@@ -266,7 +295,7 @@ export default function OutputDataPage() {
                   <CategoryShopSelector
                     selectedShopId={selectedShopId}
                     onSelectShop={setSelectedShopId}
-                    label="店铺选择"
+                    label={t("店铺选择")}
                     onlyActive={true}
                     className="w-full"
                   />
@@ -278,16 +307,16 @@ export default function OutputDataPage() {
                   <CourierSelector
                     selectedCourierId={selectedCourierId}
                     onSelectCourier={setSelectedCourierId}
-                    label="快递类型"
+                    label={t("快递类型")}
                     onlyActive={true}
                     className="w-full"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">数量</label>
+                  <label className="block text-sm font-medium mb-1">{t("数量")}</label>
                   <Input
                     type="number"
-                    placeholder="请输入数量"
+                    placeholder={t("请输入数量")}
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -299,9 +328,9 @@ export default function OutputDataPage() {
 
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">备注</label>
+                  <label className="block text-sm font-medium mb-1">{t("备注")}</label>
                   <Textarea
-                    placeholder="请输入备注（可选）"
+                    placeholder={t("请输入备注（可选）")}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     className="w-full h-10 min-h-10 resize-none"
@@ -317,23 +346,19 @@ export default function OutputDataPage() {
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      添加中...
-                    </>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("添加中...")}</>
                   ) : "添加记录"}
                 </Button>
               </div>
 
-              <div className="text-xs text-muted-foreground mt-2 text-right">
-                提示：按Enter键可快速提交表单
-              </div>
+              <div className="text-xs text-muted-foreground mt-2 text-right">{t("提示：按Enter键可快速提交表单")}</div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader className="px-6 py-4">
-            <CardTitle className="text-xl">最近录入数据</CardTitle>
+            <CardTitle className="text-xl">{t("最近录入数据")}</CardTitle>
           </CardHeader>
           <CardContent className="px-6 pb-6">
             <Suspense fallback={<ListSkeleton />}>
@@ -350,7 +375,7 @@ export default function OutputDataPage() {
 
         <Card className="mb-6">
           <CardHeader className="px-6 py-4">
-            <CardTitle className="text-xl">当日数据汇总</CardTitle>
+            <CardTitle className="text-xl">{t("当日数据汇总")}</CardTitle>
           </CardHeader>
           <CardContent className="px-6 pb-6">
             <Suspense fallback={<ListSkeleton />}>
@@ -362,7 +387,6 @@ export default function OutputDataPage() {
           </CardContent>
         </Card>
       </main>
-
       {/* 编辑出力数据对话框 */}
       <EditOutputModal
         output={editingOutput}
@@ -371,7 +395,6 @@ export default function OutputDataPage() {
         onSave={handleUpdateOutput}
         isLoading={isLoading}
       />
-
       {/* 删除确认对话框 */}
       <DeleteOutputModal
         output={deletingOutput}
@@ -380,11 +403,15 @@ export default function OutputDataPage() {
         onConfirm={confirmDelete}
         isLoading={isLoading}
       />
-    </div>
+    </div>)
   );
 }
 
 function ListSkeleton() {
+  const {
+    t: t
+  } = useTranslation();
+
   return (
     <div className="space-y-3">
       <Skeleton className="h-10 w-full" />

@@ -26,20 +26,20 @@ export default function StatsPage() {
   const [activeTab, setActiveTab] = useState("table")
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
 
-  const { 
-    data, 
-    isLoading, 
-    error, 
-    timeRange, 
+  const {
+    data,
+    isLoading,
+    error,
+    timeRange,
     courierTypeFilter,
     viewMode,
     expandedItems,
-    setTimeRange, 
+    setTimeRange,
     setCourierTypeFilter,
     setViewMode,
     toggleItemExpanded,
     toggleAllExpanded,
-    refetch 
+    refetch
   } = useStatisticsData()
 
   useEffect(() => {
@@ -75,9 +75,9 @@ export default function StatsPage() {
       <DashboardHeader />
       <DashboardNav />
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
-        <PageHeader 
-          title={t("统计分析")} 
-          description={t("查看和导出发货数据统计分析")} 
+        <PageHeader
+          title={t("统计分析")}
+          description={t("查看和导出发货数据统计分析")}
           className="max-w-5xl mx-auto"
           action={
             <Button
@@ -137,10 +137,10 @@ export default function StatsPage() {
                 </TabsList>
 
                 <TabsContent value="table" className="animate-fade-in">
-                  <StatisticsTable 
-                    data={data} 
-                    isLoading={isLoading} 
-                    error={error} 
+                  <StatisticsTable
+                    data={data}
+                    isLoading={isLoading}
+                    error={error}
                     onRetry={refetch}
                     viewMode={viewMode}
                     onViewModeChange={setViewMode}
@@ -151,11 +151,11 @@ export default function StatsPage() {
                 </TabsContent>
 
                 <TabsContent value="chart" className="animate-fade-in">
-                  <StatisticsChart 
-                    data={data} 
-                    isLoading={isLoading} 
-                    error={error} 
-                    onRetry={refetch} 
+                  <StatisticsChart
+                    data={data}
+                    isLoading={isLoading}
+                    error={error}
+                    onRetry={refetch}
                     viewMode={viewMode}
                     onViewModeChange={setViewMode}
                   />
@@ -174,12 +174,12 @@ export default function StatsPage() {
 
         <Tabs defaultValue="general" className="w-full">
           <TabsList className="mb-6">
-            <TabsTrigger value="general">一般统计</TabsTrigger>
-            <TabsTrigger value="shop-output">出力统计</TabsTrigger>
+            <TabsTrigger value="general">{t("一般统计")}</TabsTrigger>
+            <TabsTrigger value="shop-output">{t("出力统计")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general">
-            <div className="text-center p-12 text-muted-foreground">一般统计内容</div>
+            <div className="text-center p-12 text-muted-foreground">{t("一般统计内容")}</div>
           </TabsContent>
 
           <TabsContent value="shop-output">

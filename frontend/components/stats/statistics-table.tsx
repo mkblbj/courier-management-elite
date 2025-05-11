@@ -151,7 +151,6 @@ export function StatisticsTable({
           </CardContent>
         </Card>
       </div>
-
       {/* 按快递类型统计表格 */}
       <div>
         <div className="flex justify-between items-center mb-3">
@@ -214,7 +213,7 @@ export function StatisticsTable({
             <TableBody>
               {viewMode === "flat" ? (
                 // 平铺视图
-                <>
+                (<>
                   {data.byCourier.map((item) => (
                     <TableRow key={item.courierId}>
                       <TableCell className="font-medium">{item.courierName}</TableCell>
@@ -225,18 +224,14 @@ export function StatisticsTable({
                       <TableCell className="text-right">{item.recordCount}</TableCell>
                     </TableRow>
                   ))}
-                </>
+                </>)
               ) : (
                 // 层级视图
-                data.hierarchical && data.hierarchical.length > 0 ? (
-                  renderHierarchicalRows(data.hierarchical)
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
-                      {t("暂无层级数据")}
-                    </TableCell>
-                  </TableRow>
-                )
+                (data.hierarchical && data.hierarchical.length > 0 ? (renderHierarchicalRows(data.hierarchical)) : (<TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                    {t("暂无层级数据")}
+                  </TableCell>
+                </TableRow>))
               )}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-bold">{t("总计")}</TableCell>
@@ -248,7 +243,6 @@ export function StatisticsTable({
           </Table>
         </div>
       </div>
-
       {/* 按日期统计表格 */}
       <div>
         <div className="flex justify-between items-center mb-3">

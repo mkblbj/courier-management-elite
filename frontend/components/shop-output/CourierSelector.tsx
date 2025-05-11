@@ -103,14 +103,14 @@ export const CourierSelector: React.FC<CourierSelectorProps> = ({
     // 显示快递类型名称，如果有类别则一并显示
     // @ts-ignore - 忽略类型错误，我们知道selectedCourier有category_id字段
     const category = categories.find(c => Number(c.id) === Number(selectedCourier.category_id));
-    if (category && selectedCourier.name.includes('未指定')) {
+    if (category && selectedCourier.name.includes(t("未指定"))) {
       return `${category.name}`;
     }
     return selectedCourier.name;
   };
 
   return (
-    <div className={cn("flex flex-col space-y-1", className)}>
+    (<div className={cn("flex flex-col space-y-1", className)}>
       {label && <span className="text-sm font-medium">{label}</span>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -174,8 +174,7 @@ export const CourierSelector: React.FC<CourierSelectorProps> = ({
                             : "opacity-0"
                         )}
                       />
-                      {group.category.name} - 未指定
-                    </CommandItem>
+                      {group.category.name}{t("- 未指定")}</CommandItem>
 
                     {/* 显示该类别下的具体快递类型 */}
                     {group.couriers
@@ -206,7 +205,7 @@ export const CourierSelector: React.FC<CourierSelectorProps> = ({
           </Command>
         </PopoverContent>
       </Popover>
-    </div>
+    </div>)
   );
 };
 

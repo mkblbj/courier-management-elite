@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { useTranslation } from "react-i18next";
 
 import React, { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
@@ -64,6 +65,10 @@ interface OutputListProps {
 }
 
 export default function OutputList({ onEdit, onDelete, selectedDate: propSelectedDate, onDateChange }: OutputListProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   // 状态定义
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +88,10 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
   // 加载商店、分类和快递类型数据
   useEffect(() => {
     const fetchData = async () => {
+      const {
+        t: t
+      } = useTranslation();
+
       try {
         // 获取店铺类别
         const categoriesData = await getShopCategories();
@@ -108,7 +117,7 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
         })));
       } catch (err) {
         console.error("Failed to load reference data:", err);
-        setError("加载基础数据失败，请刷新页面重试");
+        setError(t("加载基础数据失败，请刷新页面重试"));
       }
     };
 
@@ -117,6 +126,10 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
 
   // 加载数据的函数
   const loadData = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setLoading(true);
     setError(null);
     try {
@@ -188,7 +201,7 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
       }, 100);
     } catch (err) {
       console.error("Failed to load recent outputs:", err);
-      setError("加载数据失败，请重试");
+      setError(t("加载数据失败，请重试"));
     } finally {
       setLoading(false);
     }
@@ -204,6 +217,10 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
 
   // 处理日期变化
   const handleDateChange = (date: Date | undefined) => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (date) {
       console.log("日期已更改为:", dateToApiString(date));
 
@@ -217,21 +234,37 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
 
   // 处理快递类型变化
   const handleCourierTypeChange = (id: number | undefined) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setCourierTypeId(id);
   };
 
   // 处理店铺类型变化
   const handleShopTypeChange = (id: number | undefined) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setShopTypeId(id);
   };
 
   // 处理店铺变化
   const handleShopChange = (id: number | undefined) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setShopId(id);
   };
 
   // 清除所有筛选条件
   const handleClearFilters = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     // 重置所有筛选条件，包括将日期设置为今天
     const today = getTodayInAppTimezone();
     if (onDateChange) {
@@ -246,17 +279,24 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
 
   // 刷新数据
   const handleRefresh = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setRefreshKey(prev => prev + 1);
   };
 
   // 获取筛选条件描述
   const getFilterDescription = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     const filters = [];
 
     if (selectedDate) {
       filters.push(
-        <Badge key="date" variant="default" className="bg-blue-500 text-white font-medium">
-          日期: {dateToApiString(selectedDate)}
+        <Badge key="date" variant="default" className="bg-blue-500 text-white font-medium">{t("日期:")}{dateToApiString(selectedDate)}
         </Badge>
       );
     }
@@ -264,8 +304,7 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
     if (courierTypeId) {
       const courierName = couriers.find(c => c.id === courierTypeId)?.name || courierTypeId;
       filters.push(
-        <Badge key="courier" variant="default" className="bg-green-500 text-white font-medium">
-          快递类型: {courierName}
+        <Badge key="courier" variant="default" className="bg-green-500 text-white font-medium">{t("快递类型:")}{courierName}
         </Badge>
       );
     }
@@ -273,8 +312,7 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
     if (shopTypeId) {
       const categoryName = categories.find(c => c.id === shopTypeId)?.name || shopTypeId;
       filters.push(
-        <Badge key="category" variant="default" className="bg-purple-500 text-white font-medium">
-          店铺类型: {categoryName}
+        <Badge key="category" variant="default" className="bg-purple-500 text-white font-medium">{t("店铺类型:")}{categoryName}
         </Badge>
       );
     }
@@ -282,8 +320,7 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
     if (shopId) {
       const shopName = shops.find(s => s.id === shopId)?.name || shopId;
       filters.push(
-        <Badge key="shop" variant="default" className="bg-orange-500 text-white font-medium">
-          店铺: {shopName}
+        <Badge key="shop" variant="default" className="bg-orange-500 text-white font-medium">{t("店铺:")}{shopName}
         </Badge>
       );
     }
@@ -339,7 +376,7 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
   }, [recentOutputs, shops, categories]);
 
   return (
-    <div className="space-y-4">
+    (<div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <DateSelector
           date={selectedDate}
@@ -353,10 +390,10 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
           onValueChange={(value) => handleCourierTypeChange(value === "all" ? undefined : parseInt(value))}
         >
           <SelectTrigger className="w-auto min-w-[140px]">
-            <SelectValue placeholder="选择快递类型" />
+            <SelectValue placeholder={t("选择快递类型")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部快递类型</SelectItem>
+            <SelectItem value="all">{t("全部快递类型")}</SelectItem>
             {couriers.map((courier) => (
               <SelectItem key={courier.id} value={courier.id.toString()}>
                 {courier.name}
@@ -369,10 +406,10 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
           onValueChange={(value) => handleShopTypeChange(value === "all" ? undefined : parseInt(value))}
         >
           <SelectTrigger className="w-auto min-w-[140px]">
-            <SelectValue placeholder="选择店铺类型" />
+            <SelectValue placeholder={t("选择店铺类型")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部店铺类型</SelectItem>
+            <SelectItem value="all">{t("全部店铺类型")}</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id.toString()}>
                 {category.name}
@@ -385,10 +422,10 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
           onValueChange={(value) => handleShopChange(value === "all" ? undefined : parseInt(value))}
         >
           <SelectTrigger className="w-auto min-w-[140px]">
-            <SelectValue placeholder="选择店铺" />
+            <SelectValue placeholder={t("选择店铺")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部店铺</SelectItem>
+            <SelectItem value="all">{t("全部店铺")}</SelectItem>
             {shops.map((shop) => (
               <SelectItem key={shop.id} value={shop.id.toString()}>
                 {shop.name}
@@ -403,38 +440,32 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
             onClick={handleClearFilters}
             disabled={loading}
           >
-            <X className="h-4 w-4 mr-1" />
-            重置
-          </Button>
+            <X className="h-4 w-4 mr-1" />{t("重置")}</Button>
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
             disabled={loading}
           >
-            <RefreshCw className={cn("h-4 w-4 mr-1", { "animate-spin": loading })} />
-            刷新
-          </Button>
+            <RefreshCw className={cn("h-4 w-4 mr-1", { "animate-spin": loading })} />{t("刷新")}</Button>
         </div>
       </div>
-
       {getFilterDescription() && (
         <div className="flex flex-wrap gap-2 my-3 p-2 bg-gray-50 rounded-md border">
-          <span className="text-sm font-medium">筛选条件:</span>
+          <span className="text-sm font-medium">{t("筛选条件:")}</span>
           {getFilterDescription()}
         </div>
       )}
-
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>日期</TableHead>
-              <TableHead>店铺名称</TableHead>
-              <TableHead>快递类型</TableHead>
-              <TableHead className="text-right">数量</TableHead>
-              <TableHead>备注</TableHead>
-              <TableHead className="text-right">操作</TableHead>
+              <TableHead>{t("日期")}</TableHead>
+              <TableHead>{t("店铺名称")}</TableHead>
+              <TableHead>{t("快递类型")}</TableHead>
+              <TableHead className="text-right">{t("数量")}</TableHead>
+              <TableHead>{t("备注")}</TableHead>
+              <TableHead className="text-right">{t("操作")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -505,20 +536,20 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
                             variant="ghost"
                             size="icon"
                             onClick={() => onEdit?.(output)}
-                            title="编辑"
+                            title={t("编辑")}
                           >
                             <Edit className="h-4 w-4" />
-                            <span className="sr-only">编辑</span>
+                            <span className="sr-only">{t("编辑")}</span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => onDelete?.(output.id)}
-                            title="删除"
+                            title={t("删除")}
                             className="text-destructive hover:text-destructive/90"
                           >
                             <Trash className="h-4 w-4" />
-                            <span className="sr-only">删除</span>
+                            <span className="sr-only">{t("删除")}</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -528,20 +559,17 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  暂无数据
-                </TableCell>
+                <TableCell colSpan={6} className="h-24 text-center">{t("暂无数据")}</TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-
       {error && (
         <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
           {error}
         </div>
       )}
-    </div>
+    </div>)
   );
 }

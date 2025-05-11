@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { useTranslation } from "react-i18next";
 
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
@@ -56,6 +57,10 @@ interface OutputSummaryProps {
 }
 
 export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
+  const {
+    t: t
+  } = useTranslation();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [todayOutputs, setTodayOutputs] = useState<ShopOutput[]>([]);
@@ -78,6 +83,10 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   }, [selectedDate, refreshKey]);
 
   const fetchCategories = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     try {
       const data = await getShopCategories({ sort: "sort_order" });
       setCategories(data);
@@ -87,6 +96,10 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   };
 
   const fetchShops = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     try {
       const data = await getShops({ withCategory: true });
       setShops(data);
@@ -97,6 +110,10 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   };
 
   const fetchTodayData = async () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setLoading(true);
     setError(null);
 
@@ -116,7 +133,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
       setTodayOutputs(data);
     } catch (err) {
       console.error("Failed to fetch today's outputs:", err);
-      setError("获取出力数据失败，请重试");
+      setError(t("获取出力数据失败，请重试"));
     } finally {
       setLoading(false);
     }
@@ -124,6 +141,10 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
 
   // 获取店铺类别名称
   const getShopCategoryName = (shopId: number): string => {
+    const {
+      t: t
+    } = useTranslation();
+
     const shop = shops.find(s => s.id === shopId);
     if (shop && shop.category_id) {
       const category = categories.find(c => c.id === shop.category_id);
@@ -133,10 +154,18 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   };
 
   const handleRefresh = () => {
+    const {
+      t: t
+    } = useTranslation();
+
     setRefreshKey(prevKey => prevKey + 1);
   };
 
   const handleCategoryChange = (value: string) => {
+    const {
+      t: t
+    } = useTranslation();
+
     setSelectedCategory(value);
     // 当类别变化时触发数据刷新
     setTimeout(() => fetchTodayData(), 0);
@@ -221,6 +250,10 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
 
   // 自定义工具提示
   const CustomTooltip = ({ active, payload, label }: any) => {
+    const {
+      t: t
+    } = useTranslation();
+
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-2 border rounded shadow-sm text-sm">
@@ -237,13 +270,13 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   };
 
   return (
-    <Card className="shadow-sm">
+    (<Card className="shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-          <CardTitle>{selectedDate ? formatDisplayDate(selectedDate) : '今日'}数据汇总</CardTitle>
+          <CardTitle>{selectedDate ? formatDisplayDate(selectedDate) : '今日'}{t("数据汇总")}</CardTitle>
           {!loading && todayOutputs.length > 0 && (
             <CardDescription className="mt-1.5">
-              共{shopSummaryArray.length}家店铺，总出力量：{totalQuantity}
+              共{shopSummaryArray.length}{t("家店铺，总出力量：")}{totalQuantity}
             </CardDescription>
           )}
         </div>
@@ -251,10 +284,10 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
           {categories.length > 0 && (
             <Select value={selectedCategory} onValueChange={handleCategoryChange}>
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="选择类别" />
+                <SelectValue placeholder={t("选择类别")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">全部类别</SelectItem>
+                <SelectItem value="all">{t("全部类别")}</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
@@ -268,28 +301,27 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
             size="icon"
             onClick={handleRefresh}
             disabled={loading}
-            title="刷新数据"
+            title={t("刷新数据")}
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            <span className="sr-only">刷新</span>
+            <span className="sr-only">{t("刷新")}</span>
           </Button>
         </div>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-8">加载中...</div>
+          <div className="text-center py-8">{t("加载中...")}</div>
         ) : error ? (
           <div className="text-center py-8 text-red-500">{error}</div>
         ) : todayOutputs.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            {selectedDate ? formatDisplayDate(selectedDate) : '今日'}暂无数据
-          </div>
+            {selectedDate ? formatDisplayDate(selectedDate) : '今日'}{t("暂无数据")}</div>
         ) : (
           <div>
             <Tabs defaultValue="chart" className="mb-6">
               <TabsList className="mb-4">
-                <TabsTrigger value="chart">数据图表</TabsTrigger>
-                <TabsTrigger value="table">详细数据</TabsTrigger>
+                <TabsTrigger value="chart">{t("数据图表")}</TabsTrigger>
+                <TabsTrigger value="table">{t("详细数据")}</TabsTrigger>
               </TabsList>
               <TabsContent value="chart" className="space-y-4">
                 <div className="flex justify-end mb-2">
@@ -301,7 +333,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
                       onClick={() => setChartType("pie")}
                     >
                       <PieChart className="h-4 w-4" />
-                      <span>饼图</span>
+                      <span>{t("饼图")}</span>
                     </Button>
                     <Button
                       variant={chartType === "bar" ? "default" : "outline"}
@@ -310,7 +342,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
                       onClick={() => setChartType("bar")}
                     >
                       <BarChart2 className="h-4 w-4" />
-                      <span>柱状图</span>
+                      <span>{t("柱状图")}</span>
                     </Button>
                   </div>
                 </div>
@@ -362,7 +394,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
                             />
                           ))
                         ) : (
-                          <Bar dataKey="total" fill={COLORS[0]} name="总量" />
+                          <Bar dataKey="total" fill={COLORS[0]} name={t("总量")} />
                         )}
                       </BarChart>
                     )}
@@ -374,10 +406,10 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>店铺名称</TableHead>
-                        <TableHead>类别</TableHead>
-                        <TableHead>快递类型</TableHead>
-                        <TableHead className="text-right">出力数量</TableHead>
+                        <TableHead>{t("店铺名称")}</TableHead>
+                        <TableHead>{t("类别")}</TableHead>
+                        <TableHead>{t("快递类型")}</TableHead>
+                        <TableHead className="text-right">{t("出力数量")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -387,7 +419,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
                           <TableRow className="bg-muted/30 font-medium">
                             <TableCell>{shop.shop_name}</TableCell>
                             <TableCell>{shop.category_name}</TableCell>
-                            <TableCell>合计</TableCell>
+                            <TableCell>{t("合计")}</TableCell>
                             <TableCell className="text-right font-bold">
                               {shop.total_quantity}
                             </TableCell>
@@ -421,6 +453,6 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
           </div>
         )}
       </CardContent>
-    </Card>
+    </Card>)
   );
 } 
