@@ -483,15 +483,15 @@ export default function DashboardPage() {
   // 映射新旧标签页名称
   const mapTabName = (newTab: string) => {
     switch (newTab) {
-      case "analytics": return "shipping"; // Analytics 对应原来的发货统计
-      case "reports": return "output";     // Reports 对应原来的出力统计
-      default: return newTab;              // Overview 和 Notifications 保持不变
+      case "shipping": return "shipping";    // 发货统计
+      case "output": return "output";        // 出力统计
+      default: return newTab;                // Overview 保持不变
     }
   }
 
   // 处理标签切换
   const handleTabChange = (tab: string) => {
-    setActiveTab(mapTabName(tab))
+    setActiveTab(tab) // 直接设置为传入的标签名称，不再需要映射
   }
 
   return (
@@ -539,9 +539,9 @@ export default function DashboardPage() {
                     ? "bg-white text-gray-900 border-b-2 border-gray-900"
                     : "bg-gray-50 text-gray-500 hover:text-gray-900"
                 )}
-                onClick={() => handleTabChange("analytics")}
+                onClick={() => handleTabChange("shipping")}
               >
-                {t("Analytics")}
+                {t("发货统计")}
               </button>
               <button
                 className={cn(
@@ -550,20 +550,9 @@ export default function DashboardPage() {
                     ? "bg-white text-gray-900 border-b-2 border-gray-900"
                     : "bg-gray-50 text-gray-500 hover:text-gray-900"
                 )}
-                onClick={() => handleTabChange("reports")}
+                onClick={() => handleTabChange("output")}
               >
-                {t("Reports")}
-              </button>
-              <button
-                className={cn(
-                  "px-4 py-3 text-sm font-medium transition-colors",
-                  activeTab === "notifications"
-                    ? "bg-white text-gray-900 border-b-2 border-gray-900"
-                    : "bg-gray-50 text-gray-500 hover:text-gray-900"
-                )}
-                onClick={() => handleTabChange("notifications")}
-              >
-                {t("Notifications")}
+                {t("出力统计")}
               </button>
             </div>
           </div>
