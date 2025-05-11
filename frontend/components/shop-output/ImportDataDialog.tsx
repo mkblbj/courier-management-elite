@@ -15,9 +15,7 @@ interface ImportDataDialogProps {
 }
 
 export function ImportDataDialog({ open, onClose }: ImportDataDialogProps) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,35 +23,27 @@ export function ImportDataDialog({ open, onClose }: ImportDataDialogProps) {
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       // 检查文件类型
       const validTypes = [
-        'application/vnd.ms-excel', 
+        'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'text/csv'
       ];
-      
+
       if (!validTypes.includes(selectedFile.type)) {
         setError(t("请上传Excel(.xlsx, .xls)或CSV文件"));
         setFile(null);
         return;
       }
-      
+
       setFile(selectedFile);
       setError(null);
     }
   };
 
   const handleSubmit = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!file) {
       setError(t("请选择要上传的文件"));
       return;
@@ -99,14 +89,14 @@ export function ImportDataDialog({ open, onClose }: ImportDataDialogProps) {
             />
             <p className="text-sm text-muted-foreground">{t("支持.xlsx、.xls或.csv格式的文件")}</p>
           </div>
-          
+
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="bg-muted rounded-md p-4">
             <h4 className="text-sm font-medium mb-2">{t("导入文件要求")}</h4>
             <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">

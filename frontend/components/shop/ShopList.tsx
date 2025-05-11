@@ -99,7 +99,7 @@ export const ShopList: React.FC<ShopListProps> = ({
         setToggleStatusLoading(id);
         await onToggleStatus(id);
       } catch (error) {
-        console.error('状态切换失败:', error);
+        console.error(t('shop:status_toggle_failed'), error);
       } finally {
         setToggleStatusLoading(null);
       }
@@ -179,7 +179,7 @@ export const ShopList: React.FC<ShopListProps> = ({
         await onDelete(selectedShop.id);
       } catch (error) {
         // 错误处理已在父组件完成
-        console.error('删除处理失败：', error);
+        console.error(t('shop:delete_handling_failed'), error);
       }
     }
   };
@@ -293,6 +293,7 @@ export const ShopList: React.FC<ShopListProps> = ({
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleEditClick(shop)}
+                                title={t('shop:edit_shop')}
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -300,6 +301,7 @@ export const ShopList: React.FC<ShopListProps> = ({
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleDeleteClick(shop)}
+                                title={t('shop:delete_shop')}
                               >
                                 <Trash className="h-4 w-4" />
                               </Button>

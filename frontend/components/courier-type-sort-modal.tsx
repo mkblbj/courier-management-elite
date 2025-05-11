@@ -25,6 +25,8 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 // 排序项组件
 function SortableItem({ id, courierType }: { id: number | string; courierType: CourierType }) {
+      const { t } = useTranslation(['courier', 'common']);
+
       const {
             attributes,
             listeners,
@@ -43,8 +45,6 @@ function SortableItem({ id, courierType }: { id: number | string; courierType: C
             background: isDragging ? "rgba(243, 244, 246, 1)" : "transparent",
             scale: isDragging ? "1.02" : "1",
       };
-
-      const { t } = useTranslation(['courier', 'common']);
 
       return (
             <div
@@ -82,6 +82,8 @@ function CategoryCourierTypeList({
       courierTypes: CourierType[];
       onDragEnd: (event: DragEndEvent, categoryId: number | string) => void;
 }) {
+      const { t } = useTranslation(['courier', 'common']);
+
       const sensors = useSensors(
             useSensor(PointerSensor, {
                   activationConstraint: {
@@ -92,8 +94,6 @@ function CategoryCourierTypeList({
                   coordinateGetter: sortableKeyboardCoordinates,
             })
       );
-
-      const { t } = useTranslation(['courier', 'common']);
 
       return (
             <div className="mb-4">
@@ -141,9 +141,10 @@ export function CourierTypeSortModal({
       onSort,
       dialogDescription
 }: CourierTypeSortModalProps) {
+      const { t } = useTranslation(['courier', 'common']);
+
       const [sortedTypes, setSortedTypes] = useState<CourierType[]>([]);
       const [isSubmitting, setIsSubmitting] = useState(false);
-      const { t } = useTranslation(['courier', 'common']);
 
       // 为Dialog生成唯一ID，用于aria-describedby
       const dialogDescriptionId = "courier-type-sort-description";

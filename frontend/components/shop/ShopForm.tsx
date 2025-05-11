@@ -20,7 +20,7 @@ import {
 
 // 表单验证schema
 const shopFormSchema = z.object({
-  name: z.string().min(1, t("店铺名称不能为空")).max(50, t("店铺名称不能超过50个字符")),
+  name: z.string().min(1, "店铺名称不能为空").max(50, "店铺名称不能超过50个字符"),
   category_id: z.number().optional().or(z.string().optional().transform(val => val ? Number(val) : undefined)),
   remark: z.string().optional(),
   is_active: z.boolean().default(true),
@@ -37,9 +37,7 @@ interface ShopFormProps {
 }
 
 const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmitting }: ShopFormProps) => {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const form = useForm<ShopFormValues>({
     resolver: zodResolver(shopFormSchema),
@@ -158,7 +156,7 @@ const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmit
             <Button type="button" variant="outline" onClick={onCancel}>{t("取消")}</Button>
           )}
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? '提交中...' : initialValues?.id ? '更新' : '添加'}
+            {isSubmitting ? t('提交中...') : initialValues?.id ? t('更新') : t('添加')}
           </Button>
         </div>
       </form>

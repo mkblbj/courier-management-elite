@@ -35,9 +35,7 @@ interface OutputDataDialogProps {
 }
 
 export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDialogProps) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const isEditMode = !!output;
   const { toast } = useToast();
@@ -60,10 +58,6 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   useEffect(() => {
     // 获取快递类型数据
     const fetchCouriers = async () => {
-      const {
-        t: t
-      } = useTranslation();
-
       try {
         const data = await getCouriers(true);
         setCouriers(data);
@@ -81,10 +75,6 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   }, [toast]);
 
   const validate = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     const newErrors: Record<string, string> = {};
 
     if (!formData.shop_id) {
@@ -110,10 +100,6 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   };
 
   const handleChange = (name: string, value: string) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -121,10 +107,6 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   };
 
   const handleDateSelect = (date: Date | undefined) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (date) {
       setSelectedDate(date);
       setFormData(prev => ({ ...prev, date: dateToApiString(date) }));
@@ -135,10 +117,6 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
   };
 
   const handleSubmit = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!validate()) {
       return;
     }
@@ -248,7 +226,7 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
                     {selectedDate ? formatDisplayDate(selectedDate) : <span>{t("选择日期")}</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="p-0">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -267,18 +245,20 @@ export function OutputDataDialog({ output, shops, open, onClose }: OutputDataDia
               <Input
                 id="output_count"
                 type="number"
-                min="0"
                 value={formData.output_count}
                 onChange={(e) => handleChange('output_count', e.target.value)}
+                className="w-full"
               />
               {errors.output_count && <p className="text-sm text-red-500 mt-1">{errors.output_count}</p>}
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onClose()} disabled={isSubmitting}>{t("取消")}</Button>
+          <Button variant="outline" onClick={() => onClose()} disabled={isSubmitting}>
+            {t("取消")}
+          </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? '保存中...' : '保存'}
+            {isSubmitting ? `${t("保存中")}...` : t("保存")}
           </Button>
         </DialogFooter>
       </DialogContent>

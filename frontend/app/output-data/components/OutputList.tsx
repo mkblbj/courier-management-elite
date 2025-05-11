@@ -65,9 +65,7 @@ interface OutputListProps {
 }
 
 export default function OutputList({ onEdit, onDelete, selectedDate: propSelectedDate, onDateChange }: OutputListProps) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   // 状态定义
   const [loading, setLoading] = useState(true);
@@ -88,10 +86,6 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
   // 加载商店、分类和快递类型数据
   useEffect(() => {
     const fetchData = async () => {
-      const {
-        t: t
-      } = useTranslation();
-
       try {
         // 获取店铺类别
         const categoriesData = await getShopCategories();
@@ -122,14 +116,10 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
     };
 
     fetchData();
-  }, []);
+  }, [t]);
 
   // 加载数据的函数
   const loadData = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setLoading(true);
     setError(null);
     try {
@@ -213,14 +203,10 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
       loadData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, courierTypeId, shopTypeId, shopId, refreshKey, shops.length, categories.length, couriers.length]);
+  }, [selectedDate, courierTypeId, shopTypeId, shopId, refreshKey, shops.length, categories.length, couriers.length, t]);
 
   // 处理日期变化
   const handleDateChange = (date: Date | undefined) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (date) {
       console.log("日期已更改为:", dateToApiString(date));
 
@@ -234,37 +220,21 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
 
   // 处理快递类型变化
   const handleCourierTypeChange = (id: number | undefined) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setCourierTypeId(id);
   };
 
   // 处理店铺类型变化
   const handleShopTypeChange = (id: number | undefined) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setShopTypeId(id);
   };
 
   // 处理店铺变化
   const handleShopChange = (id: number | undefined) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setShopId(id);
   };
 
   // 清除所有筛选条件
   const handleClearFilters = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     // 重置所有筛选条件，包括将日期设置为今天
     const today = getTodayInAppTimezone();
     if (onDateChange) {
@@ -279,19 +249,11 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
 
   // 刷新数据
   const handleRefresh = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setRefreshKey(prev => prev + 1);
   };
 
   // 获取筛选条件描述
   const getFilterDescription = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     const filters = [];
 
     if (selectedDate) {

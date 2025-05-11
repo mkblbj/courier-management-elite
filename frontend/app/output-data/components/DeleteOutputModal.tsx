@@ -20,9 +20,7 @@ export default function DeleteOutputModal({
       onConfirm,
       isLoading
 }: DeleteOutputModalProps) {
-      const {
-            t: t
-      } = useTranslation();
+      const { t } = useTranslation();
 
       if (!output) return null;
 

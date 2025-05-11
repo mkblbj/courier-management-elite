@@ -27,17 +27,11 @@ export function DeleteShopDialog({
       onOpenChange,
       onDeleted,
 }: DeleteShopDialogProps) {
-      const {
-            t: t
-      } = useTranslation();
+      const { t } = useTranslation();
 
       const [isDeleting, setIsDeleting] = useState(false);
 
       const handleDelete = async () => {
-            const {
-                  t: t
-            } = useTranslation();
-
             if (!shop) return;
 
             setIsDeleting(true);
@@ -62,9 +56,9 @@ export function DeleteShopDialog({
                         <AlertDialogHeader>
                               <AlertDialogTitle>{t("确认删除店铺")}</AlertDialogTitle>
                               <AlertDialogDescription>{t("您确定要删除店铺")}<strong>{shop.name}</strong>{t("吗？此操作不可逆。")}{shop.hasRelatedData && (
-                                          <p className="mt-2 text-destructive flex items-center">
-                                                <AlertTriangle className="h-4 w-4 mr-1" />{t("警告：该店铺已有关联的出力数据，删除后相关数据也将一并删除。")}</p>
-                                    )}
+                                    <p className="mt-2 text-destructive flex items-center">
+                                          <AlertTriangle className="h-4 w-4 mr-1" />{t("警告：该店铺已有关联的出力数据，删除后相关数据也将一并删除。")}</p>
+                              )}
                               </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

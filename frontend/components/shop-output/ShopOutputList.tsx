@@ -49,9 +49,7 @@ import { DateRange } from 'react-day-picker';
 import { dateToApiString } from '@/lib/date-utils';
 
 export function ShopOutputList() {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const [outputs, setOutputs] = useState<ShopOutput[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
@@ -82,10 +80,6 @@ export function ShopOutputList() {
   }, [filter, currentPage, sort, order]);
 
   const fetchOutputs = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setIsLoading(true);
     try {
       const data = await getShopOutputs({
@@ -109,10 +103,6 @@ export function ShopOutputList() {
   };
 
   const fetchShops = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     try {
       const data = await getShops({ isActive: true }); // 只获取活跃的店铺
       setShops(data);
@@ -122,10 +112,6 @@ export function ShopOutputList() {
   };
 
   const fetchCategories = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     try {
       const data = await getShopCategories();
       setCategories(data);
@@ -135,10 +121,6 @@ export function ShopOutputList() {
   };
 
   const handleSearch = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setFilter(prev => ({
       ...prev,
       date_from: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
@@ -148,10 +130,6 @@ export function ShopOutputList() {
   };
 
   const handleSort = (column: string) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (sort === column) {
       setOrder(order === 'ASC' ? 'DESC' : 'ASC');
     } else {
@@ -161,10 +139,6 @@ export function ShopOutputList() {
   };
 
   const handleDelete = async (id: number) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!confirm(t("确定要删除这条出力数据吗？此操作不可撤销。"))) {
       return;
     }
@@ -187,16 +161,10 @@ export function ShopOutputList() {
   };
 
   const handleExport = () => {
-    const {
-      t: t
-    } = useTranslation();
+    // 导出逻辑
   };
 
   const handleDialogClose = (refresh?: boolean) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setIsDialogOpen(false);
     setEditOutput(null);
     if (refresh) {
@@ -205,10 +173,6 @@ export function ShopOutputList() {
   };
 
   const handleImportDialogClose = (refresh?: boolean) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setIsImportDialogOpen(false);
     if (refresh) {
       fetchOutputs();

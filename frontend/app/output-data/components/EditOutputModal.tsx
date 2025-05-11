@@ -52,9 +52,7 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       onSave,
       isLoading
 }) => {
-      const {
-            t: t
-      } = useTranslation();
+      const { t } = useTranslation();
 
       const [editedOutput, setEditedOutput] = useState<ShopOutput>({ ...output });
       const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,10 +77,6 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       }, [open, output, form]);
 
       const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-            const {
-                  t: t
-            } = useTranslation();
-
             const { name, value } = e.target;
             setEditedOutput(prev => ({
                   ...prev,
@@ -91,10 +85,6 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       };
 
       const handleShopChange = (shopId: number | undefined) => {
-            const {
-                  t: t
-            } = useTranslation();
-
             setEditedOutput(prev => ({
                   ...prev,
                   shop_id: shopId as number
@@ -102,10 +92,6 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       };
 
       const handleCourierChange = (courierId: number | undefined) => {
-            const {
-                  t: t
-            } = useTranslation();
-
             setEditedOutput(prev => ({
                   ...prev,
                   courier_id: courierId as number
@@ -113,10 +99,6 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       };
 
       const handleSave = async () => {
-            const {
-                  t: t
-            } = useTranslation();
-
             if (!editedOutput.shop_id || !editedOutput.courier_id || !editedOutput.quantity) {
                   toast({
                         title: "表单不完整",
@@ -144,10 +126,6 @@ const EditOutputModal: React.FC<EditOutputModalProps> = ({
       };
 
       const onSubmit = async (data: FormData) => {
-            const {
-                  t: t
-            } = useTranslation();
-
             if (!output) return;
 
             // 保留原始output对象的所有字段，只更新quantity和notes

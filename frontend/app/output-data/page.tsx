@@ -26,9 +26,7 @@ import { isSameDay } from "date-fns";
 import { dateToApiString, apiStringToDate } from "@/lib/date-utils";
 
 export default function OutputDataPage() {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedShopId, setSelectedShopId] = useState<number | undefined>(undefined);
@@ -43,10 +41,6 @@ export default function OutputDataPage() {
   const [deletingOutput, setDeletingOutput] = useState<ShopOutput | null>(null);
 
   const handleAddRecord = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!selectedDate || !selectedShopId || !selectedCourierId || !quantity || parseInt(quantity) <= 0) {
       toast({
         title: "表单不完整",
@@ -90,19 +84,11 @@ export default function OutputDataPage() {
   };
 
   const handleEditOutput = async (output: ShopOutput) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setEditingOutput(output);
     // 设置表单初始值将在编辑对话框组件中处理
   };
 
   const handleUpdateOutput = async (updatedOutput: ShopOutput) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!updatedOutput.id) return;
 
     // 保存当前选中的日期，以便在更新后恢复
@@ -188,10 +174,6 @@ export default function OutputDataPage() {
   };
 
   const handleDeleteOutput = async (id: string | number) => {
-    const {
-      t: t
-    } = useTranslation();
-
     try {
       // 根据 ID 获取要删除的出力数据详情
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shop-outputs/${id}`);
@@ -217,10 +199,6 @@ export default function OutputDataPage() {
   };
 
   const confirmDelete = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (!deletingOutput) return;
 
     // 保存当前选中的日期，以便在删除后恢复
@@ -253,10 +231,6 @@ export default function OutputDataPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (e.key === 'Enter' && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
       const activeElement = document.activeElement;
       const isTextarea = activeElement instanceof HTMLTextAreaElement;
@@ -408,9 +382,7 @@ export default function OutputDataPage() {
 }
 
 function ListSkeleton() {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-3">

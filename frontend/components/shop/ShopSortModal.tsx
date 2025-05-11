@@ -31,9 +31,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 // 排序项组件
 const SortableShopItem = ({ shop }: { shop: Shop }) => {
-      const {
-            t: t
-      } = useTranslation();
+      const { t } = useTranslation();
 
       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
             id: shop.id.toString(),
@@ -78,9 +76,7 @@ const CategoryShopList = ({
       shops: Shop[];
       onDragEnd: (event: DragEndEvent, categoryId: number) => void;
 }) => {
-      const {
-            t: t
-      } = useTranslation();
+      const { t } = useTranslation();
 
       const sensors = useSensors(
             useSensor(PointerSensor),
@@ -132,9 +128,7 @@ const ShopSortModal = ({
       categories,
       onSortSave,
 }: ShopSortModalProps) => {
-      const {
-            t: t
-      } = useTranslation();
+      const { t } = useTranslation();
 
       const [sortedShops, setSortedShops] = useState<Shop[]>([]);
       const [loading, setLoading] = useState(false);
@@ -147,10 +141,6 @@ const ShopSortModal = ({
       }, [open, shops]);
 
       const handleDragEnd = (event: DragEndEvent, categoryId: number) => {
-            const {
-                  t: t
-            } = useTranslation();
-
             const { active, over } = event;
             if (!over || active.id === over.id) return;
 
@@ -181,10 +171,6 @@ const ShopSortModal = ({
       };
 
       const handleSave = async () => {
-            const {
-                  t: t
-            } = useTranslation();
-
             try {
                   setLoading(true);
                   await onSortSave(sortedShops);

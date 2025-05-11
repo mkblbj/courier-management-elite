@@ -57,9 +57,7 @@ interface OutputSummaryProps {
 }
 
 export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
-  const {
-    t: t
-  } = useTranslation();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,13 +78,9 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     fetchCategories();
     fetchShops();
     fetchTodayData();
-  }, [selectedDate, refreshKey]);
+  }, [selectedDate, refreshKey, t]);
 
   const fetchCategories = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     try {
       const data = await getShopCategories({ sort: "sort_order" });
       setCategories(data);
@@ -96,10 +90,6 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   };
 
   const fetchShops = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     try {
       const data = await getShops({ withCategory: true });
       setShops(data);
@@ -110,10 +100,6 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   };
 
   const fetchTodayData = async () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setLoading(true);
     setError(null);
 
@@ -141,10 +127,6 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
 
   // 获取店铺类别名称
   const getShopCategoryName = (shopId: number): string => {
-    const {
-      t: t
-    } = useTranslation();
-
     const shop = shops.find(s => s.id === shopId);
     if (shop && shop.category_id) {
       const category = categories.find(c => c.id === shop.category_id);
@@ -154,18 +136,10 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   };
 
   const handleRefresh = () => {
-    const {
-      t: t
-    } = useTranslation();
-
     setRefreshKey(prevKey => prevKey + 1);
   };
 
   const handleCategoryChange = (value: string) => {
-    const {
-      t: t
-    } = useTranslation();
-
     setSelectedCategory(value);
     // 当类别变化时触发数据刷新
     setTimeout(() => fetchTodayData(), 0);
@@ -250,10 +224,6 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
 
   // 自定义工具提示
   const CustomTooltip = ({ active, payload, label }: any) => {
-    const {
-      t: t
-    } = useTranslation();
-
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-2 border rounded shadow-sm text-sm">
