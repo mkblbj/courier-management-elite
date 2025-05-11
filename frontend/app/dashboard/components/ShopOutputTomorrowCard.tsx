@@ -343,7 +343,7 @@ export function ShopOutputTomorrowCard({
                   const refreshTime = nextRefreshTime.getTime();
 
                   if (now >= refreshTime) {
-                        fetchShopOutputData(selectedCategory || undefined);
+                        fetchShopOutputData(selectedCategory || undefined, true); // 添加true参数清除缓存
                   } else {
                         setRefreshCountdown(Math.max(0, Math.floor((refreshTime - now) / 1000)));
                   }

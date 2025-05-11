@@ -6,6 +6,18 @@ const NodeCache = require('node-cache');
 // 创建缓存实例，设置缓存时间为60秒（可根据需求调整）
 const dashboardCache = new NodeCache({ stdTTL: 60, checkperiod: 120 });
 
+// 获取格式化的当前时间
+function getCurrentTimeFormatted() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 class DashboardControllerClass {
   /**
    * 获取今日出力概览
@@ -24,7 +36,7 @@ class DashboardControllerClass {
       if (cachedData) {
         return res.status(200).json({
           code: 0,
-          message: '获取成功(cached)',
+          message: `获取成功(cached) - ${getCurrentTimeFormatted()}`,
           data: cachedData
         });
       }
@@ -213,14 +225,14 @@ class DashboardControllerClass {
       
       res.status(200).json({
         code: 0,
-        message: '获取成功',
+        message: `获取成功 - ${getCurrentTimeFormatted()}`,
         data: dashboardData
       });
     } catch (error) {
       console.error('获取今日出力概览失败:', error);
       res.status(500).json({
         code: 500,
-        message: '获取今日出力概览失败',
+        message: `获取今日出力概览失败 - ${getCurrentTimeFormatted()}`,
         error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
@@ -243,7 +255,7 @@ class DashboardControllerClass {
       if (cachedData) {
         return res.status(200).json({
           code: 0,
-          message: '获取成功(cached)',
+          message: `获取成功(cached) - ${getCurrentTimeFormatted()}`,
           data: cachedData
         });
       }
@@ -437,14 +449,14 @@ class DashboardControllerClass {
       
       res.status(200).json({
         code: 0,
-        message: '获取成功',
+        message: `获取成功 - ${getCurrentTimeFormatted()}`,
         data: dashboardData
       });
     } catch (error) {
       console.error('获取明日出力预测失败:', error);
       res.status(500).json({
         code: 500,
-        message: '获取明日出力预测失败',
+        message: `获取明日出力预测失败 - ${getCurrentTimeFormatted()}`,
         error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
@@ -460,13 +472,13 @@ class DashboardControllerClass {
       dashboardCache.flushAll();
       res.status(200).json({
         code: 0,
-        message: '缓存清除成功'
+        message: `缓存清除成功 - ${getCurrentTimeFormatted()}`
       });
     } catch (error) {
       console.error('清除缓存失败:', error);
       res.status(500).json({
         code: 500,
-        message: '清除缓存失败',
+        message: `清除缓存失败 - ${getCurrentTimeFormatted()}`,
         error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
