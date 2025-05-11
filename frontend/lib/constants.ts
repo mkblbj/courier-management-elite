@@ -26,7 +26,7 @@ export const DATETIME_FORMAT = 'yyyy-MM-dd HH:mm:ss';
 /**
  * 更易读的日期时间格式
  */
-export const FRIENDLY_DATETIME_FORMAT = 'yyyy年MM月dd日 HH:mm:ss';
+export const FRIENDLY_DATETIME_FORMAT = 'yyyy-MM-dd HH:mm:ss';
 
 /**
  * 响应成功代码

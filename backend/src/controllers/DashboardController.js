@@ -52,6 +52,9 @@ class DashboardControllerClass {
       let activeShops = 0;
       const courierStats = new Map();
       
+      // 店铺和快递类型的关联统计
+      const shopCourierStats = new Map();
+      
       for (const output of outputs) {
         // 如果指定了类别ID，则只统计该类别下的店铺出力
         if (category_id && shopMap.has(output.shop_id)) {
@@ -71,6 +74,26 @@ class DashboardControllerClass {
             activeShops++;
           }
           shopData.outputs.push(output);
+          
+          // 为店铺和快递类型关联创建记录
+          const shopId = output.shop_id;
+          if (!shopCourierStats.has(shopId)) {
+            shopCourierStats.set(shopId, new Map());
+          }
+          
+          const shopCouriers = shopCourierStats.get(shopId);
+          const courierId = output.courier_id;
+          
+          if (!shopCouriers.has(courierId)) {
+            shopCouriers.set(courierId, {
+              courier_id: courierId,
+              courier_name: output.courier_name,
+              quantity: 0
+            });
+          }
+          
+          const courierData = shopCouriers.get(courierId);
+          courierData.quantity += output.quantity;
         }
         
         // 添加到快递类型统计
@@ -141,6 +164,22 @@ class DashboardControllerClass {
       // 按总量排序类别
       categoriesData.sort((a, b) => b.total_quantity - a.total_quantity);
       
+      // 格式化店铺快递关联数据
+      const shopCourierData = [];
+      shopCourierStats.forEach((courierMap, shopId) => {
+        const shop = shopMap.get(shopId);
+        if (shop) {
+          shopCourierData.push({
+            shop_id: shopId,
+            shop_name: shop.name,
+            category_id: shop.category_id,
+            category_name: shop.category_name,
+            total_quantity: shop.outputs.reduce((sum, output) => sum + output.quantity, 0),
+            couriers: Array.from(courierMap.values())
+          });
+        }
+      });
+      
       const dashboardData = {
         date: today,
         total_quantity: totalQuantity,
@@ -156,13 +195,17 @@ class DashboardControllerClass {
             category_id: shop.category_id,
             category_name: shop.category_name,
             has_data: shop.outputs.length > 0,
-            total_quantity: shop.outputs.reduce((sum, output) => sum + output.quantity, 0)
+            total_quantity: shop.outputs.reduce((sum, output) => sum + output.quantity, 0),
+            couriers: shopCourierStats.has(shop.id) 
+              ? Array.from(shopCourierStats.get(shop.id).values()) 
+              : []
           }))
           .sort((a, b) => {
             // 先按是否有数据排序，然后按数量降序
             if (a.has_data !== b.has_data) return a.has_data ? -1 : 1;
             return b.total_quantity - a.total_quantity;
-          })
+          }),
+        shop_courier_data: shopCourierData
       };
       
       // 将数据存入缓存
@@ -262,6 +305,9 @@ class DashboardControllerClass {
       
       // 按店铺汇总
       const shopStats = new Map();
+      // 店铺和快递类型的关联统计
+      const shopCourierStats = new Map();
+      
       for (const output of filteredOutputs) {
         if (!shopStats.has(output.shop_id)) {
           const shop = shops.find(s => s.id === output.shop_id);
@@ -277,6 +323,26 @@ class DashboardControllerClass {
         
         const stats = shopStats.get(output.shop_id);
         stats.total_quantity += output.quantity;
+        
+        // 为店铺和快递类型关联创建记录
+        const shopId = output.shop_id;
+        if (!shopCourierStats.has(shopId)) {
+          shopCourierStats.set(shopId, new Map());
+        }
+        
+        const shopCouriers = shopCourierStats.get(shopId);
+        const courierId = output.courier_id;
+        
+        if (!shopCouriers.has(courierId)) {
+          shopCouriers.set(courierId, {
+            courier_id: courierId,
+            courier_name: output.courier_name,
+            quantity: 0
+          });
+        }
+        
+        const courierData = shopCouriers.get(courierId);
+        courierData.quantity += output.quantity;
         
         // 检查是否已经有该快递类型的记录
         let courierEntry = stats.couriers.find(c => c.courier_id === output.courier_id);
@@ -320,7 +386,30 @@ class DashboardControllerClass {
         .sort((a, b) => b.total_quantity - a.total_quantity);
       
       // 格式化店铺统计
-      const formattedShopStats = Array.from(shopStats.values()).sort((a, b) => b.total_quantity - a.total_quantity);
+      const formattedShopStats = Array.from(shopStats.values())
+        .map(shop => ({
+          ...shop,
+          couriers: shopCourierStats.has(shop.shop_id)
+            ? Array.from(shopCourierStats.get(shop.shop_id).values())
+            : []
+        }))
+        .sort((a, b) => b.total_quantity - a.total_quantity);
+      
+      // 格式化店铺快递关联数据
+      const shopCourierData = [];
+      shopCourierStats.forEach((courierMap, shopId) => {
+        const shop = shopStats.get(shopId);
+        if (shop) {
+          shopCourierData.push({
+            shop_id: shopId,
+            shop_name: shop.shop_name,
+            category_id: shop.category_id,
+            category_name: shop.category_name,
+            total_quantity: shop.total_quantity,
+            couriers: Array.from(courierMap.values())
+          });
+        }
+      });
       
       // 构建最终返回数据
       const dashboardData = {
@@ -332,6 +421,7 @@ class DashboardControllerClass {
         couriers_data: formattedCourierStats.sort((a, b) => b.total_quantity - a.total_quantity),
         categories_data: categoriesData,
         shops_data: formattedShopStats,
+        shop_courier_data: shopCourierData,
         raw_predictions: filteredOutputs.map(output => ({
           shop_id: output.shop_id,
           shop_name: output.shop_name,
