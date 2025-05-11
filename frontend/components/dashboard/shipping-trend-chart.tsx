@@ -70,7 +70,8 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
           dateMap.set(dateStr, {
             date: dateStr,
             weekday: weekday, // 存储星期信息
-            fullDate: new Date(currentDate) // 存储完整日期对象以便后续使用
+            fullDate: new Date(currentDate), // 存储完整日期对象以便后续使用
+            totalShipping: 0 // 初始化当天总发货量
           })
 
           currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1))
@@ -100,7 +101,10 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
               const dateKey = format(new Date(item.date), "MM-dd")
               if (dateMap.has(dateKey)) {
                 const dateData = dateMap.get(dateKey)
-                dateData[item.courier_name] = Number(item.total) || 0
+                const itemTotal = Number(item.total) || 0
+                dateData[item.courier_name] = itemTotal
+                // 累加到当天总发货量
+                dateData.totalShipping += itemTotal
               }
             }
           })
@@ -135,7 +139,7 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
 
   // 从图表数据中获取所有快递类型
   const courierTypes = chartData.length > 0
-    ? Object.keys(chartData[0]).filter(key => key !== 'date' && key !== 'weekday' && key !== 'fullDate')
+    ? Object.keys(chartData[0]).filter(key => key !== 'date' && key !== 'weekday' && key !== 'fullDate' && key !== 'totalShipping')
     : []
 
   // 自定义X轴标签组件，显示日期和星期
@@ -159,7 +163,7 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart
+        <ComposedChart
           data={chartData}
           margin={{
             top: 20,
@@ -179,7 +183,15 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
               <Bar key={type} dataKey={type} fill={colors[index % colors.length]} />
             )
           })}
-        </BarChart>
+          <Line
+            type="monotone"
+            dataKey="totalShipping"
+            stroke="#ea580c"
+            strokeWidth={2}
+            dot={{ r: 4 }}
+            name={t("总发货量")}
+          />
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   )
