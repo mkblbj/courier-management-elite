@@ -21,6 +21,7 @@ import { useCourierTypes } from "@/hooks/use-courier-types"
 import { shippingApi } from "@/services/shipping-api"
 import { useShippingData } from "@/hooks/use-shipping-data"
 import { ShopOutputCard } from "./components/ShopOutputCard"
+import { ShopOutputTomorrowCard } from "./components/ShopOutputTomorrowCard"
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -708,6 +709,18 @@ export default function DashboardPage() {
               isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}
             style={{ transitionDelay: "600ms" }}
+          />
+        </div>
+
+        {/* 明日店铺出力数据卡片区域 */}
+        <div className="mb-6">
+          <ShopOutputTomorrowCard
+            title={t("明日店铺出力")}
+            className={cn(
+              "transition-all duration-500",
+              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            )}
+            style={{ transitionDelay: "700ms" }}
           />
         </div>
 
