@@ -39,11 +39,11 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
         // 这里应该是真实的API调用
         // const shops = await api.getShops({ active_only: true });
         // const couriers = await api.getCouriers({ active_only: true });
-        
+
         // 暂时使用假数据
         const shopsMap: Record<string, string> = {};
         const couriersMap: Record<string, string> = {};
-        
+
         setShopNames(shopsMap);
         setCourierNames(couriersMap);
       } catch (err) {
@@ -56,7 +56,7 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
     setDateRange(range);
-    
+
     if (range?.from && range?.to) {
       applyFilter({
         date_from: format(range.from, DATE_FORMAT),
@@ -72,7 +72,7 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
 
   const handleShopChange = (value: number | undefined) => {
     setShopId(value);
-    
+
     if (value) {
       applyFilter({ shop_id: value });
     } else {
@@ -84,7 +84,7 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
 
   const handleCourierChange = (value: number | undefined) => {
     setCourierId(value);
-    
+
     if (value) {
       applyFilter({ courier_id: value });
     } else {
@@ -97,7 +97,7 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-    
+
     if (value.trim()) {
       applyFilter({ search: value.trim() });
     } else {
@@ -162,7 +162,7 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
       <CardHeader className="pb-2 border-b">
         <CardTitle className="text-lg font-medium">{t('shop:recent_outputs')}</CardTitle>
       </CardHeader>
-      
+
       {/* 筛选功能放第二行 */}
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
@@ -173,7 +173,7 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
             </div>
-            
+
             {/* 店铺图标和选择器 */}
             <div className="flex items-center gap-1">
               <Store className="h-4 w-4 text-muted-foreground" />
@@ -184,19 +184,19 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
                 />
               </div>
             </div>
-            
+
             {/* 快递图标和选择器 */}
             <div className="flex items-center gap-1">
               <Package className="h-4 w-4 text-muted-foreground" />
               <div className="w-[150px]">
-                <CourierSelector 
+                <CourierSelector
                   selectedCourierId={courierId}
                   onSelectCourier={handleCourierChange}
                 />
               </div>
             </div>
           </div>
-          
+
           {/* 右侧搜索框和刷新按钮 */}
           <div className="flex items-center gap-3">
             {/* 搜索框 */}
@@ -209,14 +209,14 @@ export default function FilterPanel({ onFilterChange }: FilterPanelProps) {
                 onChange={handleSearchChange}
               />
             </div>
-            
+
             {/* 刷新按钮 */}
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleRefresh} disabled={isLoading}>
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </Button>
           </div>
         </div>
-        
+
         {/* 显示当前筛选条件 */}
         {Object.keys(currentFilter).length > 0 && (
           <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-sm mt-3">
