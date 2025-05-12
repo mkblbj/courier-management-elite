@@ -336,7 +336,7 @@ export default function OutputDataPage() {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("添加中...")}</>
-                  ) : "添加记录"}
+                  ) : t("添加记录")}
                 </Button>
               </div>
 
