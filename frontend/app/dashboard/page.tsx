@@ -586,6 +586,16 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* 添加今日未发送数目显示 */}
+                      <div className="mt-4">
+                        <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-red-50">
+                          <div className="text-sm text-gray-600 mb-1">{t("今日未发送数目")}</div>
+                          <div className="text-3xl font-bold text-red-700">
+                            {Math.max(0, (todayTotalOutput || 0) - (todayStats?.total?.total || 0))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* 出力总量部分 - 使用API数据 */}

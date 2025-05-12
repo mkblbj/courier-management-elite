@@ -288,7 +288,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
             {selectedDate ? formatDisplayDate(selectedDate) : '今日'}{t("暂无数据")}</div>
         ) : (
           <div>
-            <Tabs defaultValue="chart" className="mb-6">
+            <Tabs defaultValue="table" className="mb-6">
               <TabsList className="mb-4">
                 <TabsTrigger value="chart">{t("数据图表")}</TabsTrigger>
                 <TabsTrigger value="table">{t("详细数据")}</TabsTrigger>

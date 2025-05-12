@@ -24,6 +24,11 @@ import EditOutputModal from "./components/EditOutputModal";
 import DeleteOutputModal from "./components/DeleteOutputModal";
 import { isSameDay } from "date-fns";
 import { dateToApiString, apiStringToDate } from "@/lib/date-utils";
+import { API_BASE_URL, API_SUCCESS_CODE } from "@/lib/constants";
+import { getBaseApiUrl } from "@/services/api";
+
+// 获取API基础URL，支持代理情况
+const getApiEndpoint = (path: string) => `${getBaseApiUrl()}/api${path}`;
 
 export default function OutputDataPage() {
   const { t } = useTranslation();
@@ -122,7 +127,7 @@ export default function OutputDataPage() {
       console.log('更新记录:', JSON.stringify(recordToUpdate, null, 2));
 
       // 发送所有必要的字段
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shop-outputs/${updatedOutput.id}`, {
+      const response = await fetch(getApiEndpoint(`/shop-outputs/${updatedOutput.id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +149,7 @@ export default function OutputDataPage() {
 
       const result = await response.json();
 
-      if (result.code !== 0) {
+      if (result.code !== API_SUCCESS_CODE) {
         throw new Error(result.message || '更新出力数据失败');
       }
 
@@ -176,13 +181,13 @@ export default function OutputDataPage() {
   const handleDeleteOutput = async (id: string | number) => {
     try {
       // 根据 ID 获取要删除的出力数据详情
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/shop-outputs/${id}`);
+      const response = await fetch(getApiEndpoint(`/shop-outputs/${id}`));
       if (!response.ok) {
         throw new Error(`获取出力数据详情失败: ${response.statusText}`);
       }
 
       const result = await response.json();
-      if (result.code !== 0) {
+      if (result.code !== API_SUCCESS_CODE) {
         throw new Error(result.message || '获取出力数据详情失败');
       }
 
