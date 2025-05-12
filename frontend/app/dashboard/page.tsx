@@ -23,6 +23,7 @@ import { useShippingData } from "@/hooks/use-shipping-data"
 import { ShopOutputCard } from "./components/ShopOutputCard"
 import { ShopOutputTomorrowCard } from "./components/ShopOutputTomorrowCard"
 import { API_BASE_URL, API_SUCCESS_CODE } from "@/lib/constants"
+import { dashboardApi } from "@/services/dashboard-api"
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -39,7 +40,7 @@ export default function DashboardPage() {
   const { courierTypes } = useCourierTypes()
   const [selectedTimeRange, setSelectedTimeRange] = useState("7days")
   const [selectedCourierType, setSelectedCourierType] = useState("all")
-  const [refreshInterval, setRefreshInterval] = useState("60000") // 默认1分钟
+  const [refreshInterval, setRefreshInterval] = useState("30000") // 默认30秒
   const [isRefreshingTodayStats, setIsRefreshingTodayStats] = useState(false)
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null)
   // 添加活跃标签页状态
@@ -313,9 +314,6 @@ export default function DashboardPage() {
     setIsLoadingTodayOutput(true)
     setOutputError(null)
     try {
-      const url = `${API_BASE_URL}/dashboard/shop-outputs/today`
-      console.debug("[Dashboard] Fetching today output data from:", url)
-
       // 开发环境下，如果API未准备好，使用模拟数据
       if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         await new Promise(resolve => setTimeout(resolve, 600))
@@ -323,22 +321,8 @@ export default function DashboardPage() {
         return
       }
 
-      const response = await fetch(url)
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("[Dashboard] API error:", response.status, errorText)
-        throw new Error(`获取今日出力数据失败: ${response.status}`)
-      }
-
-      const apiResponse = await response.json()
-
-      if (apiResponse.code !== API_SUCCESS_CODE) {
-        console.error("[Dashboard] API returned error:", apiResponse.message)
-        throw new Error(apiResponse.message || "API返回错误")
-      }
-
-      setTodayTotalOutput(apiResponse.data.total_quantity || 0)
+      const todayOutputData = await dashboardApi.getTodayShopOutputs()
+      setTodayTotalOutput(todayOutputData.total_quantity || 0)
     } catch (error) {
       console.error("[Dashboard] 获取今日出力总量失败:", error)
       setOutputError(error instanceof Error ? error.message : "未知错误")
@@ -354,9 +338,6 @@ export default function DashboardPage() {
     setIsLoadingTomorrowOutput(true)
     setOutputError(null)
     try {
-      const url = `${API_BASE_URL}/dashboard/shop-outputs/tomorrow`
-      console.debug("[Dashboard] Fetching tomorrow output data from:", url)
-
       // 开发环境下，如果API未准备好，使用模拟数据
       if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         await new Promise(resolve => setTimeout(resolve, 600))
@@ -364,22 +345,8 @@ export default function DashboardPage() {
         return
       }
 
-      const response = await fetch(url)
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("[Dashboard] API error:", response.status, errorText)
-        throw new Error(`获取明日出力数据失败: ${response.status}`)
-      }
-
-      const apiResponse = await response.json()
-
-      if (apiResponse.code !== API_SUCCESS_CODE) {
-        console.error("[Dashboard] API returned error:", apiResponse.message)
-        throw new Error(apiResponse.message || "API返回错误")
-      }
-
-      setTomorrowTotalOutput(apiResponse.data.total_predicted_quantity || 0)
+      const tomorrowOutputData = await dashboardApi.getTomorrowShopOutputs()
+      setTomorrowTotalOutput(tomorrowOutputData.total_predicted_quantity || 0)
     } catch (error) {
       console.error("[Dashboard] 获取明日出力预测总量失败:", error)
       setOutputError(error instanceof Error ? error.message : "未知错误")
@@ -568,7 +535,37 @@ export default function DashboardPage() {
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               )}>
                 <CardHeader>
-                  <CardTitle className="text-lg">{t("今日数据概览")}</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{t("今日数据概览")}</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md flex items-center">
+                        <RefreshCw className="h-3 w-3 mr-1 text-gray-500" />
+                        {t("下次刷新")}: <span className="font-medium ml-1">{formatCountdown(nextRefreshTime)}</span>
+                      </div>
+                      <Select value={refreshInterval} onValueChange={setRefreshInterval}>
+                        <SelectTrigger className="w-[100px] h-8 text-xs">
+                          <SelectValue placeholder={t("刷新间隔")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="30000">{t("30秒")}</SelectItem>
+                          <SelectItem value="60000">{t("1分钟")}</SelectItem>
+                          <SelectItem value="120000">{t("2分钟")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          handleRefresh();
+                          setNextRefreshTime(parseInt(refreshInterval) / 1000);
+                        }}
+                        disabled={isLoading}
+                      >
+                        <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-6">

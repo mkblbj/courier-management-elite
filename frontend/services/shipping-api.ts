@@ -1,5 +1,6 @@
 // 导入环境配置和调试工具
 import { useEnvStore, debugLog, debugError, debugWarn } from "@/lib/env-config"
+import { apiClient, getBaseApiUrl } from './api';
 
 // 获取API基础URL的辅助函数
 function getApiBaseUrl(): string {
@@ -189,6 +190,54 @@ export interface ShippingFilterParams extends PaginationParams {
   year?: number
 }
 
+// 定义发货列表接口类型
+export interface ShippingItem {
+  id: number;
+  courier_id: number;
+  courier_name: string;
+  tracking_number: string;
+  recipient_name: string;
+  recipient_phone: string;
+  recipient_address: string;
+  item_description?: string;
+  shipping_date: string;
+  remark?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShippingListResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  items: ShippingItem[];
+}
+
+export interface ShippingStatsParams {
+  date?: string;
+  date_from?: string;
+  date_to?: string;
+  category_id?: number;
+  year?: number;
+  month?: number;
+  quarter?: number;
+  week?: number;
+}
+
+export interface ShippingStatsResponse {
+  by_category: {
+    category_id: number;
+    category_name: string;
+    total: string;
+    record_count: number;
+  }[];
+  total: {
+    total: string;
+    days_count: number;
+    record_count: number;
+  };
+}
+
 // 定义ShippingRecord类型，匹配API返回的字段
 export interface ShippingRecord {
   id: number | string
@@ -249,7 +298,7 @@ export const shippingApi = {
   // 创建发货记录
   async createShippingRecord(data: CreateShippingRecordRequest): Promise<ShippingRecord> {
     const SHIPPING_ENDPOINT = getShippingEndpoint()
-    return fetchWithErrorHandling<ShippingRecord>(`${SHIPPING_ENDPOINT}`, {
+    return fetchWithErrorHandling<ShippingRecord>(SHIPPING_ENDPOINT, {
       method: "POST",
       body: JSON.stringify(data),
     })
@@ -272,7 +321,7 @@ export const shippingApi = {
     })
   },
 
-  // 批量添加发货记录
+  // 批量创建发货记录
   async batchCreateShippingRecords(data: BatchCreateShippingRecordRequest): Promise<{
     created: number
     records: ShippingRecord[]
@@ -287,33 +336,31 @@ export const shippingApi = {
     })
   },
 
-  // 获取发货统计数据摘要
+  // 获取发货统计
   async getShippingStats(params?: ShippingFilterParams): Promise<any> {
     const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-
     return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/stats${queryString}`)
   },
 
-  // 获取发货统计数据详情
+  // 获取发货统计详情
   async getShippingStatsDetails(params?: ShippingFilterParams): Promise<any> {
-    const SHIPPING_API_ENDPOINT = getShippingEndpoint()
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-    return fetchWithErrorHandling<any>(`${SHIPPING_API_ENDPOINT}/stats/details${queryString}`)
+    return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/stats/details${queryString}`)
   },
 
-  // 获取层级统计数据
+  // 获取层次化统计
   async getHierarchicalStats(params?: ShippingFilterParams): Promise<any> {
-    const SHIPPING_API_ENDPOINT = getShippingEndpoint()
+    const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-    return fetchWithErrorHandling<any>(`${SHIPPING_API_ENDPOINT}/stats/hierarchical${queryString}`)
+    return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/stats/hierarchical${queryString}`)
   },
 
   // 导出数据
   async exportData(params: any): Promise<{ downloadUrl: string }> {
     const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-
     return fetchWithErrorHandling<{ downloadUrl: string }>(`${SHIPPING_ENDPOINT}/export${queryString}`)
   },
 
@@ -321,7 +368,28 @@ export const shippingApi = {
   async getChartData(params?: any): Promise<any> {
     const SHIPPING_ENDPOINT = getShippingEndpoint()
     const queryString = buildQueryString(params)
-
     return fetchWithErrorHandling<any>(`${SHIPPING_ENDPOINT}/chart${queryString}`)
   },
+
+  // 获取发货列表 (使用新的apiClient实现)
+  async getShippingListWithApiClient(params: ShippingFilterParams = {}): Promise<ShippingListResponse> {
+    try {
+      const response = await apiClient.get('/api/shipping', { params });
+      return response.data;
+    } catch (error) {
+      console.error('获取发货列表失败:', error);
+      throw error;
+    }
+  },
+
+  // 获取发货统计 (使用新的apiClient实现)
+  async getShippingStatsWithApiClient(params: ShippingStatsParams = {}): Promise<ShippingStatsResponse> {
+    try {
+      const response = await apiClient.get('/api/shipping/stats', { params });
+      return response.data;
+    } catch (error) {
+      console.error('获取发货统计失败:', error);
+      throw error;
+    }
+  }
 }

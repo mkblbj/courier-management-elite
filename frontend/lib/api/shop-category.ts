@@ -1,8 +1,9 @@
 import { ShopCategory } from '@/lib/types/shop';
 import { API_BASE_URL } from "../constants";
+import { getBaseApiUrl } from "@/services/api";
 
-// 请求基本URL
-const API_URL = `${API_BASE_URL}/shop-categories`;
+// 请求基本URL，支持代理
+const API_URL = `${getBaseApiUrl()}/api/shop-categories`;
 
 // 标准响应类型
 interface ApiResponse<T> {

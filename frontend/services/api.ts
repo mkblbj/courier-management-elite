@@ -1,11 +1,96 @@
 // 导入环境配置和调试工具
 import { useEnvStore, debugLog, debugError } from "@/lib/env-config"
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+
+// 环境变量控制是否使用代理
+const useProxy = process.env.NEXT_PUBLIC_USE_API_PROXY === 'true';
+
+// 基础 URL
+const baseApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+
+// 代理基础 URL
+const proxyBaseURL = '/api/proxy';
 
 // 获取API基础URL的辅助函数
-function getApiBaseUrl(): string {
-  // 使用新的getEffectiveApiUrl方法，它会自动处理代理问题
-  return useEnvStore.getState().getEffectiveApiUrl()
-}
+export const getBaseApiUrl = (path: string = ''): string => {
+  // 根据环境变量决定是否使用代理
+  if (useProxy) {
+    // 使用代理模式
+    return `${proxyBaseURL}${path}`;
+  } else {
+    // 直接请求模式
+    return `${baseApiUrl}${path}`;
+  }
+};
+
+// 导出一个用于判断是否使用代理的辅助函数
+export const isUsingProxy = (): boolean => {
+  return useProxy;
+};
+
+/**
+ * 创建 API 客户端实例
+ */
+export const createApiClient = (config?: AxiosRequestConfig): AxiosInstance => {
+  // 获取当前的基础URL（代理或直连）
+  const currentBaseURL = useProxy ? proxyBaseURL : baseApiUrl;
+
+  const axiosConfig: AxiosRequestConfig = {
+    ...config,
+    baseURL: currentBaseURL,
+    timeout: 30000, // 默认超时时间
+    headers: {
+      'Content-Type': 'application/json',
+      ...config?.headers,
+    },
+  };
+
+  const instance = axios.create(axiosConfig);
+
+  // 请求拦截器
+  instance.interceptors.request.use(
+    (config) => {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        debugLog(`API请求: ${config.method?.toUpperCase()} ${config.url}`, config);
+      }
+      return config;
+    },
+    (error) => {
+      debugError('API请求错误:', error);
+      return Promise.reject(error);
+    }
+  );
+
+  // 响应拦截器
+  instance.interceptors.response.use(
+    (response: AxiosResponse) => {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        debugLog(`API响应: ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
+      }
+      return response.data;
+    },
+    (error) => {
+      if (error.response) {
+        // 服务器返回错误
+        debugError('API响应错误:', error.response.data);
+        return Promise.reject(error.response.data);
+      } else if (error.request) {
+        // 请求已发送但未收到响应
+        debugError('未收到API响应:', error.request);
+        return Promise.reject({ code: -1, message: '网络错误，服务器未响应' });
+      } else {
+        // 请求设置时出错
+        debugError('请求配置错误:', error.message);
+        return Promise.reject({ code: -1, message: '请求配置错误' });
+      }
+    }
+  );
+
+  return instance;
+};
+
+// 默认API客户端实例
+export const apiClient = createApiClient();
 
 // 通用的请求处理函数
 async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Promise<T> {
@@ -62,7 +147,7 @@ async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Pr
 }
 
 // 定义API响应格式
-interface ApiResponseFormat<T> {
+export interface ApiResponseFormat<T> {
   code: number
   message: string
   data: T
@@ -133,7 +218,7 @@ export interface UpdateCourierTypeRequest {
 export const api = {
   // 获取快递类型列表
   async getCourierTypes(params?: FilterParams): Promise<CourierType[]> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     // 构建查询参数
@@ -147,7 +232,7 @@ export const api = {
 
   // 获取快递类别列表
   async getCourierCategories(): Promise<CourierCategory[]> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
 
     return fetchWithErrorHandling<CourierCategory[]>(CATEGORIES_ENDPOINT, {
@@ -157,7 +242,7 @@ export const api = {
 
   // 获取单个快递类别
   async getCourierCategory(id: number | string): Promise<CourierCategory> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
 
     return fetchWithErrorHandling<CourierCategory>(`${CATEGORIES_ENDPOINT}/${id}`)
@@ -165,7 +250,7 @@ export const api = {
 
   // 创建快递类别
   async createCourierCategory(data: { name: string; sort_order?: number }): Promise<CourierCategory> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
 
     return fetchWithErrorHandling<CourierCategory>(CATEGORIES_ENDPOINT, {
@@ -176,7 +261,7 @@ export const api = {
 
   // 更新快递类别
   async updateCourierCategory(id: number | string, data: { name: string; sort_order?: number }): Promise<CourierCategory> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
 
     return fetchWithErrorHandling<CourierCategory>(`${CATEGORIES_ENDPOINT}/${id}`, {
@@ -187,7 +272,7 @@ export const api = {
 
   // 删除快递类别
   async deleteCourierCategory(id: number | string): Promise<void> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
 
     return fetchWithErrorHandling<void>(`${CATEGORIES_ENDPOINT}/${id}`, {
@@ -197,7 +282,7 @@ export const api = {
 
   // 更新快递类别排序
   async updateCourierCategoriesOrder(items: { id: number | string; sort_order: number }[]): Promise<void> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
 
     return fetchWithErrorHandling<void>(`${CATEGORIES_ENDPOINT}/sort`, {
@@ -208,7 +293,7 @@ export const api = {
 
   // 获取单个快递类型
   async getCourierType(id: number | string): Promise<CourierType> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<CourierType>(`${COURIERS_ENDPOINT}/${id}`)
@@ -216,7 +301,7 @@ export const api = {
 
   // 创建快递类型
   async createCourierType(data: CreateCourierTypeRequest): Promise<CourierType> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<CourierType>(`${COURIERS_ENDPOINT}`, {
@@ -227,7 +312,7 @@ export const api = {
 
   // 更新快递类型
   async updateCourierType(id: number | string, data: UpdateCourierTypeRequest): Promise<CourierType> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<CourierType>(`${COURIERS_ENDPOINT}/${id}`, {
@@ -238,7 +323,7 @@ export const api = {
 
   // 删除快递类型
   async deleteCourierType(id: number | string): Promise<void> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<void>(`${COURIERS_ENDPOINT}/${id}`, {
@@ -248,7 +333,7 @@ export const api = {
 
   // 切换快递类型状态
   async toggleCourierTypeStatus(id: number | string): Promise<{ id: number | string; is_active: number }> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<{ id: number | string; is_active: number }>(`${COURIERS_ENDPOINT}/${id}/toggle`, {
@@ -258,7 +343,7 @@ export const api = {
 
   // 更新快递类型排序
   async updateCourierTypesOrder(items: { id: number | string; sort_order: number }[]): Promise<void> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const COURIERS_ENDPOINT = `${API_BASE_URL}/api/couriers`
 
     return fetchWithErrorHandling<void>(`${COURIERS_ENDPOINT}/sort`, {
@@ -269,7 +354,7 @@ export const api = {
 
   // 更新快递类别排序
   async updateCourierCategorySort(items: { id: number | string; sort_order: number }[]): Promise<void> {
-    const API_BASE_URL = getApiBaseUrl()
+    const API_BASE_URL = getBaseApiUrl()
     const CATEGORIES_ENDPOINT = `${API_BASE_URL}/api/courier-categories`
 
     return fetchWithErrorHandling<void>(`${CATEGORIES_ENDPOINT}/sort`, {

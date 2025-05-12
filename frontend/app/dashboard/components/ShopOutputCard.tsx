@@ -14,6 +14,7 @@ import { API_BASE_URL, API_SUCCESS_CODE } from "@/lib/constants";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { dashboardApi } from "@/services/dashboard-api";
 
 // 定义饼图的颜色
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD', '#EC7063', '#5DADE2', '#45B39D'];
@@ -111,6 +112,7 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
       const [error, setError] = useState<string | null>(null);
       const [shopOutputData, setShopOutputData] = useState<ShopOutputData[]>([]);
       const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+      const [allCategoryData, setAllCategoryData] = useState<CategoryData[]>([]);
       const [totalOutput, setTotalOutput] = useState(0);
       const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
       const [nextRefreshTime, setNextRefreshTime] = useState<Date>(new Date(Date.now() + 5 * 60 * 1000)); // 5分钟后刷新
@@ -121,23 +123,10 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
       // 清除仪表盘缓存
       const clearDashboardCache = useCallback(async () => {
             try {
-                  const url = `${API_BASE_URL}/dashboard/cache/clear`;
-                  console.debug("[ShopOutputCard] Clearing dashboard cache:", url);
-
-                  const response = await fetch(url, { method: 'POST' });
-
-                  if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error("[ShopOutputCard] Cache clear error:", response.status, errorText);
-                        throw new Error(`清除缓存失败: ${response.status}`);
-                  }
-
-                  const data = await response.json();
-                  console.debug("[ShopOutputCard] Cache clear response:", data);
-
+                  await dashboardApi.clearCache();
                   toast({
                         title: t("缓存已清除"),
-                        description: data.message || t("数据缓存已清除，正在获取最新数据"),
+                        description: t("数据缓存已清除，正在获取最新数据"),
                         duration: 3000,
                   });
 
@@ -165,10 +154,6 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                         await clearDashboardCache();
                   }
 
-                  // 调用真实API
-                  const url = `${API_BASE_URL}/dashboard/shop-outputs/today${categoryId ? `?category_id=${categoryId}` : ''}`;
-                  console.debug("[ShopOutputCard] Fetching data from:", url);
-
                   // 开发环境下，如果API未准备好，使用模拟数据
                   if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
                         console.debug("[ShopOutputCard] Using mock data in development mode");
@@ -176,30 +161,12 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                         return;
                   }
 
-                  const response = await fetch(url);
-
-                  if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error("[ShopOutputCard] API error:", response.status, errorText);
-                        throw new Error(`获取数据失败: ${response.status}`);
-                  }
-
-                  const apiResponse: ApiResponse = await response.json();
-                  console.debug("[ShopOutputCard] API response:", apiResponse);
-
-                  if (apiResponse.code !== API_SUCCESS_CODE) {
-                        console.error("[ShopOutputCard] API returned error:", apiResponse.message);
-                        throw new Error(apiResponse.message || "API返回错误");
-                  }
+                  // 调用dashboardApi
+                  const params = categoryId ? { category_id: categoryId } : undefined;
+                  const data = await dashboardApi.getTodayShopOutputs(params);
 
                   // 设置最后更新时间
-                  if (apiResponse.message) {
-                        setLastUpdateTime(apiResponse.message);
-                  } else {
-                        setLastUpdateTime(t("数据已更新"));
-                  }
-
-                  const { data } = apiResponse;
+                  setLastUpdateTime(t("数据已更新"));
 
                   // 从API响应中提取数据
                   const total = data.total_quantity;
@@ -230,6 +197,12 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
 
                   setShopOutputData(shopData);
                   setCategoryData(catData);
+
+                  // 只有在显示所有类别的时候才更新所有类别数据
+                  if (!categoryId) {
+                        setAllCategoryData(catData);
+                  }
+
                   setTotalOutput(total);
                   setNextRefreshTime(new Date(Date.now() + 5 * 60 * 1000)); // 5分钟后刷新
                   setRefreshCountdown(5 * 60); // 重置倒计时
@@ -313,6 +286,12 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
 
             setShopOutputData(shopData);
             setCategoryData(catData);
+
+            // 只有在显示所有类别的时候才更新所有类别数据
+            if (!categoryId) {
+                  setAllCategoryData(catData);
+            }
+
             setTotalOutput(total);
             setNextRefreshTime(new Date(Date.now() + 5 * 60 * 1000));
             setRefreshCountdown(5 * 60);
@@ -486,7 +465,7 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                                           </SelectTrigger>
                                           <SelectContent>
                                                 <SelectItem value="all">{t("所有类别")}</SelectItem>
-                                                {categoryData.map((category) => (
+                                                {allCategoryData.map((category) => (
                                                       <SelectItem key={category.id} value={category.id.toString()}>
                                                             {category.name}
                                                       </SelectItem>
