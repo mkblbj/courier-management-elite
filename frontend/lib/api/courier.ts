@@ -1,4 +1,8 @@
 import { API_BASE_URL } from "../constants";
+import { getBaseApiUrl } from "@/services/api";
+
+// 使用代理感知的API URL
+const API_URL = `${getBaseApiUrl()}/api/couriers`;
 
 export interface Courier {
   id: number;
@@ -30,7 +34,7 @@ export const getCouriers = async (
     order?: 'asc' | 'desc';
   }
 ): Promise<Courier[]> => {
-  const url = new URL(`${API_BASE_URL}/couriers`, window.location.origin);
+  const url = new URL(API_URL, window.location.origin);
   
   if (isActive !== undefined) {
     url.searchParams.append('status', isActive ? 'active' : 'inactive');
@@ -65,6 +69,6 @@ export const getCouriers = async (
  * @param id 快递类型ID
  */
 export const getCourier = async (id: number): Promise<ApiResponse<Courier>> => {
-  const response = await fetch(`${API_BASE_URL}/couriers/${id}`);
+  const response = await fetch(`${API_URL}/${id}`);
   return await response.json();
 }; 

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../constants";
+import { getBaseApiUrl } from "@/services/api";
 import {
   ShopOutput,
   ShopOutputFormData,
@@ -8,9 +9,13 @@ import {
   DashboardData,
 } from "../types/shop-output";
 
-const API_URL = `${API_BASE_URL}/shop-outputs`;
-const STATS_URL = `${API_BASE_URL}/stats/shop-outputs`;
-const DASHBOARD_URL = `${API_BASE_URL}/dashboard/shop-outputs`;
+// 获取API基础URL
+const getApiEndpoint = (path: string) => `${getBaseApiUrl()}/api${path}`;
+
+// 使用代理感知的URL构建
+const API_URL = getApiEndpoint('/shop-outputs');
+const STATS_URL = getApiEndpoint('/stats/shop-outputs');
+const DASHBOARD_URL = getApiEndpoint('/dashboard/shop-outputs');
 
 interface ApiResponse<T> {
   code: number;

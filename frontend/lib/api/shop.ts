@@ -1,7 +1,9 @@
 import { Shop, ShopFormData, ShopSortItem } from "../types/shop";
 import { API_BASE_URL } from "../constants";
+import { getBaseApiUrl } from "@/services/api";
 
-const API_URL = `${API_BASE_URL}/shops`;
+// 使用代理感知的URL构建
+const API_URL = `${getBaseApiUrl()}/api/shops`;
 
 interface ApiResponse<T> {
   code: number;
