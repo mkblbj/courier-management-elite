@@ -171,5 +171,12 @@
   "total_quantity": "总数量",
   "total_record": "共 {{count}} 条记录",
   "total_shops": "共 {{count}} 个店铺",
-  "update_success": "更新成功"
+  "update_success": "更新成功",
+  "selectShop": "请选择店铺",
+  "searchShops": "搜索店铺...",
+  "noShopsFound": "未找到店铺",
+  "noCategoriesFound": "未找到店铺类别",
+  "shops": "店铺",
+  "noAvailableShops": "没有可用店铺",
+  "allShops": "所有店铺"
 }

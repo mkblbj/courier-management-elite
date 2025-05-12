@@ -141,5 +141,12 @@
   "unknown_category": "不明なカテゴリ",
   "today": "今日",
   "tomorrow": "明日",
-  "edit_shop_description": "店舗情報を編集するための説明"
+  "edit_shop_description": "店舗情報を編集するための説明",
+  "selectShop": "お店を選択してください",
+  "searchShops": "お店を検索...",
+  "noShopsFound": "お店が見つかりません",
+  "noCategoriesFound": "店舗カテゴリが見つかりません",
+  "shops": "お店",
+  "noAvailableShops": "利用可能なお店がありません",
+  "allShops": "すべてのお店"
 }

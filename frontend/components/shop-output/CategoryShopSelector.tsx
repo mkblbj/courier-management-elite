@@ -141,7 +141,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                                 )}
                                           </div>
                                     ) : (
-                                          <span className="text-muted-foreground">{t("选择店铺")}</span>
+                                          <span className="text-muted-foreground">{t("shop:selectShop")}</span>
                                     )}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
@@ -151,7 +151,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                     <div className="flex items-center border-b px-3">
                                           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                                           <CommandInput
-                                                placeholder={t("搜索店铺...")}
+                                                placeholder={t("shop:searchShops")}
                                                 value={searchTerm}
                                                 onValueChange={setSearchTerm}
                                                 className="h-9 border-0 outline-none focus-visible:ring-0"
@@ -161,8 +161,8 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                     <CommandList>
                                           {searchTerm ? (
                                                 <>
-                                                      <CommandEmpty>{t("未找到店铺")}</CommandEmpty>
-                                                      <CommandGroup heading={t("搜索结果")}>
+                                                      <CommandEmpty>{t("shop:noShopsFound")}</CommandEmpty>
+                                                      <CommandGroup heading={t("common:searchResults")}>
                                                             {filteredShops.map((shop) => (
                                                                   <CommandItem
                                                                         key={shop.id}
@@ -193,7 +193,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                                 </>
                                           ) : (
                                                 <>
-                                                      <CommandEmpty>{loading ? "加载中..." : "未找到店铺类别"}</CommandEmpty>
+                                                      <CommandEmpty>{loading ? t("common:loading") : t("shop:noCategoriesFound")}</CommandEmpty>
                                                       {categories.map((category) => {
                                                             const categoryShops = shopsByCategory[category.id] || [];
                                                             if (categoryShops.length === 0) return null;
@@ -218,7 +218,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                                                               >
                                                                                     <Command>
                                                                                           <CommandList>
-                                                                                                <CommandGroup heading={`${category.name} - 店铺`}>
+                                                                                                <CommandGroup heading={`${category.name} - ${t("shop:shops")}`}>
                                                                                                       {categoryShops.length > 0 ? (
                                                                                                             categoryShops.map((shop) => (
                                                                                                                   <CommandItem
@@ -240,7 +240,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
                                                                                                                   </CommandItem>
                                                                                                             ))
                                                                                                       ) : (
-                                                                                                            <CommandItem disabled>{t("没有可用店铺")}</CommandItem>
+                                                                                                            <CommandItem disabled>{t("shop:noAvailableShops")}</CommandItem>
                                                                                                       )}
                                                                                                 </CommandGroup>
                                                                                           </CommandList>
@@ -253,7 +253,7 @@ export const CategoryShopSelector: React.FC<CategoryShopSelectorProps> = ({
 
                                                       <CommandSeparator />
 
-                                                      <CommandGroup heading={t("所有店铺")}>
+                                                      <CommandGroup heading={t("shop:allShops")}>
                                                             {allShops.map((shop) => (
                                                                   <CommandItem
                                                                         key={shop.id}

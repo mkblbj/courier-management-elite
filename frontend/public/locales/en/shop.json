@@ -115,5 +115,12 @@
   "total_output": "Total Output",
   "total_quantity": "Total Quantity",
   "total_shops": "Total {{count}} shops",
-  "update_success": "Updated Successfully"
+  "update_success": "Updated Successfully",
+  "selectShop": "Select Shop",
+  "searchShops": "Search shops...",
+  "noShopsFound": "No shops found",
+  "noCategoriesFound": "No shop categories found",
+  "shops": "Shops",
+  "noAvailableShops": "No available shops",
+  "allShops": "All Shops"
 }

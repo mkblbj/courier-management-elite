@@ -44,6 +44,7 @@
   "common:save": "common:save",
   "common:saving": "common:saving",
   "common:search": "common:search",
+  "common:searchResults": "Search Results",
   "common:sort": "common:sort",
   "common:status_update_failed": "common:status_update_failed",
   "common:success": "common:success",
