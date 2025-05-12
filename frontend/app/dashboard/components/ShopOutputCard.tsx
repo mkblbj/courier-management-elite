@@ -112,6 +112,7 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
       const [error, setError] = useState<string | null>(null);
       const [shopOutputData, setShopOutputData] = useState<ShopOutputData[]>([]);
       const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+      const [allCategoryData, setAllCategoryData] = useState<CategoryData[]>([]);
       const [totalOutput, setTotalOutput] = useState(0);
       const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
       const [nextRefreshTime, setNextRefreshTime] = useState<Date>(new Date(Date.now() + 5 * 60 * 1000)); // 5分钟后刷新
@@ -196,6 +197,12 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
 
                   setShopOutputData(shopData);
                   setCategoryData(catData);
+
+                  // 只有在显示所有类别的时候才更新所有类别数据
+                  if (!categoryId) {
+                        setAllCategoryData(catData);
+                  }
+
                   setTotalOutput(total);
                   setNextRefreshTime(new Date(Date.now() + 5 * 60 * 1000)); // 5分钟后刷新
                   setRefreshCountdown(5 * 60); // 重置倒计时
@@ -279,6 +286,12 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
 
             setShopOutputData(shopData);
             setCategoryData(catData);
+
+            // 只有在显示所有类别的时候才更新所有类别数据
+            if (!categoryId) {
+                  setAllCategoryData(catData);
+            }
+
             setTotalOutput(total);
             setNextRefreshTime(new Date(Date.now() + 5 * 60 * 1000));
             setRefreshCountdown(5 * 60);
@@ -452,7 +465,7 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                                           </SelectTrigger>
                                           <SelectContent>
                                                 <SelectItem value="all">{t("所有类别")}</SelectItem>
-                                                {categoryData.map((category) => (
+                                                {allCategoryData.map((category) => (
                                                       <SelectItem key={category.id} value={category.id.toString()}>
                                                             {category.name}
                                                       </SelectItem>
