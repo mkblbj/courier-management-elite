@@ -314,6 +314,16 @@ export default function OutputDataPage() {
                     onChange={(e) => setNotes(e.target.value)}
                     className="w-full h-10 min-h-10 resize-none"
                   />
+                  <div className="mt-1.5 flex gap-2">
+                    <div className="text-xs text-gray-500">{t("快速选择")}:</div>
+                    <button
+                      type="button"
+                      onClick={() => setNotes("再発送")}
+                      className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      再発送
+                    </button>
+                  </div>
                 </div>
               </div>
 
