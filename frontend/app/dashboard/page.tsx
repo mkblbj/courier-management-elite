@@ -23,6 +23,7 @@ import { useShippingData } from "@/hooks/use-shipping-data"
 import { ShopOutputCard } from "./components/ShopOutputCard"
 import { ShopOutputTomorrowCard } from "./components/ShopOutputTomorrowCard"
 import { API_BASE_URL, API_SUCCESS_CODE } from "@/lib/constants"
+import { dashboardApi } from "@/services/dashboard-api"
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -313,9 +314,6 @@ export default function DashboardPage() {
     setIsLoadingTodayOutput(true)
     setOutputError(null)
     try {
-      const url = `${API_BASE_URL}/dashboard/shop-outputs/today`
-      console.debug("[Dashboard] Fetching today output data from:", url)
-
       // 开发环境下，如果API未准备好，使用模拟数据
       if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         await new Promise(resolve => setTimeout(resolve, 600))
@@ -323,22 +321,8 @@ export default function DashboardPage() {
         return
       }
 
-      const response = await fetch(url)
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("[Dashboard] API error:", response.status, errorText)
-        throw new Error(`获取今日出力数据失败: ${response.status}`)
-      }
-
-      const apiResponse = await response.json()
-
-      if (apiResponse.code !== API_SUCCESS_CODE) {
-        console.error("[Dashboard] API returned error:", apiResponse.message)
-        throw new Error(apiResponse.message || "API返回错误")
-      }
-
-      setTodayTotalOutput(apiResponse.data.total_quantity || 0)
+      const todayOutputData = await dashboardApi.getTodayShopOutputs()
+      setTodayTotalOutput(todayOutputData.total_quantity || 0)
     } catch (error) {
       console.error("[Dashboard] 获取今日出力总量失败:", error)
       setOutputError(error instanceof Error ? error.message : "未知错误")
@@ -354,9 +338,6 @@ export default function DashboardPage() {
     setIsLoadingTomorrowOutput(true)
     setOutputError(null)
     try {
-      const url = `${API_BASE_URL}/dashboard/shop-outputs/tomorrow`
-      console.debug("[Dashboard] Fetching tomorrow output data from:", url)
-
       // 开发环境下，如果API未准备好，使用模拟数据
       if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         await new Promise(resolve => setTimeout(resolve, 600))
@@ -364,22 +345,8 @@ export default function DashboardPage() {
         return
       }
 
-      const response = await fetch(url)
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("[Dashboard] API error:", response.status, errorText)
-        throw new Error(`获取明日出力数据失败: ${response.status}`)
-      }
-
-      const apiResponse = await response.json()
-
-      if (apiResponse.code !== API_SUCCESS_CODE) {
-        console.error("[Dashboard] API returned error:", apiResponse.message)
-        throw new Error(apiResponse.message || "API返回错误")
-      }
-
-      setTomorrowTotalOutput(apiResponse.data.total_predicted_quantity || 0)
+      const tomorrowOutputData = await dashboardApi.getTomorrowShopOutputs()
+      setTomorrowTotalOutput(tomorrowOutputData.total_predicted_quantity || 0)
     } catch (error) {
       console.error("[Dashboard] 获取明日出力预测总量失败:", error)
       setOutputError(error instanceof Error ? error.message : "未知错误")
