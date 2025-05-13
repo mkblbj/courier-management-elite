@@ -572,23 +572,25 @@ export default function DashboardPage() {
                     {/* 发货总量部分 */}
                     <div className="border rounded-lg p-6">
                       <h3 className="text-lg font-medium mb-4">{t("发货数据")}</h3>
-                      <div className="grid grid-cols-2 gap-4">
+                      {/* 第一行：今日发货总量 */}
+                      <div className="mb-4">
                         <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-blue-50">
                           <div className="text-sm text-gray-600 mb-1">{t("今日发货总量")}</div>
                           <div className="text-3xl font-bold text-blue-700">
                             {todayStats?.total?.total || 0}
                           </div>
                         </div>
+                      </div>
+
+                      {/* 第二行：明日预测总量和今日未发送数目 */}
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-orange-50">
                           <div className="text-sm text-gray-600 mb-1">{t("明日预测总量")}</div>
                           <div className="text-3xl font-bold text-orange-700">
                             {shippingData.tomorrowTotal || 0}
                           </div>
                         </div>
-                      </div>
 
-                      {/* 添加今日未发送数目显示 */}
-                      <div className="mt-4">
                         <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-red-50">
                           <div className="text-sm text-gray-600 mb-1">{t("今日未发送数目")}</div>
                           <div className="text-3xl font-bold text-red-700">
@@ -601,7 +603,8 @@ export default function DashboardPage() {
                     {/* 出力总量部分 - 使用API数据 */}
                     <div className="border rounded-lg p-6">
                       <h3 className="text-lg font-medium mb-4">{t("出力数据")}</h3>
-                      <div className="grid grid-cols-2 gap-4">
+                      {/* 第一行：今日出力总量 */}
+                      <div className="mb-4">
                         <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-green-50">
                           <div className="text-sm text-gray-600 mb-1">{t("今日出力总量")}</div>
                           {isLoadingTodayOutput ? (
@@ -612,6 +615,10 @@ export default function DashboardPage() {
                             <div className="text-3xl font-bold text-green-700">{todayTotalOutput}</div>
                           )}
                         </div>
+                      </div>
+
+                      {/* 第二行：明日出力预测 */}
+                      <div className="grid grid-cols-1 gap-4">
                         <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-purple-50">
                           <div className="text-sm text-gray-600 mb-1">{t("明日出力预测")}</div>
                           {isLoadingTomorrowOutput ? (

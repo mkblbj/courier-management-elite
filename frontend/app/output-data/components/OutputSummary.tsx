@@ -67,6 +67,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [refreshKey, setRefreshKey] = useState(0);
   const [chartType, setChartType] = useState<"pie" | "bar">("pie");
+  const [tableViewType, setTableViewType] = useState<"byShop" | "byCourier">("byShop");
 
   // 使用选择的日期或当天日期
   const dateToUse = selectedDate ? dateToApiString(selectedDate) : dateToApiString(new Date());
@@ -239,6 +240,50 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     return null;
   };
 
+  // 准备按快递类型分组的数据
+  const courierGroupedData = todayOutputs.reduce((acc, item) => {
+    // 按快递类型分组
+    if (!acc[item.courier_id]) {
+      acc[item.courier_id] = {
+        courier_id: item.courier_id,
+        courier_name: item.courier_name || "未知快递",
+        shops: [],
+        total_quantity: 0
+      };
+    }
+
+    // 找到或创建店铺
+    let shop = acc[item.courier_id].shops.find(s => s.shop_id === item.shop_id);
+    if (!shop) {
+      shop = {
+        shop_id: item.shop_id,
+        shop_name: item.shop_name || "未知店铺",
+        category_name: getShopCategoryName(item.shop_id),
+        quantity: 0
+      };
+      acc[item.courier_id].shops.push(shop);
+    }
+
+    // 累加数量
+    shop.quantity += item.quantity;
+    acc[item.courier_id].total_quantity += item.quantity;
+
+    return acc;
+  }, {} as Record<number, {
+    courier_id: number;
+    courier_name: string;
+    shops: Array<{
+      shop_id: number;
+      shop_name: string;
+      category_name: string;
+      quantity: number;
+    }>;
+    total_quantity: number;
+  }>);
+
+  // 转换为数组便于渲染
+  const courierSummaryArray = Object.values(courierGroupedData);
+
   return (
     (<Card className="shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -372,52 +417,120 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
                 </div>
               </TabsContent>
               <TabsContent value="table">
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("店铺名称")}</TableHead>
-                        <TableHead>{t("类别")}</TableHead>
-                        <TableHead>{t("快递类型")}</TableHead>
-                        <TableHead className="text-right">{t("出力数量")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {shopSummaryArray.map((shop, shopIndex) => (
-                        <React.Fragment key={shop.shop_id}>
-                          {/* 店铺汇总行 */}
-                          <TableRow className="bg-muted/30 font-medium">
-                            <TableCell>{shop.shop_name}</TableCell>
-                            <TableCell>{shop.category_name}</TableCell>
-                            <TableCell>{t("合计")}</TableCell>
-                            <TableCell className="text-right font-bold">
-                              {shop.total_quantity}
-                            </TableCell>
-                          </TableRow>
-                          {/* 快递类型明细行 */}
-                          {shop.couriers.map((courier, courierIndex) => (
-                            <TableRow key={`${shop.shop_id}-${courier.courier_id}`}>
-                              <TableCell></TableCell>
-                              <TableCell></TableCell>
-                              <TableCell>{courier.courier_name}</TableCell>
-                              <TableCell className="text-right">
-                                {courier.quantity}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                          {/* 分隔行，最后一个店铺不需要 */}
-                          {shopIndex < shopSummaryArray.length - 1 && (
-                            <TableRow>
-                              <TableCell colSpan={4} className="p-0">
-                                <Separator />
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="mb-4">
+                  <div className="flex justify-start space-x-2">
+                    <Button
+                      variant={tableViewType === "byShop" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setTableViewType("byShop")}
+                    >
+                      {t("按店铺统计")}
+                    </Button>
+                    <Button
+                      variant={tableViewType === "byCourier" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setTableViewType("byCourier")}
+                    >
+                      {t("按快递类型统计")}
+                    </Button>
+                  </div>
                 </div>
+
+                {tableViewType === "byShop" ? (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t("店铺名称")}</TableHead>
+                          <TableHead>{t("类别")}</TableHead>
+                          <TableHead>{t("快递类型")}</TableHead>
+                          <TableHead className="text-right">{t("出力数量")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {shopSummaryArray.map((shop, shopIndex) => (
+                          <React.Fragment key={shop.shop_id}>
+                            {/* 店铺汇总行 */}
+                            <TableRow className="bg-muted/30 font-medium">
+                              <TableCell>{shop.shop_name}</TableCell>
+                              <TableCell>{shop.category_name}</TableCell>
+                              <TableCell>{t("合计")}</TableCell>
+                              <TableCell className="text-right font-bold">
+                                {shop.total_quantity}
+                              </TableCell>
+                            </TableRow>
+                            {/* 快递类型明细行 */}
+                            {shop.couriers.map((courier, courierIndex) => (
+                              <TableRow key={`${shop.shop_id}-${courier.courier_id}`}>
+                                <TableCell></TableCell>
+                                <TableCell></TableCell>
+                                <TableCell>{courier.courier_name}</TableCell>
+                                <TableCell className="text-right">
+                                  {courier.quantity}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {/* 分隔行，最后一个店铺不需要 */}
+                            {shopIndex < shopSummaryArray.length - 1 && (
+                              <TableRow>
+                                <TableCell colSpan={4} className="p-0">
+                                  <Separator />
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t("快递类型")}</TableHead>
+                          <TableHead>{t("店铺名称")}</TableHead>
+                          <TableHead>{t("类别")}</TableHead>
+                          <TableHead className="text-right">{t("出力数量")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {courierSummaryArray.map((courier, courierIndex) => (
+                          <React.Fragment key={courier.courier_id}>
+                            {/* 快递类型汇总行 */}
+                            <TableRow className="bg-muted/30 font-medium">
+                              <TableCell>{courier.courier_name}</TableCell>
+                              <TableCell>{t("合计")}</TableCell>
+                              <TableCell></TableCell>
+                              <TableCell className="text-right font-bold">
+                                {courier.total_quantity}
+                              </TableCell>
+                            </TableRow>
+                            {/* 店铺明细行 */}
+                            {courier.shops.map((shop) => (
+                              <TableRow key={`${courier.courier_id}-${shop.shop_id}`}>
+                                <TableCell></TableCell>
+                                <TableCell>{shop.shop_name}</TableCell>
+                                <TableCell>{shop.category_name}</TableCell>
+                                <TableCell className="text-right">
+                                  {shop.quantity}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {/* 分隔行，最后一个快递类型不需要 */}
+                            {courierIndex < courierSummaryArray.length - 1 && (
+                              <TableRow>
+                                <TableCell colSpan={4} className="p-0">
+                                  <Separator />
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
