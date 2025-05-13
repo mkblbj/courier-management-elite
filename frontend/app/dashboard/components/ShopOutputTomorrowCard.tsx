@@ -131,7 +131,7 @@ export function ShopOutputTomorrowCard({
       const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
       const [nextRefreshTime, setNextRefreshTime] = useState<Date>(new Date(Date.now() + 5 * 60 * 1000)); // 5分钟后刷新
       const [refreshCountdown, setRefreshCountdown] = useState<number>(5 * 60); // 倒计时秒数
-      const [chartType, setChartType] = useState<"pie" | "bar">("pie");
+      const [chartType, setChartType] = useState<"pie" | "bar">("bar");
       const [lastUpdateTime, setLastUpdateTime] = useState<string>(""); // 新增：最后更新时间
 
       // 清除仪表盘缓存
