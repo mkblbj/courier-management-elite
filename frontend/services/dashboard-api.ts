@@ -94,6 +94,32 @@ export interface DashboardFilterParams {
   category_id?: number | string
 }
 
+// 定义出力趋势数据参数
+export interface ShopOutputTrendParams {
+  dimension?: 'category' | 'shop' | 'courier' // 数据维度：按类别/按店铺/按快递类型
+  days?: number // 获取天数，默认7天
+  category_id?: number | string // 类别ID筛选
+  shop_id?: number | string // 店铺ID筛选
+  courier_id?: number | string // 快递类型ID筛选
+}
+
+// 定义出力趋势数据类型
+export interface ShopOutputTrendData {
+  dates: string[] // 日期数组
+  series: TrendSeries[] // 数据系列
+  total_by_date: { [date: string]: number } // 每天总量
+}
+
+// 定义趋势系列数据
+export interface TrendSeries {
+  id: number // 系列ID（类别ID/店铺ID/快递类型ID）
+  name: string // 系列名称（类别名称/店铺名称/快递类型名称）
+  category_id?: number // 如果是店铺，该店铺所属类别ID
+  category_name?: string // 如果是店铺，该店铺所属类别名称
+  data: { [date: string]: number } // 按日期的数据
+  total: number // 总量
+}
+
 // 定义今日店铺出力统计类型
 export interface TodayShopOutputsData {
   date: string
@@ -202,6 +228,27 @@ export const dashboardApi = {
     const queryString = buildQueryString(params)
 
     return fetchWithErrorHandling<TomorrowShopOutputsData>(`${DASHBOARD_ENDPOINT}/shop-outputs/tomorrow${queryString}`)
+  },
+  
+  // 获取店铺出力趋势数据
+  async getShopOutputTrend(params?: ShopOutputTrendParams): Promise<ShopOutputTrendData> {
+    const DASHBOARD_ENDPOINT = getDashboardEndpoint()
+    const queryString = buildQueryString(params)
+    const url = `${DASHBOARD_ENDPOINT}/shop-outputs/trend${queryString}`
+    
+    try {
+      const data = await fetchWithErrorHandling<ShopOutputTrendData>(url)
+      
+      // 确保返回数据结构完整
+      return {
+        dates: data.dates || [],
+        series: data.series || [],
+        total_by_date: data.total_by_date || {}
+      }
+    } catch (error) {
+      console.error("趋势数据请求失败:", error)
+      throw error
+    }
   },
 
   // 清除仪表盘数据缓存

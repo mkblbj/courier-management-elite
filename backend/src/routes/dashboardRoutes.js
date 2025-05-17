@@ -9,6 +9,9 @@ router.get('/shop-outputs/today', DashboardController.getTodayShopOutputs.bind(D
 // 获取明日出力预测
 router.get('/shop-outputs/tomorrow', DashboardController.getTomorrowShopOutputs.bind(DashboardController));
 
+// 获取店铺出力趋势数据
+router.get('/shop-outputs/trend', DashboardController.getShopOutputTrend.bind(DashboardController));
+
 // 清除仪表盘数据缓存
 router.post('/cache/clear', DashboardController.clearCache.bind(DashboardController));
 

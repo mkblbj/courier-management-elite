@@ -22,6 +22,7 @@ import { shippingApi } from "@/services/shipping-api"
 import { useShippingData } from "@/hooks/use-shipping-data"
 import { ShopOutputCard } from "./components/ShopOutputCard"
 import { ShopOutputTomorrowCard } from "./components/ShopOutputTomorrowCard"
+import { ShopOutputTrendCard } from "./components/ShopOutputTrendCard"
 import { API_BASE_URL, API_SUCCESS_CODE } from "@/lib/constants"
 import { dashboardApi } from "@/services/dashboard-api"
 
@@ -1010,6 +1011,17 @@ export default function DashboardPage() {
                   isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                 )}
                 style={{ transitionDelay: "700ms" }}
+              />
+            </div>
+
+            {/* 店铺出力趋势图卡片区域 */}
+            <div className="mb-6">
+              <ShopOutputTrendCard
+                className={cn(
+                  "transition-all duration-500",
+                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                )}
+                style={{ transitionDelay: "800ms" }}
               />
             </div>
           </>

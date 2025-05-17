@@ -463,6 +463,254 @@ class DashboardControllerClass {
   }
   
   /**
+   * 获取店铺出力趋势数据
+   * @param {Object} req 请求对象，支持query参数：
+   *                      dimension - 查询维度('category'|'shop'|'courier')
+   *                      days - 查询天数
+   *                      category_id - 类别ID筛选
+   *                      shop_id - 店铺ID筛选
+   *                      courier_id - 快递类型ID筛选
+   * @param {Object} res 响应对象
+   */
+  async getShopOutputTrend(req, res) {
+    try {
+      const { dimension = 'category', days = 7, category_id, shop_id, courier_id } = req.query;
+      
+      // 验证维度参数
+      if (!['category', 'shop', 'courier'].includes(dimension)) {
+        return res.status(400).json({
+          code: 400,
+          message: `不支持的维度: ${dimension}，支持的维度包括: category, shop, courier - ${getCurrentTimeFormatted()}`
+        });
+      }
+      
+      // 构建缓存键，包含所有筛选条件
+      const cacheKey = `shop_output_trend_${dimension}_${days}_c${category_id || 'all'}_s${shop_id || 'all'}_co${courier_id || 'all'}`;
+      
+      // 尝试从缓存获取数据
+      const cachedData = dashboardCache.get(cacheKey);
+      if (cachedData) {
+        return res.status(200).json({
+          code: 0,
+          message: `获取成功(cached) - ${getCurrentTimeFormatted()}`,
+          data: cachedData
+        });
+      }
+      
+      // 计算日期范围
+      const today = new Date();
+      const daysNum = parseInt(days) || 7;
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - daysNum + 1);
+      
+      // 生成日期数组
+      const dateArray = [];
+      const currentDate = new Date(startDate);
+      while (currentDate <= today) {
+        dateArray.push(currentDate.toISOString().split('T')[0]);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      // 获取日期范围内的所有出力数据
+      const firstDate = dateArray[0];
+      const lastDate = dateArray[dateArray.length - 1];
+      
+      // 根据维度和筛选条件获取数据
+      let outputs = [];
+      let shops = [];
+      let categories = [];
+      let couriers = [];
+      
+      // 获取所有活跃店铺
+      const shopOptions = { is_active: true };
+      if (category_id) {
+        shopOptions.category_id = parseInt(category_id);
+      }
+      shops = await Shop.getAll(shopOptions);
+      
+      // 获取所有活跃快递类型
+      couriers = await Courier.getAll({ is_active: true });
+      
+      // 为每个日期获取数据
+      const outputsByDate = {};
+      for (const date of dateArray) {
+        const dailyOutputs = await ShopOutput.getOutputsByDate(date);
+        
+        // 根据筛选条件过滤数据
+        let filteredOutputs = dailyOutputs;
+        
+        if (category_id) {
+          filteredOutputs = filteredOutputs.filter(output => {
+            const shop = shops.find(s => s.id === output.shop_id);
+            return shop && shop.category_id == category_id;
+          });
+        }
+        
+        if (shop_id) {
+          filteredOutputs = filteredOutputs.filter(output => output.shop_id == shop_id);
+        }
+        
+        if (courier_id) {
+          filteredOutputs = filteredOutputs.filter(output => output.courier_id == courier_id);
+        }
+        
+        outputsByDate[date] = filteredOutputs;
+        outputs = outputs.concat(filteredOutputs);
+      }
+      
+      // 按维度聚合数据
+      const seriesMap = new Map();
+      const totalByDate = {};
+      
+      // 初始化日期总量
+      dateArray.forEach(date => {
+        totalByDate[date] = 0;
+      });
+      
+      // 根据维度聚合数据
+      for (const date of dateArray) {
+        const dateOutputs = outputsByDate[date] || [];
+        
+        // 计算当天总量
+        totalByDate[date] = dateOutputs.reduce((sum, output) => sum + output.quantity, 0);
+        
+        // 根据维度进行聚合
+        if (dimension === 'category') {
+          // 按店铺类别汇总
+          const categoryOutputs = new Map();
+          
+          for (const output of dateOutputs) {
+            const shop = shops.find(s => s.id === output.shop_id);
+            if (!shop) continue;
+            
+            const categoryId = shop.category_id || 0;
+            const categoryName = shop.category_name || '未分类';
+            
+            if (!categoryOutputs.has(categoryId)) {
+              categoryOutputs.set(categoryId, {
+                quantity: 0,
+                name: categoryName
+              });
+            }
+            
+            categoryOutputs.get(categoryId).quantity += output.quantity;
+          }
+          
+          // 更新系列数据
+          categoryOutputs.forEach((value, categoryId) => {
+            if (!seriesMap.has(categoryId)) {
+              seriesMap.set(categoryId, {
+                id: categoryId,
+                name: value.name,
+                data: {},
+                total: 0
+              });
+            }
+            
+            const series = seriesMap.get(categoryId);
+            series.data[date] = value.quantity;
+            series.total += value.quantity;
+          });
+        } else if (dimension === 'shop') {
+          // 按店铺汇总
+          const shopOutputs = new Map();
+          
+          for (const output of dateOutputs) {
+            const shop = shops.find(s => s.id === output.shop_id);
+            if (!shop) continue;
+            
+            if (!shopOutputs.has(shop.id)) {
+              shopOutputs.set(shop.id, {
+                quantity: 0,
+                name: shop.name,
+                category_id: shop.category_id,
+                category_name: shop.category_name
+              });
+            }
+            
+            shopOutputs.get(shop.id).quantity += output.quantity;
+          }
+          
+          // 更新系列数据
+          shopOutputs.forEach((value, shopId) => {
+            if (!seriesMap.has(shopId)) {
+              seriesMap.set(shopId, {
+                id: shopId,
+                name: value.name,
+                category_id: value.category_id,
+                category_name: value.category_name,
+                data: {},
+                total: 0
+              });
+            }
+            
+            const series = seriesMap.get(shopId);
+            series.data[date] = value.quantity;
+            series.total += value.quantity;
+          });
+        } else if (dimension === 'courier') {
+          // 按快递类型汇总
+          const courierOutputs = new Map();
+          
+          for (const output of dateOutputs) {
+            if (!courierOutputs.has(output.courier_id)) {
+              courierOutputs.set(output.courier_id, {
+                quantity: 0,
+                name: output.courier_name
+              });
+            }
+            
+            courierOutputs.get(output.courier_id).quantity += output.quantity;
+          }
+          
+          // 更新系列数据
+          courierOutputs.forEach((value, courierId) => {
+            if (!seriesMap.has(courierId)) {
+              seriesMap.set(courierId, {
+                id: courierId,
+                name: value.name,
+                data: {},
+                total: 0
+              });
+            }
+            
+            const series = seriesMap.get(courierId);
+            series.data[date] = value.quantity;
+            series.total += value.quantity;
+          });
+        }
+      }
+      
+      // 转换为数组并排序
+      const seriesArray = Array.from(seriesMap.values())
+        .sort((a, b) => b.total - a.total);
+      
+      // 构建返回的趋势数据
+      const trendData = {
+        dates: dateArray,
+        series: seriesArray,
+        total_by_date: totalByDate
+      };
+      
+      // 将数据存入缓存
+      dashboardCache.set(cacheKey, trendData);
+      
+      res.status(200).json({
+        code: 0,
+        message: `获取成功 - ${getCurrentTimeFormatted()}`,
+        data: trendData
+      });
+    } catch (error) {
+      console.error('获取店铺出力趋势数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: `获取店铺出力趋势数据失败 - ${getCurrentTimeFormatted()}`,
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
+  
+  /**
    * 清除仪表盘数据缓存
    * @param {Object} req 请求对象
    * @param {Object} res 响应对象
