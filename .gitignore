@@ -56,3 +56,5 @@ out/
 
 # Private individual user cursor rules
 .cursor/
+
+docs/animated-menu/
