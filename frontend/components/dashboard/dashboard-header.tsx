@@ -8,6 +8,7 @@ import LanguageSwitcher from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
+import { AnimatedMenu } from "@/components/animated-menu";
 
 export function DashboardHeader() {
   const [isVisible, setIsVisible] = useState(false);
@@ -40,9 +41,10 @@ export function DashboardHeader() {
   const formattedTime = isMounted ? format(currentTime, "HH:mm:ss") : "";
 
   return (
-    <header className="bg-white dark:bg-gray-950 border-b sticky top-0 z-30">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center">
+    <header className="bg-white dark:bg-gray-950 border-0 border-none sticky top-0 z-30">
+      <div className="flex items-center justify-between h-16 w-full">
+        {/* 左侧区域：欢迎信息和时间 */}
+        <div className="flex flex-col justify-center h-full pl-4">
           <Link
             href="/"
             className={cn(
@@ -57,19 +59,29 @@ export function DashboardHeader() {
               {isMounted ? t("welcome") : ""}
             </span>
           </Link>
+
+          <div className={cn(
+            "flex items-center gap-1 text-gray-600 dark:text-gray-300 transition-all duration-500",
+            isVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-4"
+          )}>
+            <Clock className="h-3 w-3" />
+            <span className="text-xs">
+              {formattedDate} {weekday} {formattedTime}
+            </span>
+          </div>
         </div>
-        <div className={cn(
-          "flex items-center gap-2 text-gray-600 dark:text-gray-300 transition-all duration-500",
-          isVisible
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-4"
-        )}>
-          <Clock className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            {formattedDate} {weekday} {formattedTime}
-          </span>
+
+        {/* 中间区域：菜单 - 使用flex而非绝对定位 */}
+        <div className="flex-1 flex justify-center items-center">
+          <div className="inline-block">
+            <AnimatedMenu />
+          </div>
         </div>
-        <div className="flex items-center gap-4">
+
+        {/* 右侧区域：主题和语言切换 */}
+        <div className="flex items-center gap-4 pr-4">
           <ThemeToggle />
           <LanguageSwitcher />
         </div>

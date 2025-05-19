@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ApiError } from "@/components/api-error"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import {
@@ -16,14 +15,14 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  Treemap,
+  ResponsiveContainer
 } from "recharts"
 import { useTranslation } from "react-i18next";
 import type { StatisticsData } from "@/hooks/use-statistics-data"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatDisplayDate } from "@/lib/date-utils" // 添加时区格式化工具
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface StatisticsChartProps {
   data: StatisticsData | null
@@ -33,14 +32,14 @@ interface StatisticsChartProps {
 
 export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps) {
   const { t } = useTranslation();
-  const [chartType, setChartType] = useState<"bar" | "pie" | "treemap">("bar");
+  const [chartType, setChartType] = useState<"bar" | "pie">("bar");
 
   if (isLoading) {
     return <ChartSkeleton />;
   }
 
   if (error) {
-    return <ApiError error={error} />;
+    return <ApiError message={error} onRetry={() => { }} />;
   }
 
   if (!data) {
@@ -81,23 +80,10 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
   );
 
   // 准备饼图数据
-  let pieData = [];
-  if (data.byCourier && data.byCourier.length > 0) {
-    pieData = data.byCourier.map((item) => ({
-      name: item.courierName,
-      value: item.total,
-    }));
-  } else if (data.byShop && data.byShop.length > 0) {
-    pieData = data.byShop.map((item) => ({
-      name: item.shopName,
-      value: item.total,
-    }));
-  } else if (data.byCategory && data.byCategory.length > 0) {
-    pieData = data.byCategory.map((item) => ({
-      name: item.categoryName,
-      value: item.total,
-    }));
-  }
+  let pieData = data.byCourier.map((item) => ({
+    name: item.courierName,
+    value: item.total,
+  }));
 
   // 饼图颜色
   const COLORS = [

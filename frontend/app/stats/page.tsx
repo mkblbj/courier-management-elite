@@ -32,14 +32,9 @@ export default function StatsPage() {
     error,
     timeRange,
     courierTypeFilter,
-    viewMode,
-    expandedItems,
+    refetch,
     setTimeRange,
-    setCourierTypeFilter,
-    setViewMode,
-    toggleItemExpanded,
-    toggleAllExpanded,
-    refetch
+    setCourierTypeFilter
   } = useStatisticsData()
 
   useEffect(() => {
@@ -62,9 +57,6 @@ export default function StatsPage() {
 
     // 重置快递类型筛选
     setCourierTypeFilter([])
-
-    // 重置视图模式为平铺视图
-    setViewMode("flat")
 
     // 重新加载数据
     refetch()
@@ -107,7 +99,7 @@ export default function StatsPage() {
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-sm">
-                        <p>{t("母类型数据包含其自身数据和子类型数据之和。切换到层级视图以查看更详细的层级统计。")}</p>
+                        <p>{t("统计数据展示了按不同快递类型的发货量分布情况。")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -142,11 +134,6 @@ export default function StatsPage() {
                     isLoading={isLoading}
                     error={error}
                     onRetry={refetch}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                    expandedItems={expandedItems}
-                    onToggleExpanded={toggleItemExpanded}
-                    onToggleAllExpanded={toggleAllExpanded}
                   />
                 </TabsContent>
 
@@ -155,9 +142,6 @@ export default function StatsPage() {
                     data={data}
                     isLoading={isLoading}
                     error={error}
-                    onRetry={refetch}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
                   />
                 </TabsContent>
               </Tabs>
