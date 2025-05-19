@@ -28,12 +28,12 @@ export default function SettingsPage() {
   }, [])
 
   return (
-    (<div className="min-h-screen bg-gray-50">
+    (<div className="min-h-screen bg-background">
       <DashboardHeader />
       <DashboardNav />
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
-        <PageHeader 
-          title={t("系统设置")} 
+        <PageHeader
+          title={t("系统设置")}
           description={t("管理系统设置和用户首选项")}
           className="max-w-5xl mx-auto"
         />
@@ -84,7 +84,7 @@ export default function SettingsPage() {
                         </select>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between border-b pb-4">
                       <div>
                         <h3 className="font-medium">{t("主题设置")}</h3>
@@ -96,7 +96,7 @@ export default function SettingsPage() {
                         <Button variant="outline" size="sm" className="h-8">{t("跟随系统")}</Button>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium">{t("数据分页设置")}</h3>
@@ -112,7 +112,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <CardFooter className="px-0 border-t pt-4">
                     <Button className="bg-blue-600 hover:bg-blue-700 transition-all duration-300">{t("保存设置")}</Button>
                   </CardFooter>

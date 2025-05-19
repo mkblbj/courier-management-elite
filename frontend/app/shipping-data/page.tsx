@@ -27,10 +27,10 @@ export default function ShippingDataPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <DashboardHeader />
       <DashboardNav />
-      
+
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
         <PageHeader
           title={t('shipping:shipping_management')}

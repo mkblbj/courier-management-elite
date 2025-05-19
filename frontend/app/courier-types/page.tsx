@@ -71,7 +71,7 @@ function CourierTypesContent() {
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
       )}
     >
-      <div className="bg-white shadow rounded-lg p-6 max-w-5xl mx-auto">
+      <div className="bg-background dark:bg-background shadow rounded-lg p-6 max-w-5xl mx-auto">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="mb-6">
             <TabsTrigger value="courier-management">{t('courier:courier_management')}</TabsTrigger>
@@ -129,7 +129,7 @@ export default function CourierTypesPage() {
   const { t } = useTranslation(['common', 'courier', 'shop'])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <DashboardHeader />
       <DashboardNav />
 

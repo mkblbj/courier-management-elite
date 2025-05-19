@@ -7,7 +7,6 @@ import { useTheme } from "next-themes"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslation } from "react-i18next"
-import { ThemeToggle } from "./theme-toggle"
 import { useEffect, useState } from "react"
 
 interface MenuItem {
@@ -141,8 +140,8 @@ export function AnimatedMenu() {
       const isDarkTheme = theme === "dark"
 
       return (
-            <div className="bg-background border-b">
-                  <div className="max-w-screen-xl mx-auto px-4 py-2 flex justify-between items-center">
+            <div className="flex justify-center">
+                  <div className="px-4 py-2 flex justify-center items-center">
                         <motion.nav
                               className="p-2 rounded-2xl bg-gradient-to-b from-background/80 to-background/40 backdrop-blur-lg border border-border/40 shadow-lg relative overflow-hidden"
                               initial="initial"
@@ -222,15 +221,6 @@ export function AnimatedMenu() {
                                     ))}
                               </ul>
                         </motion.nav>
-                        <div
-                              style={{
-                                    opacity: isVisible ? 1 : 0,
-                                    transform: isVisible ? "translateY(0)" : "translateY(10px)",
-                                    transition: "opacity 0.5s ease 0.6s, transform 0.5s ease 0.6s"
-                              }}
-                        >
-                              <ThemeToggle />
-                        </div>
                   </div>
             </div>
       )

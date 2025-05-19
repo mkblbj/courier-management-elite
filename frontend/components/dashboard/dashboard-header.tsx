@@ -5,6 +5,7 @@ import { Package, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import LanguageSwitcher from "@/components/language-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 
@@ -20,7 +21,7 @@ export function DashboardHeader() {
     }, 100);
 
     setIsMounted(true);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -39,7 +40,7 @@ export function DashboardHeader() {
   const formattedTime = isMounted ? format(currentTime, "HH:mm:ss") : "";
 
   return (
-    <header className="bg-white border-b sticky top-0 z-30">
+    <header className="bg-white dark:bg-gray-950 border-b sticky top-0 z-30">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
           <Link
@@ -58,7 +59,7 @@ export function DashboardHeader() {
           </Link>
         </div>
         <div className={cn(
-          "flex items-center gap-2 text-gray-600 transition-all duration-500",
+          "flex items-center gap-2 text-gray-600 dark:text-gray-300 transition-all duration-500",
           isVisible
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-4"
@@ -69,6 +70,7 @@ export function DashboardHeader() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           <LanguageSwitcher />
         </div>
       </div>

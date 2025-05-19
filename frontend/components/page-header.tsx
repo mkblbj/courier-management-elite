@@ -26,7 +26,7 @@ export function PageHeader({ title, description, action, className }: PageHeader
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-lg border mb-6 transition-all duration-500",
+        "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-background dark:bg-background p-6 rounded-lg border mb-6 transition-all duration-500",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
         className,
       )}

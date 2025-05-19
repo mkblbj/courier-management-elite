@@ -286,7 +286,7 @@ export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
                 variant="outline"
                 onClick={handleReset}
                 disabled={submitting || isLoading}
-                className="transition-colors hover:bg-gray-100"
+                className="transition-colors hover:bg-muted dark:hover:bg-gray-700/50"
               >{t("重置")}</Button>
               <Button
                 type="submit"

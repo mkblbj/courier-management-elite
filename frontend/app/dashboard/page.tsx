@@ -463,7 +463,7 @@ export default function DashboardPage() {
   }
 
   return (
-    (<div className="min-h-screen bg-gray-50">
+    (<div className="min-h-screen bg-background">
       <DashboardHeader />
       <DashboardNav />
       <main className="container mx-auto px-4 py-6">
@@ -487,14 +487,14 @@ export default function DashboardPage() {
 
         {/* 标签页切换UI */}
         <div className="mb-6">
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-background dark:bg-background rounded-lg shadow-sm overflow-hidden">
             <div className="flex">
               <button
                 className={cn(
                   "px-4 py-3 text-sm font-medium transition-colors",
                   activeTab === "overview"
-                    ? "bg-white text-gray-900 border-b-2 border-gray-900"
-                    : "bg-gray-50 text-gray-500 hover:text-gray-900"
+                    ? "bg-background dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-b-2 border-gray-900 dark:border-gray-100"
+                    : "bg-muted dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
                 )}
                 onClick={() => handleTabChange("overview")}
               >
@@ -504,8 +504,8 @@ export default function DashboardPage() {
                 className={cn(
                   "px-4 py-3 text-sm font-medium transition-colors",
                   activeTab === "shipping"
-                    ? "bg-white text-gray-900 border-b-2 border-gray-900"
-                    : "bg-gray-50 text-gray-500 hover:text-gray-900"
+                    ? "bg-background dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-b-2 border-gray-900 dark:border-gray-100"
+                    : "bg-muted dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
                 )}
                 onClick={() => handleTabChange("shipping")}
               >
@@ -515,8 +515,8 @@ export default function DashboardPage() {
                 className={cn(
                   "px-4 py-3 text-sm font-medium transition-colors",
                   activeTab === "output"
-                    ? "bg-white text-gray-900 border-b-2 border-gray-900"
-                    : "bg-gray-50 text-gray-500 hover:text-gray-900"
+                    ? "bg-background dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-b-2 border-gray-900 dark:border-gray-100"
+                    : "bg-muted dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
                 )}
                 onClick={() => handleTabChange("output")}
               >
@@ -539,7 +539,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{t("今日数据概览")}</CardTitle>
                     <div className="flex items-center space-x-2">
-                      <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md flex items-center">
+                      <div className="text-xs bg-muted dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-md flex items-center">
                         <RefreshCw className="h-3 w-3 mr-1 text-gray-500" />
                         {t("下次刷新")}: <span className="font-medium ml-1">{formatCountdown(nextRefreshTime)}</span>
                       </div>
@@ -693,7 +693,7 @@ export default function DashboardPage() {
                 delay={100}
                 headerRight={
                   <div className="flex items-center space-x-2">
-                    <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md flex items-center">
+                    <div className="text-xs bg-muted dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-md flex items-center">
                       <RefreshCw className="h-3 w-3 mr-1 text-gray-500" />
                       {t("下次刷新")}: <span className="font-medium ml-1">{formatCountdown(nextRefreshTime)}</span>
                     </div>
@@ -855,7 +855,7 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-3 h-24">
-                      <div className="h-full w-4 bg-gray-100 rounded-full relative">
+                      <div className="h-full w-4 bg-muted dark:bg-gray-700 rounded-full relative">
                         <div
                           className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-full"
                           style={{ height: `${monthProgress}%` }}
@@ -889,7 +889,7 @@ export default function DashboardPage() {
                     {activeCourierTypes.map(courierType => (
                       <div key={courierType.id} className="space-y-1">
                         <div className="flex items-center">
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 mr-1">
+                          <Badge variant="outline" className="bg-muted dark:bg-gray-700 text-gray-700 dark:text-gray-300 mr-1">
                             {courierType.name}
                           </Badge>
                         </div>

@@ -263,7 +263,7 @@ function SortableRow({
                 )}
               </span>
             </TooltipTrigger>
-            <TooltipContent side="top" align="start" className="bg-white border shadow-md p-3 z-50">
+            <TooltipContent side="top" align="start" className="bg-background dark:bg-gray-800 border shadow-md p-3 z-50">
               <p className="text-sm text-gray-700">
                 {searchQuery ? highlightText(courierType.name, searchQuery) : courierType.name}
                 {getChildCount && getChildCount(courierType.id) > 0 && (
@@ -287,7 +287,7 @@ function SortableRow({
                 )}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top" align="start" className="max-w-[400px] bg-white border shadow-md p-3 z-50">
+            <TooltipContent side="top" align="start" className="max-w-[400px] bg-background dark:bg-gray-800 border shadow-md p-3 z-50">
               <p className="text-sm text-gray-700 break-words whitespace-normal">
                 {searchQuery ? highlightText(courierType.remark, searchQuery) : courierType.remark}
               </p>

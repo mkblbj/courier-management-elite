@@ -120,7 +120,7 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
       const dataItem = barData.find(item => item.date === payload[0].payload.date);
 
       return (
-        <div className="bg-white p-4 border rounded shadow-lg">
+        <div className="bg-background dark:bg-gray-800 p-4 border rounded shadow-lg">
           <p className="font-medium text-gray-700">{`${label} (${dataItem ? dataItem.weekday : ''})`}</p>
           <div className="mt-2">
             {payload.map((entry: any, index: number) => (
@@ -142,7 +142,7 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
       const percentage = ((data.value / data.payload.total) * 100).toFixed(2);
 
       return (
-        <div className="bg-white p-4 border rounded shadow-lg">
+        <div className="bg-background dark:bg-gray-800 p-4 border rounded shadow-lg">
           <p className="font-medium text-gray-700">{data.name}</p>
           <p style={{ color: data.color }}>{`数量: ${data.value}`}</p>
           <p style={{ color: data.color }}>{`占比: ${percentage}%`}</p>

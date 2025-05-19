@@ -227,7 +227,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-2 border rounded shadow-sm text-sm">
+        <div className="bg-background dark:bg-gray-800 p-2 border rounded shadow-sm text-sm">
           <p className="font-medium">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} style={{ color: entry.color }}>

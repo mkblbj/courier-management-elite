@@ -23,16 +23,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" className="theme-transition">
-      <body>
+      <body className="bg-background text-foreground min-h-screen transition-colors">
         <I18nProvider>
-          <ThemeProvider attribute="class" defaultTheme="light">
-            <EnvInitializer />
-            <PageLoading />
-            <RouteChangeLoading />
-            {children}
-            <ToastProvider />
-            <EnvSwitcher />
-            <DebugLogger />
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+            <div className="bg-background min-h-screen flex flex-col">
+              <EnvInitializer />
+              <PageLoading />
+              <RouteChangeLoading />
+              <div className="flex-1 flex flex-col bg-background">
+                {children}
+              </div>
+              <ToastProvider />
+              <EnvSwitcher />
+              <DebugLogger />
+            </div>
           </ThemeProvider>
         </I18nProvider>
       </body>

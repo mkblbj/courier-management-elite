@@ -413,7 +413,7 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
         </div>
       </div>
       {getFilterDescription() && (
-        <div className="flex flex-wrap gap-2 my-3 p-2 bg-gray-50 rounded-md border">
+        <div className="flex flex-wrap gap-2 my-3 p-2 bg-muted dark:bg-gray-800/50 rounded-md border">
           <span className="text-sm font-medium">{t("筛选条件:")}</span>
           {getFilterDescription()}
         </div>

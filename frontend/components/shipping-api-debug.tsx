@@ -553,7 +553,7 @@ export function ShippingApiDebug() {
                       {log.data && (
                         <details className="mt-2">
                           <summary className="text-sm cursor-pointer">{t("查看数据")}</summary>
-                          <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
+                          <pre className="mt-2 p-2 bg-muted dark:bg-gray-700 rounded text-xs overflow-auto">
                             {JSON.stringify(log.data, null, 2)}
                           </pre>
                         </details>
@@ -579,7 +579,7 @@ export function ShippingApiDebug() {
             <p>{t("API请求成功")}</p>
             <details className="mt-2">
               <summary className="cursor-pointer">{t("查看响应详情")}</summary>
-              <pre className="mt-2 p-2 bg-gray-100 overflow-auto text-xs">{JSON.stringify(result, null, 2)}</pre>
+              <pre className="mt-2 p-2 bg-muted dark:bg-gray-700 overflow-auto text-xs">{JSON.stringify(result, null, 2)}</pre>
             </details>
           </div>
         )}
@@ -600,6 +600,6 @@ function getMethodColor(method: string) {
     case "DELETE":
       return "bg-red-100 text-red-800"
     default:
-      return "bg-gray-100 text-gray-800"
+      return "bg-muted dark:bg-gray-700 text-gray-800 dark:text-gray-200"
   }
 }
