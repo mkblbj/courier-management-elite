@@ -578,9 +578,9 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                                                                                           ))}
                                                                                     </Pie>
                                                                                     <Legend
-                                                                                          layout="vertical"
-                                                                                          verticalAlign="middle"
-                                                                                          align="right"
+                                                                                          layout="horizontal"
+                                                                                          verticalAlign="bottom"
+                                                                                          align="center"
                                                                                           formatter={renderColorfulLegendText}
                                                                                     />
                                                                                     <Tooltip content={<CustomTooltip />} />
@@ -601,6 +601,7 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                                                                                     cx="50%"
                                                                                     cy="50%"
                                                                                     labelLine={false}
+                                                                                    // label={({ name, percent }) => percent > 0.05 ? name : null}
                                                                                     outerRadius={70}
                                                                                     fill="#8884d8"
                                                                                     dataKey="value"
@@ -617,9 +618,9 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                                                                                     ))}
                                                                               </Pie>
                                                                               <Legend
-                                                                                    layout="vertical"
-                                                                                    verticalAlign="middle"
-                                                                                    align="right"
+                                                                                    layout="horizontal"
+                                                                                    verticalAlign="bottom"
+                                                                                    align="center"
                                                                                     formatter={renderColorfulLegendText}
                                                                               />
                                                                               <Tooltip content={<CustomTooltip />} />

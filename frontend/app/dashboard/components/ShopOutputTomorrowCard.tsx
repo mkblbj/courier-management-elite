@@ -591,9 +591,9 @@ export function ShopOutputTomorrowCard({
                                                                                           ))}
                                                                                     </Pie>
                                                                                     <Legend
-                                                                                          layout="vertical"
-                                                                                          verticalAlign="middle"
-                                                                                          align="right"
+                                                                                          layout="horizontal"
+                                                                                          verticalAlign="bottom"
+                                                                                          align="center"
                                                                                           formatter={renderColorfulLegendText}
                                                                                     />
                                                                                     <Tooltip content={<CustomTooltip />} />
@@ -630,9 +630,9 @@ export function ShopOutputTomorrowCard({
                                                                                     ))}
                                                                               </Pie>
                                                                               <Legend
-                                                                                    layout="vertical"
-                                                                                    verticalAlign="middle"
-                                                                                    align="right"
+                                                                                    layout="horizontal"
+                                                                                    verticalAlign="bottom"
+                                                                                    align="center"
                                                                                     formatter={renderColorfulLegendText}
                                                                               />
                                                                               <Tooltip content={<CustomTooltip />} />
