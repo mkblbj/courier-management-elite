@@ -32,11 +32,6 @@ export default function SettingsPage() {
       <DashboardHeader />
       <DashboardNav />
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
-        <PageHeader
-          title={t("系统设置")}
-          description={t("管理系统设置和用户首选项")}
-          className="max-w-5xl mx-auto"
-        />
 
         <div
           className={cn(

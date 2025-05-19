@@ -134,19 +134,6 @@ export default function CourierTypesPage() {
       <DashboardNav />
 
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
-        <PageHeader
-          title={t('courier:courier_management')}
-          description={t('courier:courier_list')}
-          className="max-w-5xl mx-auto"
-          action={
-            <Link href="/shipping-data">
-              <Button className="bg-blue-600 hover:bg-blue-700 transition-all duration-300">
-                <FileInput className="mr-2 h-4 w-4" />
-                {t('shipping:shipping_management')}
-              </Button>
-            </Link>
-          }
-        />
 
         <Suspense fallback={<CourierTypesSkeleton />}>
           <CourierTypesContent />
