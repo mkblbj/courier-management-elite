@@ -97,5 +97,8 @@
   "type_name": "タイプ名",
   "delete_courier_type": "配送タイプを削除",
   "delete_courier_type_confirm": "配送タイプを削除すると、関連する出力データも削除されます。この操作は元に戻すことができません。配送タイプを削除しますか？",
-  "shop_name": "店舗名"
+  "shop_name": "店舗名",
+  "shop_management": "店舗管理",
+  "manage_courier_services_and_categories": "配送業者とカテゴリを管理",
+  "manage_shops_and_categories": "店舗とカテゴリを管理"
 }

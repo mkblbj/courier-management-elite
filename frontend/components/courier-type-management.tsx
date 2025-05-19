@@ -260,7 +260,7 @@ export function CourierTypeManagement() {
                   placeholder={t('courier:search_courier_type')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 bg-white text-black"
+                  className="pl-8 bg-background dark:bg-gray-800 text-foreground"
                 />
               </div>
               <Select value={categoryFilter} onValueChange={handleCategoryFilterChange}>

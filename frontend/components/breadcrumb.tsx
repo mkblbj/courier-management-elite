@@ -39,7 +39,7 @@ export function Breadcrumb({ items, action }: BreadcrumbProps) {
   return (
     (<nav
       className={cn(
-        "flex items-center justify-between text-sm mb-6 bg-white px-4 py-3 rounded-lg border transition-all duration-300",
+        "flex items-center justify-between text-sm mb-6 bg-background dark:bg-background px-4 py-3 rounded-lg border transition-all duration-300",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
       )}
     >
@@ -80,7 +80,7 @@ export function Breadcrumb({ items, action }: BreadcrumbProps) {
         ))}
       </div>
       {action && (
-        <div 
+        <div
           className={cn(
             "transition-all duration-300",
             isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"

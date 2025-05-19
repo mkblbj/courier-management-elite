@@ -383,7 +383,7 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
       const CustomTooltip = ({ active, payload }: any) => {
             if (active && payload && payload.length) {
                   return (
-                        <div className="bg-white p-2 border shadow-sm rounded-md text-xs">
+                        <div className="bg-background dark:bg-gray-800 p-2 border shadow-sm rounded-md text-xs">
                               <p className="font-medium">{payload[0].name}</p>
                               <p>{`${t("出力量")}: ${payload[0].value}`}</p>
                               <p>{`${t("占比")}: ${((payload[0].value / totalOutput) * 100).toFixed(2)}%`}</p>
@@ -427,7 +427,7 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
       const CustomBarTooltip = ({ active, payload, label }: any) => {
             if (active && payload && payload.length) {
                   return (
-                        <div className="bg-white p-2 border rounded shadow-sm text-xs">
+                        <div className="bg-background dark:bg-gray-800 p-2 border rounded shadow-sm text-xs">
                               <p className="font-medium">{label}</p>
                               {payload.map((entry: any, index: number) => (
                                     <p key={index} style={{ color: entry.color }}>
@@ -450,12 +450,12 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                               </div>
                               <div className="flex items-center space-x-2">
                                     {lastUpdateTime && (
-                                          <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md flex items-center">
+                                          <div className="text-xs bg-muted dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-md flex items-center">
                                                 <Clock className="h-3 w-3 mr-1 text-gray-500" />
                                                 <span className="font-medium">{lastUpdateTime}</span>
                                           </div>
                                     )}
-                                    <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md flex items-center">
+                                    <div className="text-xs bg-muted dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-md flex items-center">
                                           <RefreshCw className="h-3 w-3 mr-1 text-gray-500" />
                                           {t("下次刷新")}: <span className="font-medium ml-1">{formatCountdown(refreshCountdown)}</span>
                                     </div>
@@ -578,9 +578,9 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                                                                                           ))}
                                                                                     </Pie>
                                                                                     <Legend
-                                                                                          layout="vertical"
-                                                                                          verticalAlign="middle"
-                                                                                          align="right"
+                                                                                          layout="horizontal"
+                                                                                          verticalAlign="bottom"
+                                                                                          align="center"
                                                                                           formatter={renderColorfulLegendText}
                                                                                     />
                                                                                     <Tooltip content={<CustomTooltip />} />
@@ -601,6 +601,7 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                                                                                     cx="50%"
                                                                                     cy="50%"
                                                                                     labelLine={false}
+                                                                                    // label={({ name, percent }) => percent > 0.05 ? name : null}
                                                                                     outerRadius={70}
                                                                                     fill="#8884d8"
                                                                                     dataKey="value"
@@ -617,9 +618,9 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                                                                                     ))}
                                                                               </Pie>
                                                                               <Legend
-                                                                                    layout="vertical"
-                                                                                    verticalAlign="middle"
-                                                                                    align="right"
+                                                                                    layout="horizontal"
+                                                                                    verticalAlign="bottom"
+                                                                                    align="center"
                                                                                     formatter={renderColorfulLegendText}
                                                                               />
                                                                               <Tooltip content={<CustomTooltip />} />

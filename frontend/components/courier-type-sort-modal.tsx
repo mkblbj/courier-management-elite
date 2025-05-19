@@ -50,7 +50,7 @@ function SortableItem({ id, courierType }: { id: number | string; courierType: C
             <div
                   ref={setNodeRef}
                   style={style}
-                  className="flex items-center p-3 border-b last:border-b-0 bg-white hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-3 border-b last:border-b-0 bg-background dark:bg-gray-800 hover:bg-muted dark:hover:bg-gray-700 transition-colors"
             >
                   <Button
                         variant="ghost"
@@ -97,7 +97,7 @@ function CategoryCourierTypeList({
 
       return (
             <div className="mb-4">
-                  <div className="bg-gray-100 p-2 font-medium text-gray-700 rounded-t-md">
+                  <div className="bg-muted dark:bg-gray-700 p-2 font-medium text-gray-700 dark:text-gray-300 rounded-t-md">
                         {category.name} ({courierTypes.length}{t('courier:types_count', { count: courierTypes.length })})
                   </div>
                   <DndContext

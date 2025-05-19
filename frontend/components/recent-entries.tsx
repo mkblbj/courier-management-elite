@@ -279,7 +279,7 @@ export function RecentEntries({
                     <TableRow
                       key={entry.id}
                       className={cn(
-                        "transition-all duration-300 hover:bg-gray-50",
+                        "transition-all duration-300 hover:bg-muted dark:hover:bg-gray-700",
                         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
                       )}
                       style={{ transitionDelay: `${index * 50 + 100}ms` }}
@@ -308,7 +308,7 @@ export function RecentEntries({
                             <TooltipContent
                               side="top"
                               align="start"
-                              className="max-w-[400px] bg-white border shadow-md p-3 z-50"
+                              className="max-w-[400px] bg-background dark:bg-gray-800 border shadow-md p-3 z-50"
                             >
                               <p className="text-sm text-gray-700 break-words whitespace-normal">{entry.remarks}</p>
                             </TooltipContent>

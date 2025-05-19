@@ -178,5 +178,6 @@
   "noCategoriesFound": "未找到店铺类别",
   "shops": "店铺",
   "noAvailableShops": "没有可用店铺",
-  "allShops": "所有店铺"
+  "allShops": "所有店铺",
+  "manage_shops_and_categories": "店铺和类别管理"
 }

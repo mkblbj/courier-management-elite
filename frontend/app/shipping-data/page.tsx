@@ -27,24 +27,12 @@ export default function ShippingDataPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <DashboardHeader />
       <DashboardNav />
-      
+
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
-        <PageHeader
-          title={t('shipping:shipping_management')}
-          description={t('shipping:shipping_list')}
-          className="w-full"
-          action={
-            <Link href="/courier-types">
-              <Button className="bg-blue-600 hover:bg-blue-700 transition-all duration-300">
-                <Package className="mr-2 h-4 w-4" />
-                {t('courier:edit_courier')}
-              </Button>
-            </Link>
-          }
-        />
+
         <div
           className={cn(
             "transition-all duration-500",

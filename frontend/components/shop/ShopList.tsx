@@ -268,7 +268,7 @@ export const ShopList: React.FC<ShopListProps> = ({
                       {shops.map((shop) => (
                         <TableRow
                           key={shop.id}
-                          className={`hover:bg-muted/50 transition-colors ${!shop.is_active ? 'bg-gray-50 opacity-60' : ''}`}
+                          className={`hover:bg-muted/50 dark:hover:bg-gray-700/50 transition-colors ${!shop.is_active ? 'bg-muted dark:bg-gray-800/50 opacity-60' : ''}`}
                         >
                           <TableCell className="w-1/4 font-medium">{shop.name}</TableCell>
                           <TableCell className="w-1/6 text-center">

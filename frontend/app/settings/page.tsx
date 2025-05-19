@@ -6,14 +6,15 @@ import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Settings, User, Bell, Key, Shield } from "lucide-react"
+import { Settings, User, Bell, Key, Shield, Type } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 
 export default function SettingsPage() {
   const {
-    t: t
+    t: t,
+    i18n
   } = useTranslation();
 
   const [isVisible, setIsVisible] = useState(false)
@@ -27,16 +28,17 @@ export default function SettingsPage() {
     return () => clearTimeout(timer)
   }, [])
 
+  // 处理语言变更
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value;
+    i18n.changeLanguage(newLang);
+  };
+
   return (
-    (<div className="min-h-screen bg-gray-50">
+    (<div className="min-h-screen bg-background">
       <DashboardHeader />
       <DashboardNav />
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
-        <PageHeader 
-          title={t("系统设置")} 
-          description={t("管理系统设置和用户首选项")}
-          className="max-w-5xl mx-auto"
-        />
 
         <div
           className={cn(
@@ -78,13 +80,18 @@ export default function SettingsPage() {
                         <p className="text-sm text-gray-500">{t("设置系统界面的显示语言")}</p>
                       </div>
                       <div className="flex items-center">
-                        <select className="border rounded p-1.5 text-sm">
+                        <select
+                          className="border rounded p-1.5 text-sm"
+                          onChange={handleLanguageChange}
+                          value={i18n.language}
+                        >
                           <option value="zh-CN">{t("简体中文")}</option>
-                          <option value="en-US">English</option>
+                          <option value="en">English</option>
+                          <option value="ja">日本語</option>
                         </select>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between border-b pb-4">
                       <div>
                         <h3 className="font-medium">{t("主题设置")}</h3>
@@ -96,7 +103,20 @@ export default function SettingsPage() {
                         <Button variant="outline" size="sm" className="h-8">{t("跟随系统")}</Button>
                       </div>
                     </div>
-                    
+
+                    <div className="flex items-center justify-between border-b pb-4">
+                      <div>
+                        <h3 className="font-medium">{t("字体设置")}</h3>
+                        <p className="text-sm text-gray-500">{t("为特定语言自定义字体显示")}</p>
+                      </div>
+                      <div className="flex items-center">
+                        <Button variant="outline" size="sm" className="h-8 flex items-center gap-1">
+                          <Type className="h-4 w-4" />
+                          <span>{i18n.language === 'ja' ? t("使用日语字体") : t("默认字体")}</span>
+                        </Button>
+                      </div>
+                    </div>
+
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium">{t("数据分页设置")}</h3>
@@ -112,7 +132,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <CardFooter className="px-0 border-t pt-4">
                     <Button className="bg-blue-600 hover:bg-blue-700 transition-all duration-300">{t("保存设置")}</Button>
                   </CardFooter>

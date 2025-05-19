@@ -281,7 +281,7 @@ export const CourierTypeList: React.FC<CourierTypeListProps> = ({
                                                                   {types.map((type) => (
                                                                         <TableRow
                                                                               key={type.id}
-                                                                              className={`hover:bg-muted/50 transition-colors ${!type.is_active ? 'bg-gray-50 opacity-60' : ''}`}
+                                                                              className={`hover:bg-muted/50 transition-colors ${!type.is_active ? 'bg-muted dark:bg-gray-800/50 opacity-60' : ''}`}
                                                                         >
                                                                               <TableCell className="w-[15%] font-mono">{type.code}</TableCell>
                                                                               <TableCell className="w-[25%] font-medium">{type.name}</TableCell>
