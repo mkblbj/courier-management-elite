@@ -148,5 +148,6 @@
   "noCategoriesFound": "店舗カテゴリが見つかりません",
   "shops": "お店",
   "noAvailableShops": "利用可能なお店がありません",
-  "allShops": "すべてのお店"
+  "allShops": "すべてのお店",
+  "manage_shops_and_categories": "店舗とカテゴリを管理"
 }

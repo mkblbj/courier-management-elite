@@ -85,5 +85,9 @@
   "total_types": "快递类型总数",
   "types_count": "共{{count}}个类型",
   "uncategorized": "未分类",
-  "unknown_category": "未知分类"
+  "unknown_category": "未知分类",
+  "shop_name": "店铺名称",
+  "shop_management": "店铺管理",
+  "manage_courier_services_and_categories": "快递服务和分类管理",
+  "category_list": "分类列表"
 }
