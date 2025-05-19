@@ -9,6 +9,7 @@ import { DebugLogger } from "@/components/debug-logger";
 import { EnvInitializer } from "@/components/env-initializer";
 import { I18nProvider } from "@/components/i18n-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LanguageFontProvider } from "@/components/language-font-provider";
 
 export const metadata: Metadata = {
   title: "UOcourier",
@@ -26,17 +27,19 @@ export default function RootLayout({
       <body className="bg-background text-foreground min-h-screen transition-colors">
         <I18nProvider>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-            <div className="bg-background min-h-screen flex flex-col">
-              <EnvInitializer />
-              <PageLoading />
-              <RouteChangeLoading />
-              <div className="flex-1 flex flex-col bg-background">
-                {children}
+            <LanguageFontProvider>
+              <div className="bg-background min-h-screen flex flex-col">
+                <EnvInitializer />
+                <PageLoading />
+                <RouteChangeLoading />
+                <div className="flex-1 flex flex-col bg-background">
+                  {children}
+                </div>
+                <ToastProvider />
+                <EnvSwitcher />
+                <DebugLogger />
               </div>
-              <ToastProvider />
-              <EnvSwitcher />
-              <DebugLogger />
-            </div>
+            </LanguageFontProvider>
           </ThemeProvider>
         </I18nProvider>
       </body>

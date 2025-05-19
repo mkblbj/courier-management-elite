@@ -19,6 +19,32 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: [
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          '"Helvetica Neue"',
+          'Arial',
+          '"Noto Sans"',
+          '"Hiragino Sans"',
+          '"Hiragino Kaku Gothic ProN"',
+          '"Yu Gothic"',
+          'YuGothic',
+          '"Meiryo"',
+          'sans-serif'
+        ],
+        japanese: [
+          '"Hiragino Sans"',
+          '"Hiragino Kaku Gothic ProN"',
+          '"Yu Gothic"',
+          'YuGothic',
+          '"Meiryo"',
+          'sans-serif'
+        ],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
