@@ -8,6 +8,7 @@ import { EnvSwitcher } from "@/components/env-switcher";
 import { DebugLogger } from "@/components/debug-logger";
 import { EnvInitializer } from "@/components/env-initializer";
 import { I18nProvider } from "@/components/i18n-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: "UOcourier",
@@ -21,16 +22,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" className="theme-transition">
       <body>
         <I18nProvider>
-          <EnvInitializer />
-          <PageLoading />
-          <RouteChangeLoading />
-          {children}
-          <ToastProvider />
-          <EnvSwitcher />
-          <DebugLogger />
+          <ThemeProvider attribute="class" defaultTheme="light">
+            <EnvInitializer />
+            <PageLoading />
+            <RouteChangeLoading />
+            {children}
+            <ToastProvider />
+            <EnvSwitcher />
+            <DebugLogger />
+          </ThemeProvider>
         </I18nProvider>
       </body>
     </html>
