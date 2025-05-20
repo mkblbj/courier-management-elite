@@ -291,7 +291,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
           <CardTitle>{selectedDate ? formatDisplayDate(selectedDate) : '今日'}{t("数据汇总")}</CardTitle>
           {!loading && todayOutputs.length > 0 && (
             <CardDescription className="mt-1.5">
-              共{shopSummaryArray.length}{t("家店铺，总出力量：")}{totalQuantity}
+              {t("共 {count} 家店铺，总出力量：{total}", { count: shopSummaryArray.length, total: totalQuantity })}
             </CardDescription>
           )}
         </div>
