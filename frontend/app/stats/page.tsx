@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PieChart, BarChart2, Download, FileText, HelpCircle } from "lucide-react"
+import { PieChart, BarChart2, Download, FileText, HelpCircle, BarChart, LineChart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { StatisticsTable } from "@/components/stats/statistics-table"
 import { StatisticsChart } from "@/components/stats/statistics-chart"
@@ -17,14 +17,27 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { subDays } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import OutputSummary from "@/app/output-data/components/OutputSummary"
+import ShopOutputStats from "./components/ShopOutputStats"
+import { useSearchParams, useRouter } from "next/navigation"
 
 export default function StatsPage() {
   const { t } = useTranslation();
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [isVisible, setIsVisible] = useState(false)
   const [activeTab, setActiveTab] = useState("table")
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+
+  // 获取当前激活的统计类型
+  const statsType = searchParams.get('type') || 'shipping'
+
+  // 切换统计类型
+  const handleStatsTypeChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('type', value)
+    router.push(`?${params.toString()}`)
+  }
 
   const {
     data,
@@ -69,7 +82,7 @@ export default function StatsPage() {
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
         <PageHeader
           title={t("统计分析")}
-          description={t("查看和导出发货数据统计分析")}
+          description={t("查看和分析发货数据和店铺出力数据")}
           className="max-w-5xl mx-auto"
           action={
             <Button
@@ -86,67 +99,114 @@ export default function StatsPage() {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
           )}
         >
-          <Card className="border max-w-5xl mx-auto">
-            <CardHeader className="pb-3">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center">
-                  <CardTitle className="text-lg font-medium">{t("发货数据统计")}</CardTitle>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 ml-1">
-                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm">
-                        <p>{t("统计数据展示了按不同快递类型的发货量分布情况。")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <StatisticsFilter
-                  timeRange={timeRange}
-                  courierTypeFilter={courierTypeFilter}
-                  onTimeRangeChange={setTimeRange}
-                  onCourierTypeFilterChange={setCourierTypeFilter}
-                  onRefresh={refetch}
-                  onReset={handleReset}
-                  isLoading={isLoading}
-                />
+          {/* 统计类型选择卡片 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 max-w-5xl mx-auto">
+            {/* 发货数据统计卡片 */}
+            <div
+              className={`cursor-pointer p-6 rounded-lg border-2 transition-all ${statsType === 'shipping'
+                ? 'border-primary bg-primary/10 dark:bg-primary/5'
+                : 'border-border hover:border-primary/40'
+                }`}
+              onClick={() => handleStatsTypeChange('shipping')}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <BarChart className="h-6 w-6 text-primary" />
+                <h3 className="text-xl font-medium">{t("发货数据统计")}</h3>
               </div>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="table" className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    <span>{t("表格视图")}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="chart" className="flex items-center gap-2">
-                    <PieChart className="h-4 w-4" />
-                    <span>{t("图表视图")}</span>
-                  </TabsTrigger>
-                </TabsList>
+              <p className="text-muted-foreground text-sm">
+                {t("查看和分析发货数据的各项指标和趋势")}
+              </p>
+            </div>
 
-                <TabsContent value="table" className="animate-fade-in">
-                  <StatisticsTable
-                    data={data}
-                    isLoading={isLoading}
-                    error={error}
-                    onRetry={refetch}
-                  />
-                </TabsContent>
+            {/* 出力统计卡片 */}
+            <div
+              className={`cursor-pointer p-6 rounded-lg border-2 transition-all ${statsType === 'shop-output'
+                ? 'border-primary bg-primary/10 dark:bg-primary/5'
+                : 'border-border hover:border-primary/40'
+                }`}
+              onClick={() => handleStatsTypeChange('shop-output')}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <LineChart className="h-6 w-6 text-primary" />
+                <h3 className="text-xl font-medium">{t("店铺出力统计")}</h3>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                {t("查看和分析店铺出力数据的各项指标和趋势")}
+              </p>
+            </div>
+          </div>
 
-                <TabsContent value="chart" className="animate-fade-in">
-                  <StatisticsChart
-                    data={data}
+          {/* 发货数据统计内容 */}
+          {statsType === 'shipping' && (
+            <Card className="border max-w-5xl mx-auto">
+              <CardHeader className="pb-3">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex items-center">
+                    <CardTitle className="text-lg font-medium">{t("发货数据统计")}</CardTitle>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 ml-1">
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm">
+                          <p>{t("统计数据展示了按不同快递类型的发货量分布情况。")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <StatisticsFilter
+                    timeRange={timeRange}
+                    courierTypeFilter={courierTypeFilter}
+                    onTimeRangeChange={setTimeRange}
+                    onCourierTypeFilterChange={setCourierTypeFilter}
+                    onRefresh={refetch}
+                    onReset={handleReset}
                     isLoading={isLoading}
-                    error={error}
                   />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="table" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>{t("表格视图")}</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="chart" className="flex items-center gap-2">
+                      <PieChart className="h-4 w-4" />
+                      <span>{t("图表视图")}</span>
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="table" className="animate-fade-in">
+                    <StatisticsTable
+                      data={data}
+                      isLoading={isLoading}
+                      error={error}
+                      onRetry={refetch}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="chart" className="animate-fade-in">
+                    <StatisticsChart
+                      data={data}
+                      isLoading={isLoading}
+                      error={error}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 出力统计内容 */}
+          {statsType === 'shop-output' && (
+            <div className="max-w-5xl mx-auto">
+              <ShopOutputStats />
+            </div>
+          )}
         </div>
 
         <ExportDataDialog
@@ -155,21 +215,6 @@ export default function StatsPage() {
           timeRange={timeRange}
           courierTypeFilter={courierTypeFilter}
         />
-
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="general">{t("一般统计")}</TabsTrigger>
-            <TabsTrigger value="shop-output">{t("出力统计")}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="general">
-            <div className="text-center p-12 text-muted-foreground">{t("一般统计内容")}</div>
-          </TabsContent>
-
-          <TabsContent value="shop-output">
-            <OutputSummary />
-          </TabsContent>
-        </Tabs>
       </main>
     </div>)
   );
