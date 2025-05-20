@@ -49,10 +49,12 @@ Story Points: 2
 
 1. - [ ] 实现导出服务
    1. - [ ] 创建 `lib/services/export.ts` 导出服务
-   2. - [ ] 实现 Excel 导出功能，使用 exceljs 库
-   3. - [ ] 实现 CSV 导出功能
-   4. - [ ] 实现 PDF 导出功能，使用 jspdf 和 jspdf-autotable 库
-   5. - [ ] 添加图表导出功能（转换为图片后嵌入 PDF）
+   2. - [ ] 集成现有 API 服务框架，确保导出 URL 正确处理代理情况
+   3. - [ ] 使用适当的 URL 获取方法，支持不同环境配置
+   4. - [ ] 实现 Excel 导出功能，使用 exceljs 库
+   5. - [ ] 实现 CSV 导出功能
+   6. - [ ] 实现 PDF 导出功能，使用 jspdf 和 jspdf-autotable 库
+   7. - [ ] 添加图表导出功能（转换为图片后嵌入 PDF）
 2. - [ ] 创建导出选项对话框
    1. - [ ] 创建 `app/stats/components/ExportDialog.tsx` 组件
    2. - [ ] 实现导出格式选择控件
@@ -105,3 +107,6 @@ Story Points: 2
 - 导出文件命名应包含统计维度、日期范围等关键信息
 - PDF 导出时确保图表清晰可读
 - 导出的 Excel 文件应包含适当的格式设置（如数字格式、日期格式等）
+- 确保所有 API 调用都通过现有的 API 服务框架进行，正确处理代理配置
+- 使用 `useEnvStore` 或其他环境配置方法获取正确的 API URL
+- 在开发过程中测试代理和非代理环境下的功能表现

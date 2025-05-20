@@ -48,8 +48,10 @@ Story Points: 3
 
 1. - [ ] 实现数据获取服务
    1. - [ ] 在 `lib/api/stats.ts` 中添加获取按类别统计数据的方法
-   2. - [ ] 实现日期范围和快递类型筛选参数
-   3. - [ ] 处理数据加载状态和错误情况
+   2. - [ ] 利用现有的 API 服务框架，确保支持代理配置
+   3. - [ ] 使用 `getApiBaseUrl()` 或 `useEnvStore.getState().getEffectiveApiUrl()` 获取正确的 API URL
+   4. - [ ] 实现日期范围和快递类型筛选参数
+   5. - [ ] 处理数据加载状态和错误情况
 2. - [ ] 实现数据表格组件
    1. - [ ] 创建 `app/stats/components/CategoryStatsTable.tsx` 组件
    2. - [ ] 实现表格列配置和数据绑定

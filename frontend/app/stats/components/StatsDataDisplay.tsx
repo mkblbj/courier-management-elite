@@ -10,6 +10,21 @@ interface StatsDataDisplayProps {
 }
 
 const StatsDataDisplay: React.FC<StatsDataDisplayProps> = ({ isLoading, selectedDimension }) => {
+      const getChartPlaceholder = () => {
+            switch (selectedDimension) {
+                  case 'category':
+                        return '类别分布柱状图（将在后续故事中实现）';
+                  case 'shop':
+                        return '店铺分布饼图（将在后续故事中实现）';
+                  case 'courier':
+                        return '快递类型分布折线图（将在后续故事中实现）';
+                  case 'date':
+                        return '日期趋势折线图（将在后续故事中实现）';
+                  default:
+                        return '图表区域（将在后续故事中实现）';
+            }
+      };
+
       return (
             <div className="space-y-4">
                   {/* 图表区域 */}
@@ -24,7 +39,7 @@ const StatsDataDisplay: React.FC<StatsDataDisplayProps> = ({ isLoading, selected
                                     </div>
                               ) : (
                                     <div className="h-60 w-full flex items-center justify-center bg-muted/20 rounded-md">
-                                          <p className="text-muted-foreground">图表区域（将在后续故事中实现）</p>
+                                          <p className="text-muted-foreground">{getChartPlaceholder()}</p>
                                     </div>
                               )}
                         </CardContent>
