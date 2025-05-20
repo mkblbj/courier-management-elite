@@ -1712,7 +1712,53 @@
 }
 ```
 
-### 4. 获取总计数据
+### 4. 按类别统计出力数据
+
+获取按店铺类别分组的出力数据统计。
+
+**请求方法**: GET  
+**URL**: `/stats/shop-outputs/categories`
+
+**查询参数**:
+
+| 参数      | 类型   | 必需 | 描述                      |
+| --------- | ------ | ---- | ------------------------- |
+| date_from | string | 否   | 开始日期，格式 YYYY-MM-DD |
+| date_to   | string | 否   | 结束日期，格式 YYYY-MM-DD |
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": [
+    {
+      "category_id": 1,
+      "category_name": "电商平台",
+      "total_quantity": 500,
+      "shops_count": 5,
+      "days_count": 7
+    },
+    {
+      "category_id": 2,
+      "category_name": "实体门店",
+      "total_quantity": 300,
+      "shops_count": 3,
+      "days_count": 7
+    },
+    {
+      "category_id": 0,
+      "category_name": "未分类",
+      "total_quantity": 200,
+      "shops_count": 2,
+      "days_count": 7
+    }
+  ]
+}
+```
+
+### 5. 获取总计数据
 
 获取出力数据的总计统计信息。
 

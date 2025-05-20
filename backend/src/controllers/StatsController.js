@@ -745,6 +745,94 @@ class StatsController {
       });
     }
   }
+
+  /**
+   * 获取按类别统计的店铺出力数据
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async getShopOutputsByCategory(req, res) {
+    try {
+      // 解析请求参数
+      const dateFrom = req.query.date_from || null;
+      const dateTo = req.query.date_to || null;
+      
+      // 打印请求参数
+      console.log('按类别统计请求参数:', { date_from: dateFrom, date_to: dateTo });
+      
+      // 创建一个自定义SQL查询来按店铺类别统计出力数据
+      const db = require('../db');
+      
+      let sql = `
+        SELECT 
+          sc.id as category_id, 
+          sc.name as category_name, 
+          SUM(so.quantity) as total_quantity,
+          COUNT(DISTINCT so.shop_id) as shops_count,
+          COUNT(DISTINCT so.output_date) as days_count
+        FROM 
+          shop_outputs so
+        JOIN 
+          shops s ON so.shop_id = s.id
+        LEFT JOIN 
+          shop_categories sc ON s.category_id = sc.id
+        WHERE 
+          1=1
+      `;
+      
+      const params = [];
+      
+      if (dateFrom) {
+        sql += ` AND so.output_date >= ?`;
+        params.push(dateFrom);
+      }
+      
+      if (dateTo) {
+        sql += ` AND so.output_date <= ?`;
+        params.push(dateTo);
+      }
+      
+      sql += `
+        GROUP BY 
+          sc.id, sc.name
+        ORDER BY 
+          total_quantity DESC
+      `;
+      
+      const results = await db.query(sql, params);
+      
+      // 处理未分类的情况 (sc.id 可能为 NULL)
+      const processedResults = Array.isArray(results) ? results.map(row => {
+        if (row.category_id === null) {
+          return {
+            ...row,
+            category_id: 0,
+            category_name: '未分类'
+          };
+        }
+        return row;
+      }) : [];
+      
+      // 打印响应数据
+      console.log('按类别统计响应数据:', {
+        code: 0,
+        message: '获取成功',
+        data: processedResults
+      });
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data: processedResults
+      });
+    } catch (error) {
+      console.error('按类别统计出力数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '统计数据查询失败'
+      });
+    }
+  }
 }
 
 module.exports = new StatsController(); 
