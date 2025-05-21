@@ -168,31 +168,60 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                   // 设置最后更新时间
                   setLastUpdateTime(t("数据已更新"));
 
-                  // 从API响应中提取数据
-                  const total = data.total_quantity;
+                  // 筛选出有效的店铺数据（只保留total_quantity > 0的店铺）
+                  const validShopsData = data.shops_data.filter(shop => shop.total_quantity > 0);
 
-                  // 转换店铺数据到组件格式
-                  const shopData: ShopOutputData[] = data.shops_data.map(shop => ({
-                        categoryId: shop.category_id,
-                        categoryName: shop.category_name,
-                        shopId: shop.shop_id,
-                        shopName: shop.shop_name,
-                        output: shop.total_quantity,
-                        percent: parseFloat(((shop.total_quantity / total) * 100).toFixed(2)),
-                        // 使用API返回的快递数据，而不是随机生成
-                        couriers: shop.couriers ? shop.couriers.map(courier => ({
-                              courierId: courier.courier_id,
-                              courierName: courier.courier_name,
-                              quantity: courier.quantity
-                        })) : []
-                  }));
+                  // 从API响应中提取数据 - 基于有效数据计算总量
+                  const total = validShopsData.reduce((sum, shop) => sum + shop.total_quantity, 0);
 
-                  // 转换类别数据到组件格式
-                  const catData: CategoryData[] = data.categories_data.map(category => ({
-                        id: category.category_id,
-                        name: category.category_name,
-                        total: category.total_quantity,
-                        percent: parseFloat(((category.total_quantity / total) * 100).toFixed(2))
+                  // 转换店铺数据到组件格式 - 只处理有效数据
+                  const shopData: ShopOutputData[] = validShopsData.map(shop => {
+                        // 筛选有效的快递数据（只保留quantity > 0的快递）
+                        const validCouriers = shop.couriers ?
+                              shop.couriers.filter(courier => courier.quantity > 0) : [];
+
+                        return {
+                              categoryId: shop.category_id,
+                              categoryName: shop.category_name,
+                              shopId: shop.shop_id,
+                              shopName: shop.shop_name,
+                              output: shop.total_quantity,
+                              percent: total > 0 ? parseFloat(((shop.total_quantity / total) * 100).toFixed(2)) : 0,
+                              couriers: validCouriers.map(courier => ({
+                                    courierId: courier.courier_id,
+                                    courierName: courier.courier_name,
+                                    quantity: courier.quantity
+                              }))
+                        };
+                  });
+
+                  // 重新计算类别数据 - 基于筛选后的店铺数据
+                  const categoriesMap = new Map<string | number, CategoryData>();
+
+                  // 先遍历所有有效店铺，按类别累计数量
+                  shopData.forEach(shop => {
+                        if (!shop.categoryId) return;
+
+                        const catId = shop.categoryId;
+                        const catName = shop.categoryName || "";
+
+                        if (!categoriesMap.has(catId)) {
+                              categoriesMap.set(catId, {
+                                    id: catId,
+                                    name: catName,
+                                    total: 0,
+                                    percent: 0
+                              });
+                        }
+
+                        const category = categoriesMap.get(catId)!;
+                        category.total += shop.output;
+                  });
+
+                  // 计算每个类别的百分比
+                  const catData: CategoryData[] = Array.from(categoriesMap.values()).map(category => ({
+                        ...category,
+                        percent: total > 0 ? parseFloat(((category.total / total) * 100).toFixed(2)) : 0
                   }));
 
                   setShopOutputData(shopData);
@@ -244,43 +273,82 @@ export function ShopOutputCard({ title, icon = <Store className="h-5 w-5" />, cl
                   ? mockShops.filter(shop => shop.categoryId.toString() === categoryId.toString())
                   : mockShops;
 
-            // 生成随机出力数据
-            const total = filteredShops.reduce((sum, _) => sum + (Math.floor(Math.random() * 100) + 20), 0);
-
-            // 店铺数据
-            const shopData: ShopOutputData[] = filteredShops.map(shop => {
-                  const output = Math.floor(Math.random() * 100) + 20;
-                  // 为每个店铺分配1-3个快递类型
-                  const courierCount = Math.floor(Math.random() * 3) + 1;
-                  const shuffledCouriers = [...mockCouriers].sort(() => 0.5 - Math.random());
-                  const selectedCouriers = shuffledCouriers.slice(0, courierCount);
-
-                  return {
-                        categoryId: shop.categoryId,
-                        categoryName: mockCategories.find(c => c.id === shop.categoryId)?.name,
-                        shopId: shop.id,
-                        shopName: shop.name,
-                        output,
-                        percent: parseFloat(((output / total) * 100).toFixed(2)),
-                        couriers: selectedCouriers.map(courier => ({
-                              courierId: courier.id,
-                              courierName: courier.name,
-                              quantity: Math.floor(output / courierCount)
-                        }))
-                  };
+            // 生成随机出力数据 - 确保至少有一些店铺的出力为0，用于测试筛选
+            const shopOutputs = filteredShops.map(() => {
+                  // 随机生成一个0到5的整数，0表示无数据
+                  const hasData = Math.random() > 0.2; // 80%概率有数据
+                  return hasData ? Math.floor(Math.random() * 100) + 20 : 0;
             });
 
-            // 类别数据
-            const catData: CategoryData[] = mockCategories.map(category => {
-                  const shopsInCategory = shopData.filter(shop => shop.categoryId === category.id);
-                  const categoryTotal = shopsInCategory.reduce((sum, shop) => sum + shop.output, 0);
-                  return {
-                        id: category.id,
-                        name: category.name,
-                        total: categoryTotal,
-                        percent: parseFloat(((categoryTotal / total) * 100).toFixed(2))
-                  };
+            // 只计算有效店铺的总量（出力>0）
+            const total = shopOutputs.reduce((sum, output) => sum + (output > 0 ? output : 0), 0);
+
+            // 店铺数据 - 只保留出力>0的店铺
+            const shopData: ShopOutputData[] = filteredShops
+                  .map<ShopOutputData | null>((shop, index) => {
+                        const output = shopOutputs[index];
+
+                        // 如果出力为0，这个店铺没有有效数据，跳过
+                        if (output <= 0) return null;
+
+                        // 为每个店铺分配1-3个快递类型，确保部分快递出力为0，用于测试筛选
+                        const courierCount = Math.floor(Math.random() * 3) + 1;
+                        const shuffledCouriers = [...mockCouriers].sort(() => 0.5 - Math.random());
+                        const selectedCouriers = shuffledCouriers.slice(0, courierCount);
+
+                        // 生成快递出力，确保有些快递出力为0
+                        const courierOutputs = selectedCouriers.map(() => {
+                              const hasData = Math.random() > 0.3; // 70%概率有数据
+                              return hasData ? Math.floor(output / courierCount) : 0;
+                        });
+
+                        // 只保留出力>0的快递
+                        const validCouriers = selectedCouriers
+                              .map((courier, idx) => ({
+                                    courierId: courier.id,
+                                    courierName: courier.name,
+                                    quantity: courierOutputs[idx]
+                              }))
+                              .filter(courier => courier.quantity > 0);
+
+                        return {
+                              categoryId: shop.categoryId,
+                              categoryName: mockCategories.find(c => c.id === shop.categoryId)?.name,
+                              shopId: shop.id,
+                              shopName: shop.name,
+                              output,
+                              percent: parseFloat(((output / total) * 100).toFixed(2)),
+                              couriers: validCouriers
+                        };
+                  })
+                  .filter((shop): shop is ShopOutputData => shop !== null) as ShopOutputData[];
+
+            // 类别数据 - 基于筛选后的有效店铺数据计算
+            const categoriesMap = new Map<number | string, CategoryData>();
+
+            // 先遍历所有有效店铺，按类别累计数量
+            shopData.forEach(shop => {
+                  const catId = shop.categoryId;
+                  const catName = shop.categoryName || "";
+
+                  if (!categoriesMap.has(catId)) {
+                        categoriesMap.set(catId, {
+                              id: catId,
+                              name: catName,
+                              total: 0,
+                              percent: 0
+                        });
+                  }
+
+                  const category = categoriesMap.get(catId)!;
+                  category.total += shop.output;
             });
+
+            // 计算每个类别的百分比
+            const catData: CategoryData[] = Array.from(categoriesMap.values()).map(category => ({
+                  ...category,
+                  percent: parseFloat(((category.total / total) * 100).toFixed(2))
+            }));
 
             console.debug("[ShopOutputCard] Mock data generated:", { shopData, catData, total });
 

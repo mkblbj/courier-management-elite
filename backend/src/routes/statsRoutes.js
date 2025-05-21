@@ -15,4 +15,7 @@ router.get('/shop-outputs/dates', StatsController.getShopOutputsByDate.bind(Stat
 // 获取总计数据
 router.get('/shop-outputs/total', StatsController.getShopOutputsTotal.bind(StatsController));
 
+// 按类别统计
+router.get('/shop-outputs/categories', StatsController.getShopOutputsByCategory.bind(StatsController));
+
 module.exports = router; 

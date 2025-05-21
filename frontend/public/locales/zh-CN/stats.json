@@ -1,0 +1,10 @@
+{
+  "category_name": "类别名称",
+  "total_output": "总出力量",
+  "percentage_of_total": "占总体出力的百分比",
+  "shops_count": "类别内店铺数量",
+  "daily_average": "日均出力量",
+  "yoy_mom_change": "同比/环比变化",
+  "loading": "加载中...",
+  "no_data": "暂无数据"
+}

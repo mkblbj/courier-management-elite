@@ -139,7 +139,8 @@ router.get('/docs', (req, res) => {
           { method: 'GET', path: '/shop-outputs/shops', description: '按店铺统计' },
           { method: 'GET', path: '/shop-outputs/couriers', description: '按快递类型统计' },
           { method: 'GET', path: '/shop-outputs/dates', description: '按日期统计' },
-          { method: 'GET', path: '/shop-outputs/total', description: '获取总计数据' }
+          { method: 'GET', path: '/shop-outputs/total', description: '获取总计数据' },
+          { method: 'GET', path: '/shop-outputs/categories', description: '按类别统计' }
         ]
       },
       {
