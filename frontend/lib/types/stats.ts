@@ -8,8 +8,18 @@ export interface CategoryStatsItem {
   percentage?: number;
   shops_count: number;
   daily_average?: number;
+  
+  // 旧字段，兼容旧版本
   change_rate?: number;
   change_type?: 'increase' | 'decrease' | 'unchanged';
+  
+  // 新增环比字段
+  mom_change_rate?: number;  // Month-on-Month 环比变化率
+  mom_change_type?: 'increase' | 'decrease' | 'unchanged';
+  
+  // 新增同比字段
+  yoy_change_rate?: number;  // Year-on-Year 同比变化率
+  yoy_change_type?: 'increase' | 'decrease' | 'unchanged';
 }
 
 /**
@@ -108,4 +118,5 @@ export interface StatsQueryParams {
   courier_id?: number | string;
   category_id?: number | string;
   group_by?: 'day' | 'week' | 'month' | 'year';
+  compare_type?: 'month-on-month' | 'year-on-year';
 } 

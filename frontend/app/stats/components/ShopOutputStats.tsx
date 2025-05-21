@@ -61,30 +61,29 @@ const ShopOutputStats = () => {
 
                         // 添加筛选条件
                         if (filters.courier_ids && filters.courier_ids.length > 0) {
-                              params.courier_id = filters.courier_ids.join(',');
-                        }
-
-                        // 请求类别统计数据
-                        try {
-                              console.log('请求类别统计数据，参数:', params);
-                              const response = await getCategoryStats(params);
-                              console.log('类别统计API响应:', response);
-
-                              // 确保响应数据与组件预期格式匹配
-                              if (Array.isArray(response)) {
-                                    setCategoryData(response);
-                              } else {
-                                    console.error('API响应格式不符合预期:', response);
-                                    setCategoryData([]);
+                              // 确保courier_id是数字类型
+                              const courierId = parseInt(filters.courier_ids[0]);
+                              if (!isNaN(courierId) && courierId !== -1) {
+                                    params.courier_id = courierId;
                               }
-                        } catch (error) {
-                              console.error('获取类别统计数据出错:', error);
-                              setCategoryData([]);
                         }
+
+                        console.log('请求类别统计数据，参数:', params);
+
+                        // 调用API并更新状态
+                        const data = await getCategoryStats(params);
+                        console.log('类别统计API响应:', data);
+                        setCategoryData(data);
+                  } else if (selectedDimension === 'shop') {
+                        // 暂时留空，未来实现
+                        console.log('店铺统计维度暂未实现');
+                  } else if (selectedDimension === 'courier') {
+                        // 暂时留空，未来实现
+                        console.log('快递类型统计维度暂未实现');
                   }
-                  // 其他维度的数据获取将在后续故事中实现
             } catch (error) {
-                  console.error('获取统计数据失败:', error);
+                  console.error('获取数据失败:', error);
+                  alert('获取数据失败，请重试');
             } finally {
                   setIsLoading(false);
             }

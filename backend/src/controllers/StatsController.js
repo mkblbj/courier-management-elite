@@ -757,10 +757,9 @@ class StatsController {
       const dateFrom = req.query.date_from || null;
       const dateTo = req.query.date_to || null;
       const courierId = req.query.courier_id ? parseInt(req.query.courier_id) : null;
-      const compareType = req.query.compare_type || 'month-on-month';  // 'month-on-month'环比 或 'year-on-year'同比
       
       // 打印请求参数
-      console.log('按类别统计请求参数:', { date_from: dateFrom, date_to: dateTo, compare_type: compareType });
+      console.log('按类别统计请求参数:', { date_from: dateFrom, date_to: dateTo, courier_id: courierId });
       
       // 创建一个自定义SQL查询来按店铺类别统计出力数据
       const db = require('../db');
@@ -820,114 +819,209 @@ class StatsController {
         return row;
       }) : [];
       
-      // 计算同比/环比变化率
+      // 计算同比和环比变化率
       if (dateFrom && dateTo) {
-        const currentPeriodStart = new Date(dateFrom);
-        const currentPeriodEnd = new Date(dateTo);
-        const currentPeriodDays = Math.round((currentPeriodEnd.getTime() - currentPeriodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        
-        // 计算上一个周期的日期范围
-        let previousPeriodStart, previousPeriodEnd;
-        
-        if (compareType === 'year-on-year') { // 同比（去年同期）
-          previousPeriodStart = new Date(currentPeriodStart);
-          previousPeriodStart.setFullYear(previousPeriodStart.getFullYear() - 1);
+        try {
+          const currentPeriodStart = new Date(dateFrom);
+          const currentPeriodEnd = new Date(dateTo);
+          const currentPeriodDays = Math.round((currentPeriodEnd.getTime() - currentPeriodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
           
-          previousPeriodEnd = new Date(currentPeriodEnd);
-          previousPeriodEnd.setFullYear(previousPeriodEnd.getFullYear() - 1);
-        } else { // 环比（上个时间段）
-          previousPeriodEnd = new Date(currentPeriodStart);
-          previousPeriodEnd.setDate(previousPeriodEnd.getDate() - 1);
+          // 计算环比和同比的日期范围
+          // 1. 环比（上个时间段）
+          const momPeriodEnd = new Date(currentPeriodStart);
+          momPeriodEnd.setDate(momPeriodEnd.getDate() - 1);
           
-          previousPeriodStart = new Date(previousPeriodEnd);
-          previousPeriodStart.setDate(previousPeriodStart.getDate() - currentPeriodDays + 1);
-        }
-        
-        // 格式化日期为 YYYY-MM-DD
-        const formatDate = (date) => {
-          return date.toISOString().split('T')[0];
-        };
-        
-        const prevDateFrom = formatDate(previousPeriodStart);
-        const prevDateTo = formatDate(previousPeriodEnd);
-        
-        console.log('上一周期日期范围:', { prevDateFrom, prevDateTo });
-        
-        // 获取上一周期的数据
-        let prevSql = `
-          SELECT 
-            sc.id as category_id, 
-            sc.name as category_name, 
-            SUM(so.quantity) as total_quantity
-          FROM 
-            shop_outputs so
-          JOIN 
-            shops s ON so.shop_id = s.id
-          LEFT JOIN 
-            shop_categories sc ON s.category_id = sc.id
-          WHERE 
-            so.output_date >= ? AND so.output_date <= ?
-        `;
-        
-        const prevParams = [prevDateFrom, prevDateTo];
-        
-        if (courierId) {
-          prevSql += ` AND so.courier_id = ?`;
-          prevParams.push(courierId);
-        }
-        
-        prevSql += `
-          GROUP BY 
-            sc.id, sc.name
-        `;
-        
-        const prevResults = await db.query(prevSql, prevParams);
-        
-        // 处理未分类的上一周期数据
-        const prevProcessedResults = Array.isArray(prevResults) ? prevResults.map(row => {
-          if (row.category_id === null) {
-            return {
-              ...row,
-              category_id: 0,
-              category_name: '未分类'
-            };
+          const momPeriodStart = new Date(momPeriodEnd);
+          momPeriodStart.setDate(momPeriodStart.getDate() - currentPeriodDays + 1);
+          
+          // 2. 同比（去年同期）
+          const yoyPeriodStart = new Date(currentPeriodStart);
+          yoyPeriodStart.setFullYear(yoyPeriodStart.getFullYear() - 1);
+          
+          const yoyPeriodEnd = new Date(currentPeriodEnd);
+          yoyPeriodEnd.setFullYear(yoyPeriodEnd.getFullYear() - 1);
+          
+          // 格式化日期为 YYYY-MM-DD
+          const formatDate = (date) => {
+            return date.toISOString().split('T')[0];
+          };
+          
+          const momDateFrom = formatDate(momPeriodStart);
+          const momDateTo = formatDate(momPeriodEnd);
+          const yoyDateFrom = formatDate(yoyPeriodStart);
+          const yoyDateTo = formatDate(yoyPeriodEnd);
+          
+          console.log('环比日期范围:', { momDateFrom, momDateTo });
+          console.log('同比日期范围:', { yoyDateFrom, yoyDateTo });
+          
+          // 获取环比周期的数据
+          let momSql = `
+            SELECT 
+              sc.id as category_id, 
+              sc.name as category_name, 
+              SUM(so.quantity) as total_quantity
+            FROM 
+              shop_outputs so
+            JOIN 
+              shops s ON so.shop_id = s.id
+            LEFT JOIN 
+              shop_categories sc ON s.category_id = sc.id
+            WHERE 
+              so.output_date >= ? AND so.output_date <= ?
+          `;
+          
+          const momParams = [momDateFrom, momDateTo];
+          
+          if (courierId) {
+            momSql += ` AND so.courier_id = ?`;
+            momParams.push(courierId);
           }
-          return row;
-        }) : [];
-        
-        // 创建上一周期数据的映射表，用于快速查找
-        const prevDataMap = new Map();
-        prevProcessedResults.forEach(item => {
-          prevDataMap.set(item.category_id, item.total_quantity);
-        });
-        
-        // 计算变化率并添加到结果中
-        for (const item of processedResults) {
-          const currentQuantity = item.total_quantity || 0;
-          const previousQuantity = prevDataMap.get(item.category_id) || 0;
           
-          if (previousQuantity > 0) {
-            // 计算变化率
-            const changeRate = ((currentQuantity - previousQuantity) / previousQuantity) * 100;
-            item.change_rate = parseFloat(changeRate.toFixed(2));
-            
-            // 判断变化类型
-            if (changeRate > 0) {
-              item.change_type = 'increase';
-            } else if (changeRate < 0) {
-              item.change_type = 'decrease';
-            } else {
-              item.change_type = 'unchanged';
+          momSql += `
+            GROUP BY 
+              sc.id, sc.name
+          `;
+          
+          // 获取同比周期的数据
+          let yoySql = `
+            SELECT 
+              sc.id as category_id, 
+              sc.name as category_name, 
+              SUM(so.quantity) as total_quantity
+            FROM 
+              shop_outputs so
+            JOIN 
+              shops s ON so.shop_id = s.id
+            LEFT JOIN 
+              shop_categories sc ON s.category_id = sc.id
+            WHERE 
+              so.output_date >= ? AND so.output_date <= ?
+          `;
+          
+          const yoyParams = [yoyDateFrom, yoyDateTo];
+          
+          if (courierId) {
+            yoySql += ` AND so.courier_id = ?`;
+            yoyParams.push(courierId);
+          }
+          
+          yoySql += `
+            GROUP BY 
+              sc.id, sc.name
+          `;
+          
+          // 执行查询
+          const momResults = await db.query(momSql, momParams);
+          const yoyResults = await db.query(yoySql, yoyParams);
+          
+          // 处理未分类数据
+          const momProcessedResults = Array.isArray(momResults) ? momResults.map(row => {
+            if (row.category_id === null) {
+              return {
+                ...row,
+                category_id: 0,
+                category_name: '未分类'
+              };
             }
-          } else if (currentQuantity > 0) {
-            // 新增类别，之前没有数据
-            item.change_rate = 100;
-            item.change_type = 'increase';
-          } else {
-            // 无变化或无法计算
-            item.change_rate = 0;
-            item.change_type = 'unchanged';
+            return row;
+          }) : [];
+          
+          const yoyProcessedResults = Array.isArray(yoyResults) ? yoyResults.map(row => {
+            if (row.category_id === null) {
+              return {
+                ...row,
+                category_id: 0,
+                category_name: '未分类'
+              };
+            }
+            return row;
+          }) : [];
+          
+          // 创建映射表用于快速查找
+          const momDataMap = new Map();
+          momProcessedResults.forEach(item => {
+            momDataMap.set(item.category_id, parseFloat(item.total_quantity) || 0);
+          });
+          
+          const yoyDataMap = new Map();
+          yoyProcessedResults.forEach(item => {
+            yoyDataMap.set(item.category_id, parseFloat(item.total_quantity) || 0);
+          });
+          
+          console.log('环比数据:', momProcessedResults);
+          console.log('同比数据:', yoyProcessedResults);
+          
+          // 计算变化率并添加到结果中
+          for (const item of processedResults) {
+            const currentQuantity = parseFloat(item.total_quantity) || 0;
+            const momPreviousQuantity = momDataMap.get(item.category_id) || 0;
+            const yoyPreviousQuantity = yoyDataMap.get(item.category_id) || 0;
+            
+            console.log(`类别 ${item.category_name}: 当前=${currentQuantity}, 环比上期=${momPreviousQuantity}, 同比上期=${yoyPreviousQuantity}`);
+            
+            // 计算环比变化率
+            if (momPreviousQuantity > 0) {
+              const momChangeRate = ((currentQuantity - momPreviousQuantity) / momPreviousQuantity) * 100;
+              item.mom_change_rate = parseFloat(momChangeRate.toFixed(2));
+              
+              if (momChangeRate > 0) {
+                item.mom_change_type = 'increase';
+              } else if (momChangeRate < 0) {
+                item.mom_change_type = 'decrease';
+              } else {
+                item.mom_change_type = 'unchanged';
+              }
+            } else if (currentQuantity > 0 && momPreviousQuantity === 0) {
+              item.mom_change_rate = 100;
+              item.mom_change_type = 'increase';
+            } else if (currentQuantity === 0 && momPreviousQuantity === 0) {
+              item.mom_change_rate = 0;
+              item.mom_change_type = 'unchanged';
+            } else if (currentQuantity === 0 && momPreviousQuantity > 0) {
+              item.mom_change_rate = -100;
+              item.mom_change_type = 'decrease';
+            } else {
+              item.mom_change_rate = 0;
+              item.mom_change_type = 'unchanged';
+            }
+            
+            // 计算同比变化率
+            if (yoyPreviousQuantity > 0) {
+              const yoyChangeRate = ((currentQuantity - yoyPreviousQuantity) / yoyPreviousQuantity) * 100;
+              item.yoy_change_rate = parseFloat(yoyChangeRate.toFixed(2));
+              
+              if (yoyChangeRate > 0) {
+                item.yoy_change_type = 'increase';
+              } else if (yoyChangeRate < 0) {
+                item.yoy_change_type = 'decrease';
+              } else {
+                item.yoy_change_type = 'unchanged';
+              }
+            } else if (currentQuantity > 0 && yoyPreviousQuantity === 0) {
+              item.yoy_change_rate = 100;
+              item.yoy_change_type = 'increase';
+            } else if (currentQuantity === 0 && yoyPreviousQuantity === 0) {
+              item.yoy_change_rate = 0;
+              item.yoy_change_type = 'unchanged';
+            } else if (currentQuantity === 0 && yoyPreviousQuantity > 0) {
+              item.yoy_change_rate = -100;
+              item.yoy_change_type = 'decrease';
+            } else {
+              item.yoy_change_rate = 0;
+              item.yoy_change_type = 'unchanged';
+            }
+            
+            console.log(`    环比变化率: ${item.mom_change_rate}%, 同比变化率: ${item.yoy_change_rate}%`);
           }
+        } catch (error) {
+          console.error('计算变化率出错:', error);
+          // 如果计算出错，确保仍然返回数据，但不包含变化率信息
+          processedResults.forEach(item => {
+            item.mom_change_rate = 0;
+            item.mom_change_type = 'unchanged';
+            item.yoy_change_rate = 0;
+            item.yoy_change_type = 'unchanged';
+          });
         }
       }
       

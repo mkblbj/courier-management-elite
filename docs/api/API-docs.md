@@ -1714,19 +1714,18 @@
 
 ### 4. 按类别统计出力数据
 
-获取按店铺类别分组的出力数据统计。
+获取按店铺类别分组的出力数据统计。API 会同时返回同比和环比变化数据。
 
 **请求方法**: GET  
 **URL**: `/api/stats/shop-outputs/categories`
 
 **查询参数**:
 
-| 参数         | 类型   | 必需 | 描述                                                                           |
-| ------------ | ------ | ---- | ------------------------------------------------------------------------------ |
-| date_from    | string | 否   | 开始日期，格式 YYYY-MM-DD                                                      |
-| date_to      | string | 否   | 结束日期，格式 YYYY-MM-DD                                                      |
-| courier_id   | number | 否   | 筛选特定快递类型                                                               |
-| compare_type | string | 否   | 比较类型：'month-on-month'(环比)或'year-on-year'(同比)，默认为'month-on-month' |
+| 参数       | 类型   | 必需 | 描述                      |
+| ---------- | ------ | ---- | ------------------------- |
+| date_from  | string | 否   | 开始日期，格式 YYYY-MM-DD |
+| date_to    | string | 否   | 结束日期，格式 YYYY-MM-DD |
+| courier_id | number | 否   | 筛选特定快递类型          |
 
 **响应示例**:
 
@@ -1737,30 +1736,25 @@
   "data": [
     {
       "category_id": 1,
-      "category_name": "电商平台",
-      "total_quantity": 500,
+      "category_name": "乐天",
+      "total_quantity": 689,
       "shops_count": 5,
-      "days_count": 7,
-      "change_rate": 15.25,
-      "change_type": "increase"
+      "days_count": 12,
+      "mom_change_rate": 72.25,
+      "mom_change_type": "increase",
+      "yoy_change_rate": -1.57,
+      "yoy_change_type": "decrease"
     },
     {
       "category_id": 2,
-      "category_name": "实体门店",
-      "total_quantity": 300,
-      "shops_count": 3,
-      "days_count": 7,
-      "change_rate": -5.75,
-      "change_type": "decrease"
-    },
-    {
-      "category_id": 0,
-      "category_name": "未分类",
-      "total_quantity": 200,
-      "shops_count": 2,
-      "days_count": 7,
-      "change_rate": 0,
-      "change_type": "unchanged"
+      "category_name": "亚马逊",
+      "total_quantity": 372,
+      "shops_count": 5,
+      "days_count": 9,
+      "mom_change_rate": 100,
+      "mom_change_type": "increase",
+      "yoy_change_rate": 100,
+      "yoy_change_type": "increase"
     }
   ]
 }
@@ -1768,15 +1762,17 @@
 
 **响应字段说明**:
 
-| 字段           | 类型   | 描述                                                              |
-| -------------- | ------ | ----------------------------------------------------------------- |
-| category_id    | number | 类别 ID                                                           |
-| category_name  | string | 类别名称                                                          |
-| total_quantity | number | 总出力量                                                          |
-| shops_count    | number | 该类别下的店铺数量                                                |
-| days_count     | number | 统计周期内的天数                                                  |
-| change_rate    | number | 与上一个周期相比的变化率(百分比)                                  |
-| change_type    | string | 变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
+| 字段            | 类型   | 描述                                                                  |
+| --------------- | ------ | --------------------------------------------------------------------- |
+| category_id     | number | 类别 ID                                                               |
+| category_name   | string | 类别名称                                                              |
+| total_quantity  | number | 总出力量                                                              |
+| shops_count     | number | 该类别下的店铺数量                                                    |
+| days_count      | number | 统计周期内的天数                                                      |
+| mom_change_rate | number | 环比变化率(百分比)，环比指与上一个相同时间段相比                      |
+| mom_change_type | string | 环比变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
+| yoy_change_rate | number | 同比变化率(百分比)，同比指与去年同期相比                              |
+| yoy_change_type | string | 同比变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
 
 ### 5. 获取总计数据
 
