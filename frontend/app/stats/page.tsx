@@ -1,7 +1,7 @@
 "use client"
 import { useTranslation } from "react-i18next";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,8 +19,10 @@ import { subDays } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import ShopOutputStats from "./components/ShopOutputStats"
 import { useSearchParams, useRouter } from "next/navigation"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export default function StatsPage() {
+// 创建一个内部组件来使用useSearchParams，以便用Suspense包装
+function StatsPageContent() {
   const { t } = useTranslation();
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -76,7 +78,7 @@ export default function StatsPage() {
   }
 
   return (
-    (<div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <DashboardHeader />
       <DashboardNav />
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
@@ -216,6 +218,37 @@ export default function StatsPage() {
           courierTypeFilter={courierTypeFilter}
         />
       </main>
-    </div>)
+    </div>
+  )
+}
+
+// 定义loading状态
+function StatsPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-background">
+      <DashboardHeader />
+      <DashboardNav />
+      <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
+        <div className="max-w-5xl mx-auto">
+          <Skeleton className="h-10 w-1/3 mb-2" />
+          <Skeleton className="h-4 w-2/3 mb-8" />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Skeleton className="h-32 rounded-lg" />
+            <Skeleton className="h-32 rounded-lg" />
+          </div>
+
+          <Skeleton className="h-[500px] rounded-lg" />
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default function StatsPage() {
+  return (
+    <Suspense fallback={<StatsPageSkeleton />}>
+      <StatsPageContent />
+    </Suspense>
   );
 }
