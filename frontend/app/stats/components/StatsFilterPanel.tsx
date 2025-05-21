@@ -5,17 +5,55 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import type { StatsDimension } from './ShopOutputStats';
 import { Loader2 } from 'lucide-react';
+import { MultiSelect, MultiSelectItem } from '@/components/ui/multi-select';
 
 interface StatsFilterPanelProps {
       selectedDimension: StatsDimension;
       isLoading?: boolean;
+      onFilterChange?: (filters: any) => void;
+      onResetFilters?: () => void;
+      courierTypes?: { id: string | number; name: string }[];
+      shopCategories?: { id: string | number; name: string }[];
+      shops?: { id: string | number; name: string; category_id?: string | number }[];
 }
 
-const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({ selectedDimension, isLoading = false }) => {
+const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({
+      selectedDimension,
+      isLoading = false,
+      onFilterChange,
+      onResetFilters,
+      courierTypes = [],
+      shopCategories = [],
+      shops = []
+}) => {
       const [isExpanded, setIsExpanded] = useState(true);
+      const [courierTypeFilter, setCourierTypeFilter] = useState<string[]>([]);
+      const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+      const [shopFilter, setShopFilter] = useState<string[]>([]);
 
       const toggleExpanded = () => {
             setIsExpanded(!isExpanded);
+      };
+
+      // 处理应用筛选按钮点击
+      const handleApplyFilter = () => {
+            if (onFilterChange) {
+                  onFilterChange({
+                        courier_ids: courierTypeFilter.length > 0 ? courierTypeFilter : undefined,
+                        category_ids: categoryFilter.length > 0 ? categoryFilter : undefined,
+                        shop_ids: shopFilter.length > 0 ? shopFilter : undefined
+                  });
+            }
+      };
+
+      // 处理重置按钮点击
+      const handleReset = () => {
+            setCourierTypeFilter([]);
+            setCategoryFilter([]);
+            setShopFilter([]);
+            if (onResetFilters) {
+                  onResetFilters();
+            }
       };
 
       return (
@@ -45,61 +83,89 @@ const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({ selectedDimension, 
                               ) : (
                                     <>
                                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                {/* 店铺类别筛选器 - 对于按店铺、按快递类型或按日期维度显示 */}
-                                                {(selectedDimension === 'shop' || selectedDimension === 'courier' || selectedDimension === 'date') && (
+                                                {/* 快递类型筛选器 - 对于所有维度都显示 */}
+                                                <div className="space-y-2">
+                                                      <label className="text-sm font-medium">快递类型</label>
+                                                      <MultiSelect
+                                                            value={courierTypeFilter}
+                                                            onChange={setCourierTypeFilter}
+                                                            placeholder="选择快递类型"
+                                                      >
+                                                            {courierTypes.length === 0 ? (
+                                                                  // 使用示例数据
+                                                                  <>
+                                                                        <MultiSelectItem value="1">顺丰速运</MultiSelectItem>
+                                                                        <MultiSelectItem value="2">中通快递</MultiSelectItem>
+                                                                        <MultiSelectItem value="3">圆通速递</MultiSelectItem>
+                                                                  </>
+                                                            ) : (
+                                                                  courierTypes.map((type) => (
+                                                                        <MultiSelectItem key={type.id} value={type.id.toString()}>
+                                                                              {type.name}
+                                                                        </MultiSelectItem>
+                                                                  ))
+                                                            )}
+                                                      </MultiSelect>
+                                                </div>
+
+                                                {/* 店铺类别筛选器 - 对于按店铺或按快递类型维度显示 */}
+                                                {(selectedDimension === 'shop' || selectedDimension === 'courier') && (
                                                       <div className="space-y-2">
                                                             <label className="text-sm font-medium">店铺类别</label>
-                                                            <Select>
-                                                                  <SelectTrigger>
-                                                                        <SelectValue placeholder="选择店铺类别" />
-                                                                  </SelectTrigger>
-                                                                  <SelectContent>
-                                                                        <SelectItem value="all">全部类别</SelectItem>
-                                                                        <SelectItem value="1">电商平台</SelectItem>
-                                                                        <SelectItem value="2">实体门店</SelectItem>
-                                                                  </SelectContent>
-                                                            </Select>
+                                                            <MultiSelect
+                                                                  value={categoryFilter}
+                                                                  onChange={setCategoryFilter}
+                                                                  placeholder="选择店铺类别"
+                                                            >
+                                                                  {shopCategories.length === 0 ? (
+                                                                        // 使用示例数据
+                                                                        <>
+                                                                              <MultiSelectItem value="1">电商平台</MultiSelectItem>
+                                                                              <MultiSelectItem value="2">实体门店</MultiSelectItem>
+                                                                              <MultiSelectItem value="3">海外专营店</MultiSelectItem>
+                                                                        </>
+                                                                  ) : (
+                                                                        shopCategories.map((category) => (
+                                                                              <MultiSelectItem key={category.id} value={category.id.toString()}>
+                                                                                    {category.name}
+                                                                              </MultiSelectItem>
+                                                                        ))
+                                                                  )}
+                                                            </MultiSelect>
                                                       </div>
                                                 )}
 
-                                                {/* 店铺筛选器 - 对于按快递类型或按日期维度显示 */}
-                                                {(selectedDimension === 'courier' || selectedDimension === 'date') && (
+                                                {/* 店铺筛选器 - 对于按快递类型维度显示 */}
+                                                {selectedDimension === 'courier' && (
                                                       <div className="space-y-2">
                                                             <label className="text-sm font-medium">店铺</label>
-                                                            <Select>
-                                                                  <SelectTrigger>
-                                                                        <SelectValue placeholder="选择店铺" />
-                                                                  </SelectTrigger>
-                                                                  <SelectContent>
-                                                                        <SelectItem value="all">全部店铺</SelectItem>
-                                                                        <SelectItem value="1">东京旗舰店</SelectItem>
-                                                                        <SelectItem value="2">大阪分店</SelectItem>
-                                                                  </SelectContent>
-                                                            </Select>
-                                                      </div>
-                                                )}
-
-                                                {/* 快递类型筛选器 - 仅对于按日期维度显示 */}
-                                                {selectedDimension === 'date' && (
-                                                      <div className="space-y-2">
-                                                            <label className="text-sm font-medium">快递类型</label>
-                                                            <Select>
-                                                                  <SelectTrigger>
-                                                                        <SelectValue placeholder="选择快递类型" />
-                                                                  </SelectTrigger>
-                                                                  <SelectContent>
-                                                                        <SelectItem value="all">全部类型</SelectItem>
-                                                                        <SelectItem value="1">顺丰速运</SelectItem>
-                                                                        <SelectItem value="2">中通快递</SelectItem>
-                                                                  </SelectContent>
-                                                            </Select>
+                                                            <MultiSelect
+                                                                  value={shopFilter}
+                                                                  onChange={setShopFilter}
+                                                                  placeholder="选择店铺"
+                                                            >
+                                                                  {shops.length === 0 ? (
+                                                                        // 使用示例数据
+                                                                        <>
+                                                                              <MultiSelectItem value="1">东京旗舰店</MultiSelectItem>
+                                                                              <MultiSelectItem value="2">大阪分店</MultiSelectItem>
+                                                                              <MultiSelectItem value="3">名古屋分店</MultiSelectItem>
+                                                                        </>
+                                                                  ) : (
+                                                                        shops.map((shop) => (
+                                                                              <MultiSelectItem key={shop.id} value={shop.id.toString()}>
+                                                                                    {shop.name}
+                                                                              </MultiSelectItem>
+                                                                        ))
+                                                                  )}
+                                                            </MultiSelect>
                                                       </div>
                                                 )}
                                           </div>
 
                                           <div className="flex justify-end space-x-2">
-                                                <Button variant="outline" size="sm">重置</Button>
-                                                <Button size="sm">应用筛选</Button>
+                                                <Button variant="outline" size="sm" onClick={handleReset}>重置</Button>
+                                                <Button size="sm" onClick={handleApplyFilter}>应用筛选</Button>
                                           </div>
                                     </>
                               )}

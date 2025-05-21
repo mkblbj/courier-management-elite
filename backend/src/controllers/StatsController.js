@@ -756,9 +756,11 @@ class StatsController {
       // 解析请求参数
       const dateFrom = req.query.date_from || null;
       const dateTo = req.query.date_to || null;
+      const courierId = req.query.courier_id ? parseInt(req.query.courier_id) : null;
+      const compareType = req.query.compare_type || 'month-on-month';  // 'month-on-month'环比 或 'year-on-year'同比
       
       // 打印请求参数
-      console.log('按类别统计请求参数:', { date_from: dateFrom, date_to: dateTo });
+      console.log('按类别统计请求参数:', { date_from: dateFrom, date_to: dateTo, compare_type: compareType });
       
       // 创建一个自定义SQL查询来按店铺类别统计出力数据
       const db = require('../db');
@@ -792,6 +794,11 @@ class StatsController {
         params.push(dateTo);
       }
       
+      if (courierId) {
+        sql += ` AND so.courier_id = ?`;
+        params.push(courierId);
+      }
+      
       sql += `
         GROUP BY 
           sc.id, sc.name
@@ -812,6 +819,117 @@ class StatsController {
         }
         return row;
       }) : [];
+      
+      // 计算同比/环比变化率
+      if (dateFrom && dateTo) {
+        const currentPeriodStart = new Date(dateFrom);
+        const currentPeriodEnd = new Date(dateTo);
+        const currentPeriodDays = Math.round((currentPeriodEnd.getTime() - currentPeriodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        
+        // 计算上一个周期的日期范围
+        let previousPeriodStart, previousPeriodEnd;
+        
+        if (compareType === 'year-on-year') { // 同比（去年同期）
+          previousPeriodStart = new Date(currentPeriodStart);
+          previousPeriodStart.setFullYear(previousPeriodStart.getFullYear() - 1);
+          
+          previousPeriodEnd = new Date(currentPeriodEnd);
+          previousPeriodEnd.setFullYear(previousPeriodEnd.getFullYear() - 1);
+        } else { // 环比（上个时间段）
+          previousPeriodEnd = new Date(currentPeriodStart);
+          previousPeriodEnd.setDate(previousPeriodEnd.getDate() - 1);
+          
+          previousPeriodStart = new Date(previousPeriodEnd);
+          previousPeriodStart.setDate(previousPeriodStart.getDate() - currentPeriodDays + 1);
+        }
+        
+        // 格式化日期为 YYYY-MM-DD
+        const formatDate = (date) => {
+          return date.toISOString().split('T')[0];
+        };
+        
+        const prevDateFrom = formatDate(previousPeriodStart);
+        const prevDateTo = formatDate(previousPeriodEnd);
+        
+        console.log('上一周期日期范围:', { prevDateFrom, prevDateTo });
+        
+        // 获取上一周期的数据
+        let prevSql = `
+          SELECT 
+            sc.id as category_id, 
+            sc.name as category_name, 
+            SUM(so.quantity) as total_quantity
+          FROM 
+            shop_outputs so
+          JOIN 
+            shops s ON so.shop_id = s.id
+          LEFT JOIN 
+            shop_categories sc ON s.category_id = sc.id
+          WHERE 
+            so.output_date >= ? AND so.output_date <= ?
+        `;
+        
+        const prevParams = [prevDateFrom, prevDateTo];
+        
+        if (courierId) {
+          prevSql += ` AND so.courier_id = ?`;
+          prevParams.push(courierId);
+        }
+        
+        prevSql += `
+          GROUP BY 
+            sc.id, sc.name
+        `;
+        
+        const prevResults = await db.query(prevSql, prevParams);
+        
+        // 处理未分类的上一周期数据
+        const prevProcessedResults = Array.isArray(prevResults) ? prevResults.map(row => {
+          if (row.category_id === null) {
+            return {
+              ...row,
+              category_id: 0,
+              category_name: '未分类'
+            };
+          }
+          return row;
+        }) : [];
+        
+        // 创建上一周期数据的映射表，用于快速查找
+        const prevDataMap = new Map();
+        prevProcessedResults.forEach(item => {
+          prevDataMap.set(item.category_id, item.total_quantity);
+        });
+        
+        // 计算变化率并添加到结果中
+        for (const item of processedResults) {
+          const currentQuantity = item.total_quantity || 0;
+          const previousQuantity = prevDataMap.get(item.category_id) || 0;
+          
+          if (previousQuantity > 0) {
+            // 计算变化率
+            const changeRate = ((currentQuantity - previousQuantity) / previousQuantity) * 100;
+            item.change_rate = parseFloat(changeRate.toFixed(2));
+            
+            // 判断变化类型
+            if (changeRate > 0) {
+              item.change_type = 'increase';
+            } else if (changeRate < 0) {
+              item.change_type = 'decrease';
+            } else {
+              item.change_type = 'unchanged';
+            }
+          } else if (currentQuantity > 0) {
+            // 新增类别，之前没有数据
+            item.change_rate = 100;
+            item.change_type = 'increase';
+          } else {
+            // 无变化或无法计算
+            item.change_rate = 0;
+            item.change_type = 'unchanged';
+          }
+        }
+      }
       
       // 打印响应数据
       console.log('按类别统计响应数据:', {

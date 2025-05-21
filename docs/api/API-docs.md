@@ -17,7 +17,7 @@
 
 ## API 基础信息
 
-- **基础 URL**: `http://localhost:3000/api` (开发环境)
+- **基础 URL**: `http://localhost:3000` (开发环境)（前端环境文件`.env.development` 或 `.env.production` 中的 NEXT_PUBLIC_API_BASE_URL）
 - **响应格式**: 所有 API 响应均使用统一的 JSON 格式:
   ```json
   {
@@ -36,7 +36,7 @@
 获取系统中所有的快递类别信息。
 
 **请求方法**: GET  
-**URL**: `/courier-categories`
+**URL**: `/api/courier-categories`
 
 **查询参数**:
 
@@ -70,7 +70,7 @@
 根据 ID 获取特定快递类别的详细信息。
 
 **请求方法**: GET  
-**URL**: `/courier-categories/:id`
+**URL**: `/api/courier-categories/:id`
 
 **路径参数**:
 
@@ -99,7 +99,7 @@
 创建新的快递类别。
 
 **请求方法**: POST  
-**URL**: `/courier-categories`
+**URL**: `/api/courier-categories`
 
 **请求体**:
 
@@ -129,7 +129,7 @@
 更新现有快递类别的信息。
 
 **请求方法**: PUT  
-**URL**: `/courier-categories/:id`
+**URL**: `/api/courier-categories/:id`
 
 **路径参数**:
 
@@ -167,7 +167,7 @@
 **注意**: 如果有快递类型关联到此类别，删除将失败。必须先移除关联的快递类型，或将它们转移到其他类别。
 
 **请求方法**: DELETE  
-**URL**: `/courier-categories/:id`
+**URL**: `/api/courier-categories/:id`
 
 **路径参数**:
 
@@ -189,7 +189,7 @@
 批量更新快递类别的排序顺序。
 
 **请求方法**: POST  
-**URL**: `/courier-categories/sort`
+**URL**: `/api/courier-categories/sort`
 
 **请求体**:
 
@@ -220,7 +220,7 @@
 获取特定快递类别的出力数据统计信息。
 
 **请求方法**: GET  
-**URL**: `/courier-categories/:id/stats`
+**URL**: `/api/courier-categories/:id/stats`
 
 **路径参数**:
 
@@ -255,7 +255,7 @@
 获取发货记录按快递类别的统计数据。
 
 **请求方法**: GET  
-**URL**: `/shipping/stats/categories`
+**URL**: `/api/shipping/stats/categories`
 
 **查询参数**:
 
@@ -308,7 +308,7 @@
 获取系统中所有的快递类型信息，支持筛选和排序。
 
 **请求方法**: GET  
-**URL**: `/couriers`
+**URL**: `/api/couriers`
 
 **查询参数**:
 
@@ -349,7 +349,7 @@
 获取特定类别下的所有快递类型。
 
 **请求方法**: GET  
-**URL**: `/couriers/category/:categoryId`
+**URL**: `/api/couriers/category/:categoryId`
 
 **路径参数**:
 
@@ -386,7 +386,7 @@
 根据 ID 获取特定快递类型的详细信息。
 
 **请求方法**: GET  
-**URL**: `/couriers/:id`
+**URL**: `/api/couriers/:id`
 
 **路径参数**:
 
@@ -420,7 +420,7 @@
 创建新的快递类型记录。
 
 **请求方法**: POST  
-**URL**: `/couriers`
+**URL**: `/api/couriers`
 
 **请求体**:
 
@@ -459,7 +459,7 @@
 更新现有快递类型的信息。
 
 **请求方法**: PUT  
-**URL**: `/couriers/:id`
+**URL**: `/api/couriers/:id`
 
 **路径参数**:
 
@@ -504,7 +504,7 @@
 删除特定的快递类型记录。
 
 **请求方法**: DELETE  
-**URL**: `/couriers/:id`
+**URL**: `/api/couriers/:id`
 
 **路径参数**:
 
@@ -526,7 +526,7 @@
 切换快递类型的启用/禁用状态。
 
 **请求方法**: PUT  
-**URL**: `/couriers/:id/toggle`
+**URL**: `/api/couriers/:id/toggle`
 
 **路径参数**:
 
@@ -552,7 +552,7 @@
 批量更新快递类型的排序顺序。
 
 **请求方法**: POST  
-**URL**: `/couriers/sort`
+**URL**: `/api/couriers/sort`
 
 **请求体**:
 
@@ -587,7 +587,7 @@
 获取系统中的发货记录，支持分页、筛选和排序。
 
 **请求方法**: GET  
-**URL**: `/shipping`
+**URL**: `/api/shipping`
 
 **查询参数**:
 
@@ -638,7 +638,7 @@
 根据 ID 获取特定发货记录的详细信息。
 
 **请求方法**: GET  
-**URL**: `/shipping/:id`
+**URL**: `/api/shipping/:id`
 
 **路径参数**:
 
@@ -674,7 +674,7 @@
 创建新的发货记录。
 
 **请求方法**: POST  
-**URL**: `/shipping`
+**URL**: `/api/shipping`
 
 **请求体**:
 
@@ -731,7 +731,7 @@
 更新现有的发货记录信息。
 
 **请求方法**: PUT  
-**URL**: `/shipping/:id`
+**URL**: `/api/shipping/:id`
 
 **路径参数**:
 
@@ -769,7 +769,7 @@
 删除特定的发货记录。
 
 **请求方法**: DELETE  
-**URL**: `/shipping/:id`
+**URL**: `/api/shipping/:id`
 
 **路径参数**:
 
@@ -791,7 +791,7 @@
 批量创建多条发货记录。
 
 **请求方法**: POST  
-**URL**: `/shipping/batch`
+**URL**: `/api/shipping/batch`
 
 **请求体**:
 
@@ -853,7 +853,7 @@
 获取系统中所有的店铺类别。
 
 **请求方法**: GET  
-**URL**: `/shop-categories`
+**URL**: `/api/shop-categories`
 
 **查询参数**:
 
@@ -894,7 +894,7 @@
 根据 ID 获取特定店铺类别的详细信息。
 
 **请求方法**: GET  
-**URL**: `/shop-categories/:id`
+**URL**: `/api/shop-categories/:id`
 
 **路径参数**:
 
@@ -923,7 +923,7 @@
 创建新的店铺类别。
 
 **请求方法**: POST  
-**URL**: `/shop-categories`
+**URL**: `/api/shop-categories`
 
 **请求体**:
 
@@ -953,7 +953,7 @@
 更新现有店铺类别的信息。
 
 **请求方法**: PUT  
-**URL**: `/shop-categories/:id`
+**URL**: `/api/shop-categories/:id`
 
 **路径参数**:
 
@@ -991,7 +991,7 @@
 **注意**: 如果有店铺关联到此类别，删除将失败。必须先移除关联的店铺，或将它们转移到其他类别。
 
 **请求方法**: DELETE  
-**URL**: `/shop-categories/:id`
+**URL**: `/api/shop-categories/:id`
 
 **路径参数**:
 
@@ -1013,7 +1013,7 @@
 批量更新店铺类别的排序顺序。
 
 **请求方法**: POST  
-**URL**: `/shop-categories/sort`
+**URL**: `/api/shop-categories/sort`
 
 **请求体**:
 
@@ -1048,7 +1048,7 @@
 获取系统中所有的店铺信息。
 
 **请求方法**: GET  
-**URL**: `/shops`
+**URL**: `/api/shops`
 
 **查询参数**:
 
@@ -1101,7 +1101,7 @@
 根据 ID 获取特定店铺的详细信息。
 
 **请求方法**: GET  
-**URL**: `/shops/:id`
+**URL**: `/api/shops/:id`
 
 **路径参数**:
 
@@ -1135,7 +1135,7 @@
 创建新的店铺。
 
 **请求方法**: POST  
-**URL**: `/shops`
+**URL**: `/api/shops`
 
 **请求体**:
 
@@ -1174,7 +1174,7 @@
 更新现有店铺的信息。
 
 **请求方法**: PUT  
-**URL**: `/shops/:id`
+**URL**: `/api/shops/:id`
 
 **路径参数**:
 
@@ -1219,7 +1219,7 @@
 删除特定的店铺。
 
 **请求方法**: DELETE  
-**URL**: `/shops/:id`
+**URL**: `/api/shops/:id`
 
 **路径参数**:
 
@@ -1241,7 +1241,7 @@
 切换店铺的启用/禁用状态。
 
 **请求方法**: POST  
-**URL**: `/shops/:id/toggle`
+**URL**: `/api/shops/:id/toggle`
 
 **路径参数**:
 
@@ -1267,7 +1267,7 @@
 批量更新店铺的排序顺序。
 
 **请求方法**: POST  
-**URL**: `/shops/sort`
+**URL**: `/api/shops/sort`
 
 **请求体**:
 
@@ -1302,7 +1302,7 @@
 获取店铺的出力数据，支持分页、筛选和排序。
 
 **请求方法**: GET  
-**URL**: `/shop-outputs`
+**URL**: `/api/shop-outputs`
 
 **查询参数**:
 
@@ -1351,7 +1351,7 @@
 获取系统中最近录入的出力数据记录。
 
 **请求方法**: GET  
-**URL**: `/shop-outputs/recent`
+**URL**: `/api/shop-outputs/recent`
 
 **查询参数**:
 
@@ -1388,7 +1388,7 @@
 获取今日的店铺出力数据。
 
 **请求方法**: GET  
-**URL**: `/shop-outputs/today`
+**URL**: `/api/shop-outputs/today`
 
 **查询参数**:
 
@@ -1425,7 +1425,7 @@
 根据 ID 获取特定出力记录的详细信息。
 
 **请求方法**: GET  
-**URL**: `/shop-outputs/:id`
+**URL**: `/api/shop-outputs/:id`
 
 **路径参数**:
 
@@ -1459,7 +1459,7 @@
 创建新的店铺出力记录。
 
 **请求方法**: POST  
-**URL**: `/shop-outputs`
+**URL**: `/api/shop-outputs`
 
 **请求体**:
 
@@ -1509,7 +1509,7 @@
 更新现有的出力记录信息。
 
 **请求方法**: PUT  
-**URL**: `/shop-outputs/:id`
+**URL**: `/api/shop-outputs/:id`
 
 **路径参数**:
 
@@ -1546,7 +1546,7 @@
 删除特定的出力记录。
 
 **请求方法**: DELETE  
-**URL**: `/shop-outputs/:id`
+**URL**: `/api/shop-outputs/:id`
 
 **路径参数**:
 
@@ -1572,7 +1572,7 @@
 获取按店铺分组的出力数据统计。
 
 **请求方法**: GET  
-**URL**: `/stats/shop-outputs/shops`
+**URL**: `/api/stats/shop-outputs/shops`
 
 **查询参数**:
 
@@ -1623,7 +1623,7 @@
 获取按快递类型分组的出力数据统计。
 
 **请求方法**: GET  
-**URL**: `/stats/shop-outputs/couriers`
+**URL**: `/api/stats/shop-outputs/couriers`
 
 **查询参数**:
 
@@ -1668,7 +1668,7 @@
 获取按日期分组的出力数据统计。
 
 **请求方法**: GET  
-**URL**: `/stats/shop-outputs/dates`
+**URL**: `/api/stats/shop-outputs/dates`
 
 **查询参数**:
 
@@ -1717,14 +1717,16 @@
 获取按店铺类别分组的出力数据统计。
 
 **请求方法**: GET  
-**URL**: `/stats/shop-outputs/categories`
+**URL**: `/api/stats/shop-outputs/categories`
 
 **查询参数**:
 
-| 参数      | 类型   | 必需 | 描述                      |
-| --------- | ------ | ---- | ------------------------- |
-| date_from | string | 否   | 开始日期，格式 YYYY-MM-DD |
-| date_to   | string | 否   | 结束日期，格式 YYYY-MM-DD |
+| 参数         | 类型   | 必需 | 描述                                                                           |
+| ------------ | ------ | ---- | ------------------------------------------------------------------------------ |
+| date_from    | string | 否   | 开始日期，格式 YYYY-MM-DD                                                      |
+| date_to      | string | 否   | 结束日期，格式 YYYY-MM-DD                                                      |
+| courier_id   | number | 否   | 筛选特定快递类型                                                               |
+| compare_type | string | 否   | 比较类型：'month-on-month'(环比)或'year-on-year'(同比)，默认为'month-on-month' |
 
 **响应示例**:
 
@@ -1738,32 +1740,50 @@
       "category_name": "电商平台",
       "total_quantity": 500,
       "shops_count": 5,
-      "days_count": 7
+      "days_count": 7,
+      "change_rate": 15.25,
+      "change_type": "increase"
     },
     {
       "category_id": 2,
       "category_name": "实体门店",
       "total_quantity": 300,
       "shops_count": 3,
-      "days_count": 7
+      "days_count": 7,
+      "change_rate": -5.75,
+      "change_type": "decrease"
     },
     {
       "category_id": 0,
       "category_name": "未分类",
       "total_quantity": 200,
       "shops_count": 2,
-      "days_count": 7
+      "days_count": 7,
+      "change_rate": 0,
+      "change_type": "unchanged"
     }
   ]
 }
 ```
+
+**响应字段说明**:
+
+| 字段           | 类型   | 描述                                                              |
+| -------------- | ------ | ----------------------------------------------------------------- |
+| category_id    | number | 类别 ID                                                           |
+| category_name  | string | 类别名称                                                          |
+| total_quantity | number | 总出力量                                                          |
+| shops_count    | number | 该类别下的店铺数量                                                |
+| days_count     | number | 统计周期内的天数                                                  |
+| change_rate    | number | 与上一个周期相比的变化率(百分比)                                  |
+| change_type    | string | 变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
 
 ### 5. 获取总计数据
 
 获取出力数据的总计统计信息。
 
 **请求方法**: GET  
-**URL**: `/stats/shop-outputs/total`
+**URL**: `/api/stats/shop-outputs/total`
 
 **查询参数**:
 
@@ -1810,7 +1830,7 @@
 获取今日各店铺的出力概览信息。
 
 **请求方法**: GET  
-**URL**: `/dashboard/shop-outputs/today`
+**URL**: `/api/dashboard/shop-outputs/today`
 
 **响应示例**:
 
@@ -1856,7 +1876,7 @@
 获取对明日出力数据的预测。
 
 **请求方法**: GET  
-**URL**: `/dashboard/shop-outputs/tomorrow`
+**URL**: `/api/dashboard/shop-outputs/tomorrow`
 
 **响应示例**:
 
