@@ -8,10 +8,13 @@ import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { getCategoryStats } from '@/lib/api/stats';
 import { CategoryStatsItem } from '@/lib/types/stats';
+import { useTranslation } from 'react-i18next';
+
 
 export type StatsDimension = 'category' | 'shop' | 'courier' | 'date';
 
 const ShopOutputStats = () => {
+      const { t } = useTranslation('stats'); // 使用'stats'命名空间
       const router = useRouter();
       const searchParams = useSearchParams();
       const [isLoading, setIsLoading] = useState(false);

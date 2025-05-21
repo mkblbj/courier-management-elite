@@ -6,6 +6,8 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { RefreshCw, Download, BarChart, LineChart, PieChart, Calendar } from 'lucide-react';
 import type { StatsDimension } from './ShopOutputStats';
 import type { DateRange } from 'react-day-picker';
+import { useTranslation } from 'react-i18next';
+
 
 interface StatsControlPanelProps {
       selectedDimension: StatsDimension;
@@ -22,6 +24,7 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
       onDateRangeChange,
       onRefresh,
 }) => {
+      const { t } = useTranslation('stats'); // 使用'stats'命名空间
       // 获取每个维度对应的图标
       const getDimensionIcon = (dimension: StatsDimension) => {
             switch (dimension) {
@@ -43,23 +46,23 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                   <CardContent className="p-4">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                               <div className="space-y-2 w-full md:w-auto">
-                                    <div className="text-sm font-medium">统计维度</div>
+                                    <div className="text-sm font-medium">{t('统计维度')}</div>
                                     <ToggleGroup type="single" value={selectedDimension} onValueChange={(value) => value && onDimensionChange(value as StatsDimension)}>
-                                          <ToggleGroupItem value="category" aria-label="按店铺类别" className="flex items-center">
+                                          <ToggleGroupItem value="category" aria-label={t('按店铺类别')} className="flex items-center">
                                                 {getDimensionIcon('category')}
-                                                按店铺类别
+                                                {t('按店铺类别')}
                                           </ToggleGroupItem>
-                                          <ToggleGroupItem value="shop" aria-label="按店铺" className="flex items-center">
+                                          <ToggleGroupItem value="shop" aria-label={t('按店铺')} className="flex items-center">
                                                 {getDimensionIcon('shop')}
-                                                按店铺
+                                                {t('按店铺')}
                                           </ToggleGroupItem>
-                                          <ToggleGroupItem value="courier" aria-label="按快递类型" className="flex items-center">
+                                          <ToggleGroupItem value="courier" aria-label={t('按快递类型')} className="flex items-center">
                                                 {getDimensionIcon('courier')}
-                                                按快递类型
+                                                {t('按快递类型')}
                                           </ToggleGroupItem>
-                                          <ToggleGroupItem value="date" aria-label="按日期" className="flex items-center">
+                                          <ToggleGroupItem value="date" aria-label={t('按日期')} className="flex items-center">
                                                 {getDimensionIcon('date')}
-                                                按日期
+                                                {t('按日期')}
                                           </ToggleGroupItem>
                                     </ToggleGroup>
                               </div>
@@ -74,11 +77,11 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                                     <div className="flex items-center gap-2">
                                           <Button variant="outline" size="sm" onClick={onRefresh}>
                                                 <RefreshCw className="h-4 w-4 mr-1" />
-                                                刷新
+                                                {t('刷新')}
                                           </Button>
                                           <Button variant="outline" size="sm">
                                                 <Download className="h-4 w-4 mr-1" />
-                                                导出
+                                                {t('导出')}
                                           </Button>
                                     </div>
                               </div>

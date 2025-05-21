@@ -5,6 +5,10 @@ import { cn } from '@/lib/utils';
 import { ArrowDown, ArrowUp, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from "react-i18next";
+
+
+
 
 interface CategoryStatsTableProps {
       data: CategoryStatsItem[];
@@ -20,6 +24,7 @@ interface CategoryStatsExtended extends CategoryStatsItem {
 
 const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading = false }) => {
       const router = useRouter();
+      const { t } = useTranslation('stats'); // 使用'stats'命名空间
       const [processedData, setProcessedData] = useState<CategoryStatsExtended[]>([]);
 
       // 处理和计算数据
@@ -169,19 +174,19 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
                   <Table>
                         <TableHeader>
                               <TableRow className="bg-muted/50">
-                                    <TableHead className="w-[200px] font-semibold">类别名称</TableHead>
-                                    <TableHead className="text-right font-semibold">总出力量</TableHead>
-                                    <TableHead className="text-right font-semibold">占总体出力的百分比</TableHead>
-                                    <TableHead className="text-right font-semibold">类别内店铺数量</TableHead>
-                                    <TableHead className="text-right font-semibold">日均出力量</TableHead>
-                                    <TableHead className="text-center font-semibold">同比/环比变化</TableHead>
+                                    <TableHead className="w-[200px] font-semibold">{t('category_name')}</TableHead>
+                                    <TableHead className="text-right font-semibold">{t('total_output')}</TableHead>
+                                    <TableHead className="text-right font-semibold">{t('percentage_of_total')}</TableHead>
+                                    <TableHead className="text-right font-semibold">{t('shops_count')}</TableHead>
+                                    <TableHead className="text-right font-semibold">{t('daily_average')}</TableHead>
+                                    <TableHead className="text-center font-semibold">{t('yoy_mom_change')}</TableHead>
                               </TableRow>
                         </TableHeader>
                         <TableBody>
                               {processedData.length === 0 ? (
                                     <TableRow>
                                           <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
-                                                {isLoading ? '加载中...' : '暂无数据'}
+                                                {isLoading ? t('loading') : t('no_data')}
                                           </TableCell>
                                     </TableRow>
                               ) : (

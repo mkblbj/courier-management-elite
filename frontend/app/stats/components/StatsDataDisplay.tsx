@@ -6,6 +6,7 @@ import type { StatsDimension } from './ShopOutputStats';
 import CategoryStatsTable from './CategoryStatsTable';
 import CategoryStatsChart from './CategoryStatsChart';
 import { CategoryStatsItem } from '@/lib/types/stats';
+import { useTranslation } from 'react-i18next';
 
 interface StatsDataDisplayProps {
       isLoading: boolean;
@@ -14,6 +15,7 @@ interface StatsDataDisplayProps {
 }
 
 const StatsDataDisplay: React.FC<StatsDataDisplayProps> = ({ isLoading, selectedDimension, categoryData = [] }) => {
+      const { t } = useTranslation('stats'); // 使用'stats'命名空间
       const getChartPlaceholder = () => {
             switch (selectedDimension) {
                   case 'category':
@@ -34,7 +36,7 @@ const StatsDataDisplay: React.FC<StatsDataDisplayProps> = ({ isLoading, selected
                   {/* 图表区域 */}
                   <Card>
                         <CardHeader>
-                              <CardTitle className="text-lg">数据图表</CardTitle>
+                              <CardTitle className="text-lg">{t('数据图表')}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4">
                               {isLoading ? (
@@ -58,7 +60,7 @@ const StatsDataDisplay: React.FC<StatsDataDisplayProps> = ({ isLoading, selected
                   {/* 数据表格 */}
                   <Card>
                         <CardHeader>
-                              <CardTitle className="text-lg">数据表格</CardTitle>
+                              <CardTitle className="text-lg">{t('数据表格')}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4">
                               {isLoading ? (

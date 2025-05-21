@@ -7,6 +7,7 @@ import {
       PieChart, Pie, Sector
 } from 'recharts';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from "react-i18next";
 
 interface CategoryStatsChartProps {
       data: CategoryStatsItem[];
@@ -17,6 +18,7 @@ interface CategoryStatsChartProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A4DE6C', '#8884D8', '#82CA9D', '#FF6B6B', '#8785A2', '#52D4B5'];
 
 const CategoryStatsChart: React.FC<CategoryStatsChartProps> = ({ data, isLoading = false }) => {
+      const { t } = useTranslation('stats'); // 使用'stats'命名空间
       const [activeChartType, setActiveChartType] = useState<'pie' | 'bar'>('pie');
       const [activeIndex, setActiveIndex] = useState<number | null>(null);
       const [chartData, setChartData] = useState<any[]>([]);
@@ -34,7 +36,7 @@ const CategoryStatsChart: React.FC<CategoryStatsChartProps> = ({ data, isLoading
 
                   const processedData = validData.map((item, index) => ({
                         ...item,
-                        name: item.category_name || `类别${index + 1}`,
+                        name: item.category_name || `${t('类别')}${index + 1}`,
                         // 确保value是数字类型
                         value: typeof item.total_quantity === 'string'
                               ? parseFloat(item.total_quantity)
@@ -94,9 +96,9 @@ const CategoryStatsChart: React.FC<CategoryStatsChartProps> = ({ data, isLoading
                         />
                         <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
                         <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-                        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333">{`出力量 ${value}`}</text>
+                        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333">{`${t('出力量')} ${value}`}</text>
                         <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="#999">
-                              {`(占比 ${(percent * 100).toFixed(2)}%)`}
+                              {`(${t('占比')} ${(percent * 100).toFixed(2)}%)`}
                         </text>
                   </g>
             );
@@ -108,8 +110,8 @@ const CategoryStatsChart: React.FC<CategoryStatsChartProps> = ({ data, isLoading
                         <Tabs value={activeChartType} onValueChange={(value) => setActiveChartType(value as 'pie' | 'bar')}>
                               <div className="flex justify-between items-center mb-4">
                                     <TabsList>
-                                          <TabsTrigger value="pie">饼图</TabsTrigger>
-                                          <TabsTrigger value="bar">柱状图</TabsTrigger>
+                                          <TabsTrigger value="pie">{t('饼图')}</TabsTrigger>
+                                          <TabsTrigger value="bar">{t('柱状图')}</TabsTrigger>
                                     </TabsList>
                               </div>
 
@@ -167,7 +169,7 @@ const CategoryStatsChart: React.FC<CategoryStatsChartProps> = ({ data, isLoading
                                                                   <YAxis />
                                                                   <Tooltip />
                                                                   <Legend />
-                                                                  <Bar dataKey="value" name="出力量" fill="#8884d8">
+                                                                  <Bar dataKey="value" name={t('出力量')} fill="#8884d8">
                                                                         {chartData.map((entry, index) => (
                                                                               <Cell key={`cell-${index}`} fill={entry.color} />
                                                                         ))}
