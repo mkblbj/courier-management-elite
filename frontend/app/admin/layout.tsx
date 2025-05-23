@@ -57,7 +57,44 @@ export default function AdminLayout({
 
       return (
             <div className="min-h-screen bg-gray-50">
-                  {/* 移动端侧边栏遮罩 */}
+                  {/* 侧边栏 */}
+                  <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:bg-gray-900">
+                        <div className="flex h-full flex-col">
+                              {/* Logo 区域 */}
+                              <div className="flex h-16 items-center justify-between px-6">
+                                    <div className="flex items-center space-x-3">
+                                          <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                                                <LayoutDashboard className="h-5 w-5 text-white" />
+                                          </div>
+                                          <span className="text-white font-semibold">后台管理系统</span>
+                                    </div>
+                              </div>
+
+                              {/* 导航菜单 */}
+                              <nav className="flex-1 px-4 py-6 space-y-2">
+                                    {navigation.map((item) => {
+                                          const isActive = pathname === item.href ||
+                                                (item.href !== '/admin' && pathname.startsWith(item.href))
+
+                                          return (
+                                                <Link
+                                                      key={item.name}
+                                                      href={item.href}
+                                                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
+                                                            ? 'bg-blue-600 text-white'
+                                                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                                                            }`}
+                                                >
+                                                      <item.icon className="h-5 w-5" />
+                                                      <span>{item.name}</span>
+                                                </Link>
+                                          )
+                                    })}
+                              </nav>
+                        </div>
+                  </div>
+
+                  {/* 移动端侧边栏 */}
                   <AnimatePresence>
                         {sidebarOpen && (
                               <motion.div
@@ -70,13 +107,12 @@ export default function AdminLayout({
                         )}
                   </AnimatePresence>
 
-                  {/* 侧边栏 */}
                   <motion.div
                         initial={false}
                         animate={{
                               x: sidebarOpen ? 0 : '-100%',
                         }}
-                        className="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 lg:translate-x-0 lg:static lg:inset-0"
+                        className="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 lg:hidden"
                   >
                         <div className="flex h-full flex-col">
                               {/* Logo 区域 */}
@@ -90,7 +126,7 @@ export default function AdminLayout({
                                     <Button
                                           variant="ghost"
                                           size="sm"
-                                          className="lg:hidden text-white hover:bg-gray-800"
+                                          className="text-white hover:bg-gray-800"
                                           onClick={() => setSidebarOpen(false)}
                                     >
                                           <X className="h-5 w-5" />
@@ -108,8 +144,8 @@ export default function AdminLayout({
                                                       key={item.name}
                                                       href={item.href}
                                                       className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                                                                  ? 'bg-blue-600 text-white'
-                                                                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                                                            ? 'bg-blue-600 text-white'
+                                                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                                                             }`}
                                                       onClick={() => setSidebarOpen(false)}
                                                 >

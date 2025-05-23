@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Save, Eye, Plus, X, Link as LinkIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -31,9 +31,11 @@ interface LinkItem {
       url: string
 }
 
-export default function CreateNotificationPage() {
+export default function EditNotificationPage() {
       const router = useRouter()
+      const params = useParams()
       const { toast } = useToast()
+      const templateId = parseInt(params.id as string)
 
       // 表单状态
       const [formData, setFormData] = useState({
@@ -48,7 +50,54 @@ export default function CreateNotificationPage() {
       const [mediaUrls, setMediaUrls] = useState<string[]>([])
       const [links, setLinks] = useState<LinkItem[]>([])
       const [loading, setLoading] = useState(false)
+      const [initialLoading, setInitialLoading] = useState(true)
       const [previewMode, setPreviewMode] = useState(false)
+
+      // 加载模板数据
+      useEffect(() => {
+            const loadTemplate = async () => {
+                  try {
+                        // 使用 mock 数据
+                        const template = mockData.templates.find(t => t.id === templateId)
+                        if (!template) {
+                              toast({
+                                    title: '模板不存在',
+                                    description: '找不到指定的通知模板',
+                                    variant: 'destructive',
+                              })
+                              router.push('/admin/notifications')
+                              return
+                        }
+
+                        setFormData({
+                              name: template.name,
+                              title: template.title,
+                              content: template.content,
+                              style_id: template.style_id,
+                              is_active: template.is_active,
+                        })
+
+                        setMediaUrls(template.media_urls)
+                        setLinks(template.links.map((link, index) => ({
+                              id: `link-${index}`,
+                              text: link.text,
+                              url: link.url,
+                        })))
+
+                  } catch (error) {
+                        console.error('Failed to load template:', error)
+                        toast({
+                              title: '加载失败',
+                              description: '无法加载通知模板',
+                              variant: 'destructive',
+                        })
+                  } finally {
+                        setInitialLoading(false)
+                  }
+            }
+
+            loadTemplate()
+      }, [templateId, toast, router])
 
       // 加载样式列表
       useEffect(() => {
@@ -92,16 +141,16 @@ export default function CreateNotificationPage() {
                   await new Promise(resolve => setTimeout(resolve, 1000))
 
                   toast({
-                        title: '创建成功',
-                        description: '通知模板已成功创建',
+                        title: '更新成功',
+                        description: '通知模板已成功更新',
                   })
 
                   router.push('/admin/notifications')
             } catch (error) {
-                  console.error('Failed to create template:', error)
+                  console.error('Failed to update template:', error)
                   toast({
-                        title: '创建失败',
-                        description: '无法创建通知模板',
+                        title: '更新失败',
+                        description: '无法更新通知模板',
                         variant: 'destructive',
                   })
             } finally {
@@ -141,6 +190,46 @@ export default function CreateNotificationPage() {
             setLinks(prev => prev.filter(link => link.id !== id))
       }
 
+      if (initialLoading) {
+            return (
+                  <div className="space-y-6">
+                        <div className="flex items-center space-x-4">
+                              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                              <div>
+                                    <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+                                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mt-2"></div>
+                              </div>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                              <div className="space-y-6">
+                                    {[1, 2, 3].map((i) => (
+                                          <Card key={i} className="animate-pulse">
+                                                <CardHeader>
+                                                      <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                                                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                                                </CardHeader>
+                                                <CardContent>
+                                                      <div className="space-y-4">
+                                                            <div className="h-4 bg-gray-200 rounded"></div>
+                                                            <div className="h-10 bg-gray-200 rounded"></div>
+                                                      </div>
+                                                </CardContent>
+                                          </Card>
+                                    ))}
+                              </div>
+                              <Card className="animate-pulse">
+                                    <CardHeader>
+                                          <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                                    </CardHeader>
+                                    <CardContent>
+                                          <div className="h-64 bg-gray-200 rounded"></div>
+                                    </CardContent>
+                              </Card>
+                        </div>
+                  </div>
+            )
+      }
+
       return (
             <div className="space-y-6">
                   {/* 页面头部 */}
@@ -153,8 +242,8 @@ export default function CreateNotificationPage() {
                                     </Button>
                               </Link>
                               <div>
-                                    <h1 className="text-3xl font-bold text-gray-900">创建通知模板</h1>
-                                    <p className="text-gray-600 mt-2">设计和配置新的通知模板</p>
+                                    <h1 className="text-3xl font-bold text-gray-900">编辑通知模板</h1>
+                                    <p className="text-gray-600 mt-2">修改通知模板的设置和内容</p>
                               </div>
                         </div>
 
@@ -174,7 +263,7 @@ export default function CreateNotificationPage() {
                                     className="flex items-center space-x-2"
                               >
                                     <Save className="h-4 w-4" />
-                                    <span>{loading ? '创建中...' : '创建模板'}</span>
+                                    <span>{loading ? '保存中...' : '保存更改'}</span>
                               </Button>
                         </div>
                   </div>
@@ -272,7 +361,6 @@ export default function CreateNotificationPage() {
                                                 multiple={true}
                                                 onUpload={handleFileUpload}
                                                 onDelete={(fileId) => {
-                                                      // 这里应该根据fileId删除对应的URL
                                                       console.log('Delete file:', fileId)
                                                 }}
                                           />
