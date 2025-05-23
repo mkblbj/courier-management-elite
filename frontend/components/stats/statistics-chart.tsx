@@ -80,10 +80,12 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
   );
 
   // 准备饼图数据
-  let pieData = data.byCourier.map((item) => ({
-    name: item.courierName,
-    value: item.total,
-  }));
+  let pieData = data.byCourier
+    .filter((item) => item.total > 0) // 只保留有数据的项目
+    .map((item) => ({
+      name: item.courierName,
+      value: item.total,
+    }));
 
   // 饼图颜色
   const COLORS = [
@@ -125,12 +127,13 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
   const PieTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0];
-      const percentage = ((data.value / data.payload.total) * 100).toFixed(2);
+      const total = pieData.reduce((sum, item) => sum + item.value, 0);
+      const percentage = ((data.value / total) * 100).toFixed(2);
 
       return (
-        <div className="bg-background dark:bg-gray-800 p-4 border rounded shadow-lg">
+        <div className="bg-white dark:bg-gray-800 p-4 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium text-gray-700">{data.name}</p>
-          <p style={{ color: data.color }}>{`数量: ${data.value}`}</p>
+          <p style={{ color: data.color }}>{`数量: ${data.value.toLocaleString()}`}</p>
           <p style={{ color: data.color }}>{`占比: ${percentage}%`}</p>
         </div>
       );
@@ -183,27 +186,60 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
     const total = pieData.reduce((sum, item) => sum + item.value, 0);
     const pieDataWithTotal = pieData.map(item => ({ ...item, total }));
 
+    // 自定义标签函数，只显示占比大于等于5%的标签
+    const renderCustomLabel = ({ name, percent }: any) => {
+      // 只有当占比大于等于5%时才显示标签
+      if (percent >= 0.05) {
+        return `${name} (${(percent * 100).toFixed(1)}%)`;
+      }
+      return null; // 小于5%的不显示标签
+    };
+
+    // 自定义图例格式化函数
+    const formatLegend = (value: string, entry: any) => {
+      const percent = ((entry.payload.value / total) * 100).toFixed(1);
+      return (
+        <span className="text-sm text-slate-700">
+          {value} ({percent}% - {entry.payload.value.toLocaleString()})
+        </span>
+      );
+    };
+
     return (
-      <div className="h-[400px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={pieDataWithTotal}
-              cx="50%"
-              cy="50%"
-              labelLine={true}
-              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(2)}%)`}
-              outerRadius={120}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {pieDataWithTotal.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip content={<PieTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+      <div className="h-[500px] w-full flex flex-col">
+        {/* 饼图容器 */}
+        <div className="flex-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={pieDataWithTotal}
+                cx="50%"
+                cy="45%" // 稍微上移，为下方图例留出空间
+                labelLine={true}
+                label={renderCustomLabel}
+                outerRadius={100} // 稍微减小半径，为图例留出空间
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {pieDataWithTotal.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip content={<PieTooltip />} />
+              <Legend
+                verticalAlign="bottom"
+                height={80}
+                formatter={formatLegend}
+                wrapperStyle={{
+                  paddingTop: '20px',
+                  fontSize: '12px',
+                  lineHeight: '1.5'
+                }}
+                iconType="circle"
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     );
   };
