@@ -367,8 +367,8 @@ const ShopStatsChart: React.FC<ShopStatsChartProps> = memo(({
 
                   <div className="text-center text-sm text-muted-foreground">
                         {data.length > maxDataPoints ?
-                              `注: 图表显示前 ${maxDataPoints} 个数据点，共 ${data.length} 个店铺` :
-                              `注: 显示全部 ${data.length} 个店铺的数据`
+                              t('注: 图表显示前 {{maxDataPoints}} 个数据点，共 {{dataLength}} 个店铺', { maxDataPoints, dataLength: data.length }) :
+                              t('注: 显示全部 {{dataLength}} 个店铺的数据', { dataLength: data.length })
                         }
                   </div>
             </div>

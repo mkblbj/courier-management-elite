@@ -280,12 +280,12 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
                   return (
                         <div className="bg-slate-50 rounded-lg px-3 py-2 inline-flex flex-col items-center gap-1 min-w-[120px]">
                               <div className="flex items-center gap-1">
-                                    <span className="text-xs text-slate-600 font-medium">同比</span>
+                                    <span className="text-xs text-slate-600 font-medium">{t('同比')}</span>
                                     {yoyElement}
                               </div>
                               <div className="w-full h-px bg-slate-200"></div>
                               <div className="flex items-center gap-1">
-                                    <span className="text-xs text-slate-600 font-medium">环比</span>
+                                    <span className="text-xs text-slate-600 font-medium">{t('环比')}</span>
                                     {momElement}
                               </div>
                         </div>
@@ -293,14 +293,14 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
             } else if (yoyElement !== '-') {
                   return (
                         <div className="bg-slate-50 rounded-lg px-3 py-2 inline-flex items-center gap-1 min-w-[100px]">
-                              <span className="text-xs text-slate-600 font-medium">同比</span>
+                              <span className="text-xs text-slate-600 font-medium">{t('同比')}</span>
                               {yoyElement}
                         </div>
                   );
             } else if (momElement !== '-') {
                   return (
                         <div className="bg-slate-50 rounded-lg px-3 py-2 inline-flex items-center gap-1 min-w-[100px]">
-                              <span className="text-xs text-slate-600 font-medium">环比</span>
+                              <span className="text-xs text-slate-600 font-medium">{t('环比')}</span>
                               {momElement}
                         </div>
                   );
@@ -320,7 +320,7 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
                                           <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
                                           <span className="text-base">{rowDataContent.categoryName}</span>
                                           <span className="text-sm text-slate-500 bg-white px-2 py-1 rounded-full">
-                                                {rowDataContent.shopsCount} 家店铺
+                                                {t('共 {{count}} 家店铺', { count: rowDataContent.shopsCount })}
                                           </span>
                                     </div>
                               </TableCell>
@@ -336,15 +336,15 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
                                     <div className="py-3 px-4">
                                           <h4 className="text-sm font-semibold mb-3 text-slate-700 flex items-center gap-2">
                                                 <div className="w-1 h-4 bg-orange-400 rounded-full"></div>
-                                                快递类型分布
+                                                {t('快递类型分布')}
                                           </h4>
                                           <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                                                 <Table>
                                                       <TableHeader>
                                                             <TableRow className="bg-slate-50">
-                                                                  <TableHead className="font-semibold text-slate-700">快递类型</TableHead>
-                                                                  <TableHead className="text-right font-semibold text-slate-700">数量</TableHead>
-                                                                  <TableHead className="text-right font-semibold text-slate-700">占比</TableHead>
+                                                                  <TableHead className="font-semibold text-slate-700">{t('快递类型')}</TableHead>
+                                                                  <TableHead className="text-right font-semibold text-slate-700">{t('数量')}</TableHead>
+                                                                  <TableHead className="text-right font-semibold text-slate-700">{t('占比')}</TableHead>
                                                             </TableRow>
                                                       </TableHeader>
                                                       <TableBody>
@@ -374,7 +374,7 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
                                           size="sm"
                                           className="h-8 w-8 p-0 hover:bg-slate-200"
                                           onClick={() => toggleRowExpand(shop.shop_id)}
-                                          aria-label={expandedShopIds.includes(shop.shop_id) ? '收起' : '展开'}
+                                          aria-label={expandedShopIds.includes(shop.shop_id) ? t('收起') : t('展开')}
                                     >
                                           {expandedShopIds.includes(shop.shop_id) ? (
                                                 <ChevronUp className="h-4 w-4 text-slate-600" />
@@ -434,7 +434,7 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
                         <p className="text-destructive mb-4">{error.message || '获取数据失败'}</p>
                         {onRetry && (
                               <Button onClick={onRetry} variant="outline">
-                                    重试
+                                    {t('重试')}
                               </Button>
                         )}
                   </div>
@@ -444,7 +444,7 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
       if (data.length === 0) {
             return (
                   <div className="text-center py-8 text-muted-foreground">
-                        暂无店铺统计数据
+                        {t('暂无店铺统计数据')}
                   </div>
             );
       }
@@ -569,8 +569,8 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
                   {!enableVirtualization && totalPages > 1 && (
                         <div className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-4 py-3 shadow-sm">
                               <div className="text-sm text-slate-600">
-                                    共 <span className="font-semibold text-slate-800">{data.length}</span> 家店铺，
-                                    <span className="font-semibold text-slate-800">{totalPages}</span> 页
+                                    {t('共 {{count}} 家店铺', { count: data.length })}，
+                                    {t('共 {{count}} 页', { count: totalPages })}
                               </div>
                               <div className="flex items-center space-x-2">
                                     <Button
@@ -580,14 +580,14 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
                                           onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                           disabled={currentPage === 1}
                                     >
-                                          上一页
+                                          {t('上一页')}
                                     </Button>
                                     <div className="flex items-center gap-1">
-                                          <span className="text-sm text-slate-600">第</span>
+
                                           <span className="inline-flex items-center justify-center px-3 py-1 text-sm font-semibold bg-blue-100 text-blue-700 rounded-md">
-                                                {currentPage}/{totalPages}
+                                                {t('第 {{currentPage}}/{{totalPages}} 页', { currentPage, totalPages })}
                                           </span>
-                                          <span className="text-sm text-slate-600">页</span>
+
                                     </div>
                                     <Button
                                           variant="outline"
@@ -596,7 +596,7 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
                                           onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                           disabled={currentPage === totalPages}
                                     >
-                                          下一页
+                                          {t('下一页')}
                                     </Button>
                               </div>
                         </div>
@@ -607,10 +607,10 @@ const ShopStatsTable: React.FC<ShopStatsTableProps> = ({
                               {enableVirtualization ? (
                                     <div className="flex items-center gap-2">
                                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                          <span>虚拟滚动模式 - 共 <span className="font-semibold text-slate-800">{data.length}</span> 条记录</span>
+                                          <span>{t('虚拟滚动模式 - 共 {{count}} 条记录', { count: data.length })}</span>
                                     </div>
                               ) : (
-                                    <span>分页模式 - 第 <span className="font-semibold text-slate-800">{currentPage}/{totalPages}</span> 页</span>
+                                    <span>{t('分页模式 - 第 {{currentPage}}/{{totalPages}} 页', { currentPage, totalPages })}</span>
                               )}
                         </div>
                         <Button
