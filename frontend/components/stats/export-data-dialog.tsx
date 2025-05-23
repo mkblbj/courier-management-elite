@@ -140,11 +140,11 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
 
       // 调用实际API
       const response = await shippingApi.exportData(exportParams)
-      
+
       clearInterval(progressInterval)
       setProgress(100)
       setExportStatus("success")
-      
+
       if (response && response.downloadUrl) {
         setDownloadUrl(response.downloadUrl)
       } else {
