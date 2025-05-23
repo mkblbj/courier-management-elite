@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CategoryStatsItem } from '@/lib/types/stats';
 import { cn } from '@/lib/utils';
-import { ArrowDown, ArrowUp, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowRight, ChevronDown, ChevronUp, Download, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from "react-i18next";
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // 定义排序类型
 type SortDirection = 'asc' | 'desc' | null;
@@ -30,8 +31,8 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
       const [processedData, setProcessedData] = useState<CategoryStatsExtended[]>([]);
       const [originalData, setOriginalData] = useState<CategoryStatsExtended[]>([]);
       // 新增：排序状态
-      const [sortField, setSortField] = useState<SortField>(null);
-      const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+      const [sortField, setSortField] = useState<SortField>('total_quantity');
+      const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
       // 处理和计算数据
       useEffect(() => {
@@ -158,12 +159,12 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
       // 新增：渲染排序图标
       const renderSortIcon = (field: SortField) => {
             if (sortField !== field) {
-                  return <ChevronUp className="h-4 w-4 opacity-0 group-hover:opacity-50" />;
+                  return null;
             }
 
             return sortDirection === 'asc'
-                  ? <ChevronUp className="h-4 w-4 text-primary" />
-                  : <ChevronDown className="h-4 w-4 text-primary" />;
+                  ? <ArrowUp className="ml-1 h-4 w-4 text-blue-600" />
+                  : <ArrowDown className="ml-1 h-4 w-4 text-blue-600" />;
       };
 
       const handleCategoryClick = (categoryId: number) => {
@@ -171,13 +172,21 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
             router.push(`/stats/category/${categoryId}`);
       };
 
+      const formatNumber = (value: number) => {
+            return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      };
+
+      const formatQuantity = (value: number) => {
+            return value.toLocaleString('zh-CN');
+      };
+
       // 处理变化率显示的辅助函数
       const renderChangeRate = (changeRate?: number, changeType?: 'increase' | 'decrease' | 'unchanged') => {
-            if (changeRate === undefined) return null;
+            if (changeRate === undefined) return '-';
 
             // 确保changeRate是数字
             const numericRate = typeof changeRate === 'string' ? parseFloat(changeRate) : changeRate;
-            if (isNaN(numericRate)) return null;
+            if (isNaN(numericRate)) return '-';
 
             const absoluteRate = Math.abs(numericRate);
             const formattedRate = `${absoluteRate.toFixed(2)}%`;
@@ -200,23 +209,23 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
             switch (effectiveChangeType) {
                   case 'increase':
                         return (
-                              <div className="flex items-center text-green-600 whitespace-nowrap">
-                                    <ArrowUp className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    {formattedRate}
+                              <div className="flex items-center text-green-600 whitespace-nowrap font-medium">
+                                    <ArrowUp className="h-3 w-3 mr-1 flex-shrink-0" />
+                                    <span className="text-xs">{formattedRate}</span>
                               </div>
                         );
                   case 'decrease':
                         return (
-                              <div className="flex items-center text-red-600 whitespace-nowrap">
-                                    <ArrowDown className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    {formattedRate}
+                              <div className="flex items-center text-red-600 whitespace-nowrap font-medium">
+                                    <ArrowDown className="h-3 w-3 mr-1 flex-shrink-0" />
+                                    <span className="text-xs">{formattedRate}</span>
                               </div>
                         );
                   case 'unchanged':
                         return (
-                              <div className="flex items-center text-gray-500 whitespace-nowrap">
-                                    <ArrowRight className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    {formattedRate}
+                              <div className="flex items-center text-gray-500 whitespace-nowrap font-medium">
+                                    <ArrowRight className="h-3 w-3 mr-1 flex-shrink-0" />
+                                    <span className="text-xs">{formattedRate}</span>
                               </div>
                         );
                   default:
@@ -237,164 +246,182 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
             const momElement = renderChangeRate(momRate, momType);
 
             // 只有当两个值都存在时才显示组合格式
-            if (yoyElement && momElement) {
+            if (yoyElement !== '-' && momElement !== '-') {
                   return (
-                        <div className="bg-slate-50 rounded-md px-3 py-2 inline-flex items-center gap-2 justify-end">
-                              {yoyElement}
-                              <span className="text-slate-400">/</span>
-                              {momElement}
+                        <div className="bg-slate-50 rounded-lg px-3 py-2 inline-flex flex-col items-center gap-1 min-w-[120px]">
+                              <div className="flex items-center gap-1">
+                                    <span className="text-xs text-slate-600 font-medium">同比</span>
+                                    {yoyElement}
+                              </div>
+                              <div className="w-full h-px bg-slate-200"></div>
+                              <div className="flex items-center gap-1">
+                                    <span className="text-xs text-slate-600 font-medium">环比</span>
+                                    {momElement}
+                              </div>
                         </div>
                   );
-            } else if (yoyElement) {
+            } else if (yoyElement !== '-') {
                   return (
-                        <div className="bg-slate-50 rounded-md px-3 py-2 inline-flex items-center justify-end">
+                        <div className="bg-slate-50 rounded-lg px-3 py-2 inline-flex items-center gap-1 min-w-[100px]">
+                              <span className="text-xs text-slate-600 font-medium">同比</span>
                               {yoyElement}
                         </div>
                   );
-            } else if (momElement) {
+            } else if (momElement !== '-') {
                   return (
-                        <div className="bg-slate-50 rounded-md px-3 py-2 inline-flex items-center justify-end">
+                        <div className="bg-slate-50 rounded-lg px-3 py-2 inline-flex items-center gap-1 min-w-[100px]">
+                              <span className="text-xs text-slate-600 font-medium">环比</span>
                               {momElement}
                         </div>
                   );
             }
 
-            return null;
+            return <span className="text-slate-400 text-sm">-</span>;
       };
 
+      if (isLoading) {
+            return (
+                  <div className="flex justify-center items-center h-40">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+            );
+      }
+
+      if (data.length === 0) {
+            return (
+                  <div className="text-center py-8 text-muted-foreground">
+                        暂无类别统计数据
+                  </div>
+            );
+      }
+
       return (
-            <div className="border rounded-md shadow-sm overflow-hidden">
-                  <Table>
-                        <TableHeader>
-                              <TableRow className="bg-muted/50">
-                                    <TableHead className="w-[200px] font-semibold">
-                                          <Button
-                                                variant="ghost"
-                                                className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
-                                                onClick={() => handleSort('category_name')}
-                                          >
-                                                {t('category_name')}
-                                                {renderSortIcon('category_name')}
-                                          </Button>
-                                    </TableHead>
-                                    <TableHead className="text-right font-semibold">
-                                          <div className="flex justify-end">
-                                                <Button
-                                                      variant="ghost"
-                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
-                                                      onClick={() => handleSort('total_quantity')}
-                                                >
+            <div className="space-y-4">
+                  <div className="overflow-hidden border rounded-lg shadow-sm bg-white">
+                        <Table>
+                              <TableHeader className="bg-gradient-to-r from-slate-100 to-slate-50 sticky top-0 z-10 border-b-2 border-slate-200">
+                                    <TableRow>
+                                          <TableHead className="cursor-pointer min-w-[120px] font-semibold text-slate-700" onClick={() => handleSort('category_name')}>
+                                                <div className="flex items-center hover:text-blue-600 transition-colors">
+                                                      {t('category_name')}
+                                                      {renderSortIcon('category_name')}
+                                                </div>
+                                          </TableHead>
+                                          <TableHead className="text-right cursor-pointer min-w-[100px] font-semibold text-slate-700" onClick={() => handleSort('total_quantity')}>
+                                                <div className="flex items-center justify-end hover:text-blue-600 transition-colors">
                                                       {t('total_output')}
                                                       {renderSortIcon('total_quantity')}
-                                                </Button>
-                                          </div>
-                                    </TableHead>
-                                    <TableHead className="text-right font-semibold">
-                                          <div className="flex justify-end">
-                                                <Button
-                                                      variant="ghost"
-                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
-                                                      onClick={() => handleSort('percentage')}
-                                                >
+                                                </div>
+                                          </TableHead>
+                                          <TableHead className="text-right cursor-pointer min-w-[80px] font-semibold text-slate-700" onClick={() => handleSort('percentage')}>
+                                                <div className="flex items-center justify-end hover:text-blue-600 transition-colors">
                                                       {t('percentage_of_total')}
                                                       {renderSortIcon('percentage')}
-                                                </Button>
-                                          </div>
-                                    </TableHead>
-                                    <TableHead className="text-right font-semibold">
-                                          <div className="flex justify-end">
-                                                <Button
-                                                      variant="ghost"
-                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
-                                                      onClick={() => handleSort('shops_count')}
-                                                >
+                                                </div>
+                                          </TableHead>
+                                          <TableHead className="text-right cursor-pointer min-w-[80px] font-semibold text-slate-700" onClick={() => handleSort('shops_count')}>
+                                                <div className="flex items-center justify-end hover:text-blue-600 transition-colors">
                                                       {t('shops_count')}
                                                       {renderSortIcon('shops_count')}
-                                                </Button>
-                                          </div>
-                                    </TableHead>
-                                    <TableHead className="text-right font-semibold">
-                                          <div className="flex justify-end">
-                                                <Button
-                                                      variant="ghost"
-                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
-                                                      onClick={() => handleSort('daily_average')}
-                                                >
+                                                </div>
+                                          </TableHead>
+                                          <TableHead className="text-right cursor-pointer min-w-[80px] font-semibold text-slate-700" onClick={() => handleSort('daily_average')}>
+                                                <div className="flex items-center justify-end hover:text-blue-600 transition-colors">
                                                       {t('daily_average')}
                                                       {renderSortIcon('daily_average')}
-                                                </Button>
-                                          </div>
-                                    </TableHead>
-                                    <TableHead className="text-center font-semibold">
-                                          <div className="flex justify-center">
-                                                <Button
-                                                      variant="ghost"
-                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
-                                                      onClick={() => handleSort('change_rate')}
-                                                >
-                                                      {t('yoy_mom_change')}
-                                                      {renderSortIcon('change_rate')}
-                                                </Button>
-                                          </div>
-                                    </TableHead>
-                              </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                              {processedData.length === 0 ? (
-                                    <TableRow>
-                                          <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
-                                                {isLoading ? t('loading') : t('no_data')}
-                                          </TableCell>
+                                                </div>
+                                          </TableHead>
+                                          <TableHead className="text-center min-w-[140px] font-semibold text-slate-700">
+                                                <TooltipProvider>
+                                                      <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                  <div className="flex items-center justify-center gap-1 hover:text-blue-600 transition-colors cursor-help">
+                                                                        <span>{t('yoy_mom_change')}</span>
+                                                                        <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+                                                                  </div>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                  <p>{t('同比（与去年同期相比）/ 环比（与上一个月相比）')}</p>
+                                                            </TooltipContent>
+                                                      </Tooltip>
+                                                </TooltipProvider>
+                                          </TableHead>
                                     </TableRow>
-                              ) : (
-                                    processedData.map((category, index) => (
-                                          <TableRow
-                                                key={category.category_id}
-                                                className={cn(
-                                                      "hover:bg-muted/50 transition-colors",
-                                                      index % 2 === 0 ? "bg-background" : "bg-muted/20"
-                                                )}
-                                          >
-                                                <TableCell>
-                                                      <button
-                                                            onClick={() => handleCategoryClick(category.category_id)}
-                                                            className="text-primary font-medium hover:underline focus:outline-none flex items-center"
-                                                      >
-                                                            {category.category_name}
-                                                      </button>
-                                                </TableCell>
-                                                <TableCell className="text-right font-medium">
-                                                      {typeof category.total_quantity === 'number'
-                                                            ? category.total_quantity.toLocaleString('zh-CN')
-                                                            : category.total_quantity}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                      {category.percentage !== undefined
-                                                            ? `${category.percentage.toFixed(2)}%`
-                                                            : '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                      <Badge variant="secondary" className="font-normal">
-                                                            {category.shops_count}
-                                                      </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right font-medium">
-                                                      {category.daily_average !== undefined
-                                                            ? category.daily_average.toFixed(2)
-                                                            : '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right p-2">
-                                                      <div className="flex justify-end">
-                                                            {renderCombinedChangeRate(category)}
-                                                      </div>
+                              </TableHeader>
+                              <TableBody>
+                                    {processedData.length === 0 ? (
+                                          <TableRow>
+                                                <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                                                      {isLoading ? t('loading') : t('no_data')}
                                                 </TableCell>
                                           </TableRow>
-                                    ))
-                              )}
-                        </TableBody>
-                  </Table>
+                                    ) : (
+                                          processedData.map((category, index) => (
+                                                <TableRow
+                                                      key={category.category_id}
+                                                      className="hover:bg-slate-50/50 transition-colors border-b border-slate-100"
+                                                >
+                                                      <TableCell className="font-semibold text-slate-800 min-w-[120px]">
+                                                            <button
+                                                                  onClick={() => handleCategoryClick(category.category_id)}
+                                                                  className="text-primary font-medium hover:underline focus:outline-none flex items-center hover:text-blue-600 transition-colors"
+                                                            >
+                                                                  {category.category_name}
+                                                            </button>
+                                                      </TableCell>
+                                                      <TableCell className="text-right font-mono font-semibold text-slate-800 min-w-[100px]">
+                                                            {typeof category.total_quantity === 'number'
+                                                                  ? formatQuantity(category.total_quantity)
+                                                                  : category.total_quantity}
+                                                      </TableCell>
+                                                      <TableCell className="text-right font-mono text-slate-700 min-w-[80px]">
+                                                            {category.percentage !== undefined ? (
+                                                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700">
+                                                                        {formatNumber(category.percentage)}%
+                                                                  </span>
+                                                            ) : (
+                                                                  <span className="text-slate-400">-</span>
+                                                            )}
+                                                      </TableCell>
+                                                      <TableCell className="text-right min-w-[80px]">
+                                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                                                  {category.shops_count}
+                                                            </span>
+                                                      </TableCell>
+                                                      <TableCell className="text-right font-mono text-slate-700 min-w-[80px]">
+                                                            {category.daily_average !== undefined ? (
+                                                                  <span className="font-semibold">{formatNumber(category.daily_average)}</span>
+                                                            ) : (
+                                                                  <span className="text-slate-400">-</span>
+                                                            )}
+                                                      </TableCell>
+                                                      <TableCell className="text-center min-w-[140px] p-2">
+                                                            <div className="flex justify-center">
+                                                                  {renderCombinedChangeRate(category)}
+                                                            </div>
+                                                      </TableCell>
+                                                </TableRow>
+                                          ))
+                                    )}
+                              </TableBody>
+                        </Table>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-white border border-slate-200 rounded-lg px-4 py-3 shadow-sm">
+                        <div className="text-sm text-slate-600">
+                              共 <span className="font-semibold text-slate-800">{data.length}</span> 个类别
+                        </div>
+                        <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2 border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-colors"
+                        >
+                              <Download className="h-4 w-4" />
+                              {t('导出数据')}
+                        </Button>
+                  </div>
             </div>
       );
 };
 
-export default CategoryStatsTable; 
+export default CategoryStatsTable;

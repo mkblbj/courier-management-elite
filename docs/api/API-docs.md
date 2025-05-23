@@ -1564,6 +1564,101 @@
 }
 ```
 
+### 8. 获取店铺出力统计数据（按店铺分组）
+
+获取按店铺分组的出力数据统计，包含占比、日均量、同比环比变化率等详细信息。
+
+**请求方法**: GET  
+**URL**: `/api/stats/shop-outputs/shops`
+
+**查询参数**:
+
+| 参数        | 类型   | 必需 | 描述                      |
+| ----------- | ------ | ---- | ------------------------- |
+| date_from   | string | 否   | 开始日期，格式 YYYY-MM-DD |
+| date_to     | string | 否   | 结束日期，格式 YYYY-MM-DD |
+| shop_id     | number | 否   | 筛选特定店铺              |
+| courier_id  | number | 否   | 筛选特定快递类型          |
+| category_id | number | 否   | 筛选特定店铺类别          |
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": [
+    {
+      "shop_id": 1,
+      "shop_name": "东京旗舰店",
+      "category_id": 1,
+      "category_name": "电商平台",
+      "total_quantity": 1250,
+      "percentage": 35.71,
+      "days_count": 30,
+      "daily_average": 41.67,
+      "mom_change_rate": 15.5,
+      "mom_change_type": "increase",
+      "yoy_change_rate": -2.3,
+      "yoy_change_type": "decrease",
+      "courier_distribution": {
+        "1": {
+          "courier_id": 1,
+          "courier_name": "顺丰速运",
+          "quantity": 800,
+          "percentage": 64.0
+        },
+        "2": {
+          "courier_id": 2,
+          "courier_name": "中通快递",
+          "quantity": 450,
+          "percentage": 36.0
+        }
+      }
+    },
+    {
+      "shop_id": 2,
+      "shop_name": "大阪分店",
+      "category_id": 1,
+      "category_name": "电商平台",
+      "total_quantity": 980,
+      "percentage": 28.0,
+      "days_count": 30,
+      "daily_average": 32.67,
+      "mom_change_rate": 8.2,
+      "mom_change_type": "increase",
+      "yoy_change_rate": 12.1,
+      "yoy_change_type": "increase"
+    }
+  ]
+}
+```
+
+**响应字段说明**:
+
+| 字段                 | 类型   | 描述                                                                  |
+| -------------------- | ------ | --------------------------------------------------------------------- |
+| shop_id              | number | 店铺 ID                                                               |
+| shop_name            | string | 店铺名称                                                              |
+| category_id          | number | 店铺类别 ID                                                           |
+| category_name        | string | 店铺类别名称                                                          |
+| total_quantity       | number | 总出力量                                                              |
+| percentage           | number | 占总量的百分比                                                        |
+| days_count           | number | 统计周期内的天数                                                      |
+| daily_average        | number | 日均出力量                                                            |
+| mom_change_rate      | number | 环比变化率(百分比)，环比指与上一个相同时间段相比                      |
+| mom_change_type      | string | 环比变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
+| yoy_change_rate      | number | 同比变化率(百分比)，同比指与去年同期相比                              |
+| yoy_change_type      | string | 同比变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
+| courier_distribution | object | 快递类型分布详情（可选）                                              |
+
+**注意事项**:
+
+- 占比计算基于查询范围内所有店铺的总量
+- 同比环比计算需要有历史数据支持
+- 如果没有对比数据，变化率字段将为 null
+- courier_distribution 字段仅在有详细分布数据时返回
+
 ## 统计分析 API
 
 统计分析用于生成各种统计分析报告。
@@ -1577,12 +1672,13 @@
 
 **查询参数**:
 
-| 参数       | 类型   | 必需 | 描述                      |
-| ---------- | ------ | ---- | ------------------------- |
-| start_date | string | 否   | 开始日期，格式 YYYY-MM-DD |
-| end_date   | string | 否   | 结束日期，格式 YYYY-MM-DD |
-| shop_id    | number | 否   | 筛选特定店铺              |
-| courier_id | number | 否   | 筛选特定快递类型          |
+| 参数        | 类型   | 必需 | 描述                      |
+| ----------- | ------ | ---- | ------------------------- |
+| start_date  | string | 否   | 开始日期，格式 YYYY-MM-DD |
+| end_date    | string | 否   | 结束日期，格式 YYYY-MM-DD |
+| shop_id     | number | 否   | 筛选特定店铺              |
+| courier_id  | number | 否   | 筛选特定快递类型          |
+| category_id | number | 否   | 筛选特定店铺类别          |
 
 **响应示例**:
 
@@ -1590,34 +1686,77 @@
 {
   "code": 0,
   "message": "获取成功",
-  "data": {
-    "by_shop": [
-      {
-        "shop_id": 1,
-        "shop_name": "东京旗舰店",
-        "total_quantity": 500,
-        "percentage": 50
-      },
-      {
-        "shop_id": 2,
-        "shop_name": "大阪分店",
-        "total_quantity": 300,
-        "percentage": 30
-      },
-      {
-        "shop_id": 3,
-        "shop_name": "名古屋分店",
-        "total_quantity": 200,
-        "percentage": 20
+  "data": [
+    {
+      "shop_id": 1,
+      "shop_name": "东京旗舰店",
+      "category_id": 1,
+      "category_name": "电商平台",
+      "total_quantity": 1250,
+      "percentage": 35.71,
+      "days_count": 30,
+      "daily_average": 41.67,
+      "mom_change_rate": 15.5,
+      "mom_change_type": "increase",
+      "yoy_change_rate": -2.3,
+      "yoy_change_type": "decrease",
+      "courier_distribution": {
+        "1": {
+          "courier_id": 1,
+          "courier_name": "顺丰速运",
+          "quantity": 800,
+          "percentage": 64.0
+        },
+        "2": {
+          "courier_id": 2,
+          "courier_name": "中通快递",
+          "quantity": 450,
+          "percentage": 36.0
+        }
       }
-    ],
-    "total": {
-      "total_quantity": 1000,
-      "shop_count": 3
+    },
+    {
+      "shop_id": 2,
+      "shop_name": "大阪分店",
+      "category_id": 1,
+      "category_name": "电商平台",
+      "total_quantity": 980,
+      "percentage": 28.0,
+      "days_count": 30,
+      "daily_average": 32.67,
+      "mom_change_rate": 8.2,
+      "mom_change_type": "increase",
+      "yoy_change_rate": 12.1,
+      "yoy_change_type": "increase"
     }
-  }
+  ]
 }
 ```
+
+**响应字段说明**:
+
+| 字段                 | 类型   | 描述                                                                  |
+| -------------------- | ------ | --------------------------------------------------------------------- |
+| shop_id              | number | 店铺 ID                                                               |
+| shop_name            | string | 店铺名称                                                              |
+| category_id          | number | 店铺类别 ID                                                           |
+| category_name        | string | 店铺类别名称                                                          |
+| total_quantity       | number | 总出力量                                                              |
+| percentage           | number | 占总量的百分比                                                        |
+| days_count           | number | 统计周期内的天数                                                      |
+| daily_average        | number | 日均出力量                                                            |
+| mom_change_rate      | number | 环比变化率(百分比)，环比指与上一个相同时间段相比                      |
+| mom_change_type      | string | 环比变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
+| yoy_change_rate      | number | 同比变化率(百分比)，同比指与去年同期相比                              |
+| yoy_change_type      | string | 同比变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
+| courier_distribution | object | 快递类型分布详情（可选）                                              |
+
+**注意事项**:
+
+- 占比计算基于查询范围内所有店铺的总量
+- 同比环比计算需要有历史数据支持
+- 如果没有对比数据，变化率字段将为 null
+- courier_distribution 字段仅在有详细分布数据时返回
 
 ### 2. 按快递类型统计出力数据
 
