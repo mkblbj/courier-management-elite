@@ -14,6 +14,7 @@
 8. [统计分析 API](#统计分析api)
 9. [仪表盘 API](#仪表盘api)
 10. [错误处理](#错误处理)
+11. [后台管理 API](#后台管理-api)
 
 ## API 基础信息
 
@@ -1949,3 +1950,214 @@
 - **location**: 参数位置（例如：body, query, params 等）
 
 对于其他类型的错误，系统会提供描述性的错误消息，帮助用户理解问题所在并采取相应的纠正措施。
+
+## 后台管理 API
+
+后台管理功能用于系统管理员管理通知和监控系统性能。
+
+### 1. 通知模板管理
+
+#### 1.1 获取通知模板列表
+
+**请求方法**: GET  
+**URL**: `/api/admin/notification-templates`
+
+**查询参数**:
+
+| 参数     | 类型    | 必需 | 描述                      |
+| -------- | ------- | ---- | ------------------------- |
+| page     | integer | 否   | 页码，默认 1              |
+| per_page | integer | 否   | 每页记录数，默认 20       |
+| status   | string  | 否   | 状态筛选：active/inactive |
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": {
+    "total": 10,
+    "page": 1,
+    "per_page": 20,
+    "items": [
+      {
+        "id": 1,
+        "name": "系统更新通知",
+        "title": "系统升级公告",
+        "content": "<p>系统将于今晚进行升级...</p>",
+        "style_id": 1,
+        "style_name": "现代卡片风格",
+        "media_urls": ["https://example.com/image1.jpg"],
+        "links": [{ "text": "查看详情", "url": "https://example.com" }],
+        "is_active": true,
+        "created_at": "2023-08-01T10:00:00.000Z",
+        "updated_at": "2023-08-01T10:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+#### 1.2 创建通知模板
+
+**请求方法**: POST  
+**URL**: `/api/admin/notification-templates`
+
+**请求体**:
+
+| 参数       | 类型    | 必需 | 描述                  |
+| ---------- | ------- | ---- | --------------------- |
+| name       | string  | 是   | 模板名称              |
+| title      | string  | 是   | 通知标题              |
+| content    | string  | 是   | 通知内容（HTML 格式） |
+| style_id   | integer | 是   | 样式 ID               |
+| media_urls | array   | 否   | 媒体文件 URL 数组     |
+| links      | array   | 否   | 链接数组              |
+| is_active  | boolean | 否   | 是否启用，默认 true   |
+
+#### 1.3 更新通知模板
+
+**请求方法**: PUT  
+**URL**: `/api/admin/notification-templates/:id`
+
+#### 1.4 删除通知模板
+
+**请求方法**: DELETE  
+**URL**: `/api/admin/notification-templates/:id`
+
+#### 1.5 预览通知模板
+
+**请求方法**: POST  
+**URL**: `/api/admin/notification-templates/preview`
+
+**请求体**:
+
+| 参数     | 类型    | 必需 | 描述                  |
+| -------- | ------- | ---- | --------------------- |
+| title    | string  | 是   | 通知标题              |
+| content  | string  | 是   | 通知内容（HTML 格式） |
+| style_id | integer | 是   | 样式 ID               |
+
+### 2. 通知样式管理
+
+#### 2.1 获取通知样式列表
+
+**请求方法**: GET  
+**URL**: `/api/admin/notification-styles`
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": [
+    {
+      "id": 1,
+      "name": "现代卡片风格",
+      "config": {
+        "background": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        "borderRadius": "12px",
+        "animation": "slideInDown",
+        "iconStyle": "modern"
+      },
+      "preview_image": "https://example.com/preview1.jpg"
+    }
+  ]
+}
+```
+
+### 3. 文件上传
+
+#### 3.1 上传媒体文件
+
+**请求方法**: POST  
+**URL**: `/api/admin/upload`
+
+**请求体**: FormData
+
+| 参数 | 类型   | 必需 | 描述                         |
+| ---- | ------ | ---- | ---------------------------- |
+| file | file   | 是   | 文件（支持图片、GIF 等格式） |
+| type | string | 否   | 文件类型：image/gif/video    |
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "上传成功",
+  "data": {
+    "url": "https://example.com/uploads/image123.jpg",
+    "filename": "image123.jpg",
+    "size": 1024000,
+    "type": "image/jpeg"
+  }
+}
+```
+
+### 4. 性能监控
+
+#### 4.1 获取性能指标
+
+**请求方法**: GET  
+**URL**: `/api/admin/performance/metrics`
+
+**查询参数**:
+
+| 参数        | 类型   | 必需 | 描述                                          |
+| ----------- | ------ | ---- | --------------------------------------------- |
+| metric_type | string | 否   | 指标类型：cpu/memory/response_time/error_rate |
+| start_time  | string | 否   | 开始时间，格式 YYYY-MM-DD HH:mm:ss            |
+| end_time    | string | 否   | 结束时间，格式 YYYY-MM-DD HH:mm:ss            |
+| interval    | string | 否   | 时间间隔：1m/5m/1h/1d                         |
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": {
+    "metrics": [
+      {
+        "timestamp": "2023-08-01T10:00:00.000Z",
+        "cpu_usage": 45.2,
+        "memory_usage": 68.5,
+        "response_time": 120,
+        "error_rate": 0.1
+      }
+    ],
+    "summary": {
+      "avg_cpu": 42.1,
+      "avg_memory": 65.3,
+      "avg_response_time": 115,
+      "total_requests": 10000,
+      "total_errors": 10
+    }
+  }
+}
+```
+
+#### 4.2 获取系统状态
+
+**请求方法**: GET  
+**URL**: `/api/admin/performance/status`
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": {
+    "status": "healthy",
+    "uptime": 86400,
+    "version": "1.0.0",
+    "database_status": "connected",
+    "redis_status": "connected",
+    "last_backup": "2023-08-01T02:00:00.000Z"
+  }
+}
+```
