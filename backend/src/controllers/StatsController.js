@@ -360,6 +360,8 @@ class StatsController {
       // 解析请求参数
       const dateFrom = req.query.date_from || null;
       const dateTo = req.query.date_to || null;
+      const courierId = req.query.courier_id ? parseInt(req.query.courier_id) : null;
+      const categoryId = req.query.category_id ? parseInt(req.query.category_id) : null;
       
       // 创建一个自定义SQL查询来按店铺统计出力数据
       const db = require('../db');
@@ -367,13 +369,17 @@ class StatsController {
       let sql = `
         SELECT 
           s.id as shop_id, 
-          s.name as shop_name, 
+          s.name as shop_name,
+          s.category_id,
+          sc.name as category_name,
           SUM(so.quantity) as total_quantity,
           COUNT(DISTINCT so.output_date) as days_count
         FROM 
           shop_outputs so
         JOIN 
           shops s ON so.shop_id = s.id
+        LEFT JOIN 
+          shop_categories sc ON s.category_id = sc.id
         WHERE 
           1=1
       `;
@@ -390,19 +396,41 @@ class StatsController {
         params.push(dateTo);
       }
       
+      if (courierId) {
+        sql += ` AND so.courier_id = ?`;
+        params.push(courierId);
+      }
+      
+      if (categoryId) {
+        sql += ` AND s.category_id = ?`;
+        params.push(categoryId);
+      }
+      
       sql += `
         GROUP BY 
-          s.id, s.name
+          s.id, s.name, s.category_id, sc.name
         ORDER BY 
           total_quantity DESC
       `;
       
       const results = await db.query(sql, params);
       
+      // 处理未分类的情况 (category_id 可能为 NULL)
+      const processedResults = Array.isArray(results) ? results.map(row => {
+        if (row.category_id === null) {
+          return {
+            ...row,
+            category_id: 0,
+            category_name: '未分类'
+          };
+        }
+        return row;
+      }) : [];
+      
       res.status(200).json({
         code: 0,
         message: '获取成功',
-        data: results
+        data: processedResults
       });
     } catch (error) {
       console.error('按店铺统计出力数据失败:', error);
