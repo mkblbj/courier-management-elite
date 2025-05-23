@@ -90,13 +90,21 @@ export const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>
                                                       return (
                                                             <Badge key={val} variant="secondary" className="mr-1">
                                                                   {label}
-                                                                  <button
-                                                                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                                  <span
+                                                                        role="button"
+                                                                        tabIndex={0}
+                                                                        className="ml-1 cursor-pointer ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                                                                         onMouseDown={(e) => e.preventDefault()}
                                                                         onClick={(e) => removeValue(val, e)}
+                                                                        onKeyDown={(e) => {
+                                                                              if (e.key === 'Enter' || e.key === ' ') {
+                                                                                    e.preventDefault();
+                                                                                    removeValue(val, e as unknown as React.MouseEvent);
+                                                                              }
+                                                                        }}
                                                                   >
                                                                         <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                                                                  </button>
+                                                                  </span>
                                                             </Badge>
                                                       );
                                                 })

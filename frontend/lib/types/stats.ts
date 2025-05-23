@@ -46,8 +46,22 @@ export interface ShopStatsItem {
   total_quantity: number;
   percentage?: number;
   daily_average?: number;
+  // 快递类型分布
+  courier_distribution?: {
+    [courier_id: string]: {
+      courier_name: string;
+      quantity: number;
+      percentage: number;
+    }
+  };
+  // 趋势变化
   change_rate?: number;
   change_type?: 'increase' | 'decrease' | 'unchanged';
+  // 同比环比数据
+  mom_change_rate?: number;  // 环比变化率
+  mom_change_type?: 'increase' | 'decrease' | 'unchanged';
+  yoy_change_rate?: number;  // 同比变化率
+  yoy_change_type?: 'increase' | 'decrease' | 'unchanged';
 }
 
 /**
@@ -58,6 +72,7 @@ export interface ShopStatsResponse {
   total: {
     total_quantity: number;
     shop_count: number;
+    days_count?: number;
   };
 }
 
@@ -119,4 +134,34 @@ export interface StatsQueryParams {
   category_id?: number | string;
   group_by?: 'day' | 'week' | 'month' | 'year';
   compare_type?: 'month-on-month' | 'year-on-year';
+  include_courier_distribution?: boolean; // 是否包含快递类型分布数据
+  include_trending_data?: boolean; // 是否包含趋势数据
+  sort_by?: 'quantity' | 'percentage' | 'daily_average' | 'name'; // 排序字段
+  sort_dir?: 'asc' | 'desc'; // 排序方向
+}
+
+/**
+ * 快递类型列表项
+ */
+export interface CourierType {
+  id: number;
+  name: string;
+}
+
+/**
+ * 店铺类别列表项
+ */
+export interface ShopCategory {
+  id: number;
+  name: string;
+}
+
+/**
+ * 店铺列表项
+ */
+export interface Shop {
+  id: number;
+  name: string;
+  category_id?: number;
+  category_name?: string;
 } 

@@ -7,15 +7,16 @@ import type { StatsDimension } from './ShopOutputStats';
 import { Loader2 } from 'lucide-react';
 import { MultiSelect, MultiSelectItem } from '@/components/ui/multi-select';
 import { useTranslation } from 'react-i18next';
+import { CourierType, ShopCategory, Shop } from '@/lib/types/stats';
 
 interface StatsFilterPanelProps {
       selectedDimension: StatsDimension;
       isLoading?: boolean;
       onFilterChange?: (filters: any) => void;
       onResetFilters?: () => void;
-      courierTypes?: { id: string | number; name: string }[];
-      shopCategories?: { id: string | number; name: string }[];
-      shops?: { id: string | number; name: string; category_id?: string | number }[];
+      courierTypes?: CourierType[];
+      shopCategories?: ShopCategory[];
+      shops?: Shop[];
 }
 
 const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({
@@ -58,6 +59,54 @@ const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({
             }
       };
 
+      // 渲染快递类型筛选器项
+      const renderCourierTypeItems = () => {
+            if (courierTypes.length === 0) {
+                  // 如果没有数据，显示正在加载状态或占位项
+                  return (
+                        <MultiSelectItem value="-1">{t('加载中...')}</MultiSelectItem>
+                  );
+            }
+
+            return courierTypes.map((type) => (
+                  <MultiSelectItem key={type.id} value={type.id.toString()}>
+                        {type.name}
+                  </MultiSelectItem>
+            ));
+      };
+
+      // 渲染店铺类别筛选器项
+      const renderShopCategoryItems = () => {
+            if (shopCategories.length === 0) {
+                  // 如果没有数据，显示正在加载状态或占位项
+                  return (
+                        <MultiSelectItem value="-1">{t('加载中...')}</MultiSelectItem>
+                  );
+            }
+
+            return shopCategories.map((category) => (
+                  <MultiSelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                  </MultiSelectItem>
+            ));
+      };
+
+      // 渲染店铺筛选器项
+      const renderShopItems = () => {
+            if (shops.length === 0) {
+                  // 如果没有数据，显示正在加载状态或占位项
+                  return (
+                        <MultiSelectItem value="-1">{t('加载中...')}</MultiSelectItem>
+                  );
+            }
+
+            return shops.map((shop) => (
+                  <MultiSelectItem key={shop.id} value={shop.id.toString()}>
+                        {shop.name}
+                  </MultiSelectItem>
+            ));
+      };
+
       return (
             <Card>
                   <div
@@ -93,20 +142,7 @@ const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({
                                                             onChange={setCourierTypeFilter}
                                                             placeholder={t('选择快递类型')}
                                                       >
-                                                            {courierTypes.length === 0 ? (
-                                                                  // 使用示例数据
-                                                                  <>
-                                                                        <MultiSelectItem value="1">顺丰速运</MultiSelectItem>
-                                                                        <MultiSelectItem value="2">中通快递</MultiSelectItem>
-                                                                        <MultiSelectItem value="3">圆通速递</MultiSelectItem>
-                                                                  </>
-                                                            ) : (
-                                                                  courierTypes.map((type) => (
-                                                                        <MultiSelectItem key={type.id} value={type.id.toString()}>
-                                                                              {type.name}
-                                                                        </MultiSelectItem>
-                                                                  ))
-                                                            )}
+                                                            {renderCourierTypeItems()}
                                                       </MultiSelect>
                                                 </div>
 
@@ -119,20 +155,7 @@ const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({
                                                                   onChange={setCategoryFilter}
                                                                   placeholder={t('选择店铺类别')}
                                                             >
-                                                                  {shopCategories.length === 0 ? (
-                                                                        // 使用示例数据
-                                                                        <>
-                                                                              <MultiSelectItem value="1">电商平台</MultiSelectItem>
-                                                                              <MultiSelectItem value="2">实体门店</MultiSelectItem>
-                                                                              <MultiSelectItem value="3">海外专营店</MultiSelectItem>
-                                                                        </>
-                                                                  ) : (
-                                                                        shopCategories.map((category) => (
-                                                                              <MultiSelectItem key={category.id} value={category.id.toString()}>
-                                                                                    {category.name}
-                                                                              </MultiSelectItem>
-                                                                        ))
-                                                                  )}
+                                                                  {renderShopCategoryItems()}
                                                             </MultiSelect>
                                                       </div>
                                                 )}
@@ -146,20 +169,7 @@ const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({
                                                                   onChange={setShopFilter}
                                                                   placeholder={t('选择店铺')}
                                                             >
-                                                                  {shops.length === 0 ? (
-                                                                        // 使用示例数据
-                                                                        <>
-                                                                              <MultiSelectItem value="1">东京旗舰店</MultiSelectItem>
-                                                                              <MultiSelectItem value="2">大阪分店</MultiSelectItem>
-                                                                              <MultiSelectItem value="3">名古屋分店</MultiSelectItem>
-                                                                        </>
-                                                                  ) : (
-                                                                        shops.map((shop) => (
-                                                                              <MultiSelectItem key={shop.id} value={shop.id.toString()}>
-                                                                                    {shop.name}
-                                                                              </MultiSelectItem>
-                                                                        ))
-                                                                  )}
+                                                                  {renderShopItems()}
                                                             </MultiSelect>
                                                       </div>
                                                 )}
