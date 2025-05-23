@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CategoryStatsItem } from '@/lib/types/stats';
 import { cn } from '@/lib/utils';
-import { ArrowDown, ArrowUp, ArrowRight } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from "react-i18next";
+import { Button } from '@/components/ui/button';
 
-
-
+// 定义排序类型
+type SortDirection = 'asc' | 'desc' | null;
+type SortField = 'category_name' | 'total_quantity' | 'percentage' | 'shops_count' | 'daily_average' | 'change_rate' | null;
 
 interface CategoryStatsTableProps {
       data: CategoryStatsItem[];
@@ -26,6 +28,10 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
       const router = useRouter();
       const { t } = useTranslation('stats'); // 使用'stats'命名空间
       const [processedData, setProcessedData] = useState<CategoryStatsExtended[]>([]);
+      const [originalData, setOriginalData] = useState<CategoryStatsExtended[]>([]);
+      // 新增：排序状态
+      const [sortField, setSortField] = useState<SortField>(null);
+      const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
       // 处理和计算数据
       useEffect(() => {
@@ -67,11 +73,98 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
                   });
 
                   console.log('处理后的表格数据:', processed);
+                  setOriginalData(processed);
                   setProcessedData(processed);
             } else {
+                  setOriginalData([]);
                   setProcessedData([]);
             }
       }, [data]);
+
+      // 新增：排序数据的函数
+      const sortData = (field: SortField, direction: SortDirection) => {
+            if (!field || !direction || originalData.length === 0) {
+                  return [...originalData];
+            }
+
+            return [...originalData].sort((a, b) => {
+                  if (field === 'category_name') {
+                        if (!a.category_name) return direction === 'asc' ? -1 : 1;
+                        if (!b.category_name) return direction === 'asc' ? 1 : -1;
+                        return direction === 'asc'
+                              ? a.category_name.localeCompare(b.category_name)
+                              : b.category_name.localeCompare(a.category_name);
+                  }
+
+                  if (field === 'total_quantity') {
+                        const valueA = a.total_quantity || 0;
+                        const valueB = b.total_quantity || 0;
+                        return direction === 'asc' ? valueA - valueB : valueB - valueA;
+                  }
+
+                  if (field === 'percentage') {
+                        const valueA = a.percentage || 0;
+                        const valueB = b.percentage || 0;
+                        return direction === 'asc' ? valueA - valueB : valueB - valueA;
+                  }
+
+                  if (field === 'shops_count') {
+                        const valueA = a.shops_count || 0;
+                        const valueB = b.shops_count || 0;
+                        return direction === 'asc' ? valueA - valueB : valueB - valueA;
+                  }
+
+                  if (field === 'daily_average') {
+                        const valueA = a.daily_average || 0;
+                        const valueB = b.daily_average || 0;
+                        return direction === 'asc' ? valueA - valueB : valueB - valueA;
+                  }
+
+                  if (field === 'change_rate') {
+                        const valueA = a.yoy_change_rate || 0;
+                        const valueB = b.yoy_change_rate || 0;
+                        return direction === 'asc' ? valueA - valueB : valueB - valueA;
+                  }
+
+                  return 0;
+            });
+      };
+
+      // 使用Effect应用排序状态变化
+      useEffect(() => {
+            const sorted = sortData(sortField, sortDirection);
+            setProcessedData(sorted);
+      }, [sortField, sortDirection, originalData]);
+
+      // 新增：处理排序请求
+      const handleSort = (field: SortField) => {
+            // 如果点击的是当前排序字段，则切换排序方向或重置
+            if (field === sortField) {
+                  if (sortDirection === 'asc') {
+                        setSortDirection('desc');
+                  } else if (sortDirection === 'desc') {
+                        setSortField(null);
+                        setSortDirection(null);
+                  } else {
+                        setSortDirection('asc');
+                  }
+            } else {
+                  // 如果点击的是新字段，则设置为升序
+                  setSortField(field);
+                  setSortDirection('asc');
+            }
+      };
+
+      // 新增：渲染排序图标
+      const renderSortIcon = (field: SortField) => {
+            if (sortField !== field) {
+                  return <ChevronUp className="h-4 w-4 opacity-0 group-hover:opacity-50" />;
+            }
+
+            return sortDirection === 'asc'
+                  ? <ChevronUp className="h-4 w-4 text-primary" />
+                  : <ChevronDown className="h-4 w-4 text-primary" />;
+      };
 
       const handleCategoryClick = (categoryId: number) => {
             // 导航到类别详情页面
@@ -174,12 +267,76 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
                   <Table>
                         <TableHeader>
                               <TableRow className="bg-muted/50">
-                                    <TableHead className="w-[200px] font-semibold">{t('category_name')}</TableHead>
-                                    <TableHead className="text-right font-semibold">{t('total_output')}</TableHead>
-                                    <TableHead className="text-right font-semibold">{t('percentage_of_total')}</TableHead>
-                                    <TableHead className="text-right font-semibold">{t('shops_count')}</TableHead>
-                                    <TableHead className="text-right font-semibold">{t('daily_average')}</TableHead>
-                                    <TableHead className="text-center font-semibold">{t('yoy_mom_change')}</TableHead>
+                                    <TableHead className="w-[200px] font-semibold">
+                                          <Button
+                                                variant="ghost"
+                                                className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
+                                                onClick={() => handleSort('category_name')}
+                                          >
+                                                {t('category_name')}
+                                                {renderSortIcon('category_name')}
+                                          </Button>
+                                    </TableHead>
+                                    <TableHead className="text-right font-semibold">
+                                          <div className="flex justify-end">
+                                                <Button
+                                                      variant="ghost"
+                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
+                                                      onClick={() => handleSort('total_quantity')}
+                                                >
+                                                      {t('total_output')}
+                                                      {renderSortIcon('total_quantity')}
+                                                </Button>
+                                          </div>
+                                    </TableHead>
+                                    <TableHead className="text-right font-semibold">
+                                          <div className="flex justify-end">
+                                                <Button
+                                                      variant="ghost"
+                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
+                                                      onClick={() => handleSort('percentage')}
+                                                >
+                                                      {t('percentage_of_total')}
+                                                      {renderSortIcon('percentage')}
+                                                </Button>
+                                          </div>
+                                    </TableHead>
+                                    <TableHead className="text-right font-semibold">
+                                          <div className="flex justify-end">
+                                                <Button
+                                                      variant="ghost"
+                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
+                                                      onClick={() => handleSort('shops_count')}
+                                                >
+                                                      {t('shops_count')}
+                                                      {renderSortIcon('shops_count')}
+                                                </Button>
+                                          </div>
+                                    </TableHead>
+                                    <TableHead className="text-right font-semibold">
+                                          <div className="flex justify-end">
+                                                <Button
+                                                      variant="ghost"
+                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
+                                                      onClick={() => handleSort('daily_average')}
+                                                >
+                                                      {t('daily_average')}
+                                                      {renderSortIcon('daily_average')}
+                                                </Button>
+                                          </div>
+                                    </TableHead>
+                                    <TableHead className="text-center font-semibold">
+                                          <div className="flex justify-center">
+                                                <Button
+                                                      variant="ghost"
+                                                      className="font-semibold p-0 h-auto hover:bg-transparent group flex items-center gap-1"
+                                                      onClick={() => handleSort('change_rate')}
+                                                >
+                                                      {t('yoy_mom_change')}
+                                                      {renderSortIcon('change_rate')}
+                                                </Button>
+                                          </div>
+                                    </TableHead>
                               </TableRow>
                         </TableHeader>
                         <TableBody>
