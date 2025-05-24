@@ -52,31 +52,32 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
         // 更新代码到完整名称的映射
         setCodeToFullNameMap(newCodeToFullNameMap)
 
-        // 计算日期范围
+        // 计算日期范围（排除今天）
         const today = new Date()
+        const yesterday = subDays(today, 1)
         let startDate
 
         switch (timeRange) {
           case "7days":
-            startDate = subDays(today, 6)
+            startDate = subDays(yesterday, 6)
             break
           case "14days":
-            startDate = subDays(today, 13)
+            startDate = subDays(yesterday, 13)
             break
           case "30days":
-            startDate = subDays(today, 29)
+            startDate = subDays(yesterday, 29)
             break
           case "thisMonth":
-            startDate = new Date(today.getFullYear(), today.getMonth(), 1)
+            startDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), 1)
             break
           default:
-            startDate = subDays(today, 6)
+            startDate = subDays(yesterday, 6)
         }
 
         // 构建API请求参数
         const params = {
           date_from: format(startDate, "yyyy-MM-dd"),
-          date_to: format(today, "yyyy-MM-dd"),
+          date_to: format(yesterday, "yyyy-MM-dd"),
           type: "pie",
         }
 
@@ -146,7 +147,7 @@ export function CourierDistributionChart({ timeRange, isLoading }: CourierDistri
             value: Number(validData[index]) || 0,
           }
         }).filter(item => item.value > 0)
-          .filter(item => !item.fullName.includes(t("未指定"))) // 过滤掉"未指定"的快递类型
+          .filter(item => !item.fullName.includes("未指定")) // 过滤掉"未指定"的快递类型
 
         console.log("最终格式化的饼图数据:", formattedData)
 

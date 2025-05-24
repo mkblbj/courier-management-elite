@@ -24,31 +24,32 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
     const fetchChartData = async () => {
       setLoading(true)
       try {
-        // 计算日期范围
+        // 计算日期范围（排除今天）
         const today = new Date()
+        const yesterday = subDays(today, 1)
         let startDate
 
         switch (timeRange) {
           case "7days":
-            startDate = subDays(today, 6)
+            startDate = subDays(yesterday, 6)
             break
           case "14days":
-            startDate = subDays(today, 13)
+            startDate = subDays(yesterday, 13)
             break
           case "30days":
-            startDate = subDays(today, 29)
+            startDate = subDays(yesterday, 29)
             break
           case "thisMonth":
-            startDate = new Date(today.getFullYear(), today.getMonth(), 1)
+            startDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), 1)
             break
           default:
-            startDate = subDays(today, 6)
+            startDate = subDays(yesterday, 6)
         }
 
         // 构建API请求参数
         const params: any = {
           date_from: format(startDate, "yyyy-MM-dd"),
-          date_to: format(today, "yyyy-MM-dd"),
+          date_to: format(yesterday, "yyyy-MM-dd"),
         }
 
         // 如果选择了特定快递类型
@@ -64,7 +65,7 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
 
         // 初始化日期范围内的所有日期
         let currentDate = new Date(startDate)
-        while (currentDate <= today) {
+        while (currentDate <= yesterday) {
           const dateStr = format(currentDate, "MM-dd")
           const weekday = format(currentDate, "EEEE").toLowerCase()
           dateMap.set(dateStr, {
@@ -77,11 +78,11 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
           currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1))
         }
 
-        // 获取所有快递类型并初始化
+        // 获取所有快递类型并初始化（过滤掉"未指定"的快递类型）
         const courierTypes = new Set<string>()
         if (response.by_date_and_courier && Array.isArray(response.by_date_and_courier)) {
           response.by_date_and_courier.forEach((item: any) => {
-            if (item.courier_name) {
+            if (item.courier_name && !item.courier_name.includes('未指定')) {
               courierTypes.add(item.courier_name)
             }
           })
@@ -97,7 +98,7 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
         // 填充实际数据
         if (response.by_date_and_courier && Array.isArray(response.by_date_and_courier)) {
           response.by_date_and_courier.forEach((item: any) => {
-            if (item.date && item.courier_name) {
+            if (item.date && item.courier_name && !item.courier_name.includes('未指定')) {
               const dateKey = format(new Date(item.date), "MM-dd")
               if (dateMap.has(dateKey)) {
                 const dateData = dateMap.get(dateKey)
@@ -137,9 +138,15 @@ export function ShippingTrendChart({ timeRange, courierType, isLoading }: Shippi
     );
   }
 
-  // 从图表数据中获取所有快递类型
+  // 从图表数据中获取所有快递类型（过滤掉"未指定"的快递类型）
   const courierTypes = chartData.length > 0
-    ? Object.keys(chartData[0]).filter(key => key !== 'date' && key !== 'weekday' && key !== 'fullDate' && key !== 'totalShipping')
+    ? Object.keys(chartData[0]).filter(key =>
+      key !== 'date' &&
+      key !== 'weekday' &&
+      key !== 'fullDate' &&
+      key !== 'totalShipping' &&
+      !key.includes('未指定')
+    )
     : []
 
   // 自定义X轴标签组件，显示日期和星期
