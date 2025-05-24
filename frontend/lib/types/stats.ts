@@ -114,6 +114,16 @@ export interface DateStatsItem {
   date: string;
   total_quantity: number;
   percentage?: number;
+  shops_count?: number;
+  couriers_count?: number;
+  avg_quantity?: number;
+  // 环比数据
+  mom_change_rate?: number;
+  mom_change_type?: 'increase' | 'decrease' | 'unchanged';
+  // 同比数据
+  yoy_change_rate?: number;
+  yoy_change_type?: 'increase' | 'decrease' | 'unchanged';
+  // 分布数据（可选）
   distribution?: {
     [key: string]: number | string;
   };

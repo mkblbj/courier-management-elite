@@ -9,14 +9,15 @@ import StatsDataDisplay from './StatsDataDisplay';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
-import { getCategoryStats, getShopStats, getCourierStats, getCourierTypes, getShopCategories, getShops, prefetchStatsData, clearStatsCache } from '@/lib/api/stats';
-import { CategoryStatsItem, ShopStatsItem, CourierStatsItem, CourierType, ShopCategory, Shop } from '@/lib/types/stats';
+import { getCategoryStats, getShopStats, getCourierStats, getDateStats, getCourierTypes, getShopCategories, getShops, prefetchStatsData, clearStatsCache } from '@/lib/api/stats';
+import { CategoryStatsItem, ShopStatsItem, CourierStatsItem, DateStatsItem, CourierType, ShopCategory, Shop } from '@/lib/types/stats';
 import { useTranslation } from 'react-i18next';
 import ShopStatsTable from './ShopStatsTable';
 import ShopStatsChart from './ShopStatsChart';
 import CourierStatsTable from './CourierStatsTable';
 import CourierStatsChart from './CourierStatsChart';
 import PerformanceMonitor from './PerformanceMonitor';
+import DateDetailModal from './DateDetailModal';
 
 export type StatsDimension = 'category' | 'shop' | 'courier' | 'date';
 
@@ -95,7 +96,9 @@ const ShopOutputStats = () => {
       const [categoryData, setCategoryData] = useState<CategoryStatsItem[]>([]);
       const [shopData, setShopData] = useState<ShopStatsItem[]>([]);
       const [courierData, setCourierData] = useState<CourierStatsItem[]>([]);
+      const [dateData, setDateData] = useState<DateStatsItem[]>([]);
       const [error, setError] = useState<Error | null>(null);
+      const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month' | 'year'>('day');
       const [filters, setFilters] = useState<{
             courier_ids?: string[];
             category_ids?: string[];
@@ -120,6 +123,10 @@ const ShopOutputStats = () => {
 
       // 检查是否为开发模式
       const isDevelopment = process.env.NODE_ENV === 'development';
+
+      // 日期详情模态框状态
+      const [isDateDetailModalOpen, setIsDateDetailModalOpen] = useState(false);
+      const [selectedDateData, setSelectedDateData] = useState<DateStatsItem | null>(null);
 
       // 生成缓存键
       const generateCacheKey = useCallback((dimension: StatsDimension, params: any) => {
@@ -218,6 +225,8 @@ const ShopOutputStats = () => {
                                     setShopData(cachedData as ShopStatsItem[]);
                               } else if (selectedDimension === 'courier') {
                                     setCourierData(cachedData as CourierStatsItem[]);
+                              } else if (selectedDimension === 'date') {
+                                    setDateData(cachedData as DateStatsItem[]);
                               }
                               cacheHit = true;
                               setIsLoading(false);
@@ -345,6 +354,63 @@ const ShopOutputStats = () => {
                               cacheHitRate: cacheHit ? 100 : 0,
                               dataSize: JSON.stringify(data).length
                         }));
+                  } else if (selectedDimension === 'date') {
+                        // 处理日期统计的筛选参数
+                        if (filters.shop_ids && filters.shop_ids.length > 0) {
+                              const shopId = parseInt(filters.shop_ids[0]);
+                              if (!isNaN(shopId) && shopId !== -1) {
+                                    params.shop_id = shopId;
+                              }
+                        }
+
+                        if (filters.courier_ids && filters.courier_ids.length > 0) {
+                              const courierId = parseInt(filters.courier_ids[0]);
+                              if (!isNaN(courierId) && courierId !== -1) {
+                                    params.courier_id = courierId;
+                              }
+                        }
+
+                        if (filters.category_ids && filters.category_ids.length > 0) {
+                              const categoryId = parseInt(filters.category_ids[0]);
+                              if (!isNaN(categoryId) && categoryId !== -1) {
+                                    params.category_id = categoryId;
+                              }
+                        }
+
+                        // 添加分组参数
+                        params.group_by = groupBy;
+
+                        console.log('日期统计API调用参数:', params);
+                        console.log('当前筛选器状态:', filters);
+                        console.log('分组方式:', groupBy);
+
+                        const data = await getDateStats(params);
+
+                        // 验证数据结构并添加详细日志
+                        if (!Array.isArray(data)) {
+                              console.warn('日期统计API返回的数据格式不正确:', data);
+                              setDateData([]);
+                        } else {
+                              console.log('成功获取日期统计数据:', {
+                                    count: data.length,
+                                    sample: data.slice(0, 2), // 显示前两条数据作为样本
+                                    totalQuantitySum: data.reduce((sum, item) => sum + (item.total_quantity || 0), 0),
+                                    dateRange: data.length > 0 ? `${data[0].date} - ${data[data.length - 1].date}` : 'N/A',
+                                    groupBy: groupBy
+                              });
+                              setDateData(data);
+                        }
+
+                        statsCache.set(cacheKey, data);
+
+                        // 更新性能指标
+                        const loadTime = performance.now() - startTime;
+                        setPerformanceMetrics(prev => ({
+                              ...prev,
+                              loadTime,
+                              cacheHitRate: cacheHit ? 100 : 0,
+                              dataSize: JSON.stringify(data).length
+                        }));
                   }
             } catch (error) {
                   console.error('获取数据失败:', error);
@@ -360,7 +426,7 @@ const ShopOutputStats = () => {
             } finally {
                   setIsLoading(false);
             }
-      }, [selectedDimension, dateRange, filters, generateCacheKey]);
+      }, [selectedDimension, dateRange, filters, groupBy, generateCacheKey]);
 
       useEffect(() => {
             fetchData();
@@ -714,6 +780,25 @@ const ShopOutputStats = () => {
                               </Card>
                         </div>
                   );
+            } else if (selectedDimension === 'date') {
+                  return (
+                        <StatsDataDisplay
+                              isLoading={isLoading}
+                              selectedDimension={selectedDimension}
+                              categoryData={categoryData}
+                              dateData={dateData}
+                              groupBy={groupBy}
+                              onDateClick={(date) => {
+                                    console.log('点击日期:', date);
+                                    // 查找对应的日期数据
+                                    const dateItem = dateData.find(item => item.date === date);
+                                    if (dateItem) {
+                                          setSelectedDateData(dateItem);
+                                          setIsDateDetailModalOpen(true);
+                                    }
+                              }}
+                        />
+                  );
             } else {
                   // 其他维度，使用默认的数据展示
                   return (
@@ -724,7 +809,7 @@ const ShopOutputStats = () => {
                         />
                   );
             }
-      }, [selectedDimension, isLoading, categoryData, shopData, courierData, error, handleRetry, handleRefresh, t]);
+      }, [selectedDimension, isLoading, categoryData, shopData, courierData, dateData, groupBy, error, handleRetry, handleRefresh, t]);
 
       return (
             <div className="space-y-6">
@@ -734,6 +819,8 @@ const ShopOutputStats = () => {
                         dateRange={dateRange}
                         onDateRangeChange={handleDateRangeChange}
                         onRefresh={handleRefresh}
+                        groupBy={groupBy}
+                        onGroupByChange={setGroupBy}
                   />
 
                   <StatsFilterPanel
@@ -753,6 +840,15 @@ const ShopOutputStats = () => {
                         metrics={performanceMetrics}
                         isVisible={showPerformanceMonitor && isDevelopment}
                         onToggle={() => setShowPerformanceMonitor(!showPerformanceMonitor)}
+                  />
+
+                  {/* 日期详情模态框 */}
+                  <DateDetailModal
+                        isOpen={isDateDetailModalOpen}
+                        onClose={() => setIsDateDetailModalOpen(false)}
+                        date={selectedDateData?.date || ''}
+                        groupBy={groupBy}
+                        data={selectedDateData}
                   />
             </div>
       );

@@ -15,6 +15,8 @@ interface StatsControlPanelProps {
       dateRange: DateRange;
       onDateRangeChange: (range: DateRange) => void;
       onRefresh: () => void;
+      groupBy?: 'day' | 'week' | 'month' | 'year';
+      onGroupByChange?: (groupBy: 'day' | 'week' | 'month' | 'year') => void;
 }
 
 const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
@@ -23,6 +25,8 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
       dateRange,
       onDateRangeChange,
       onRefresh,
+      groupBy = 'day',
+      onGroupByChange,
 }) => {
       const { t } = useTranslation('stats'); // 使用'stats'命名空间
       // 获取每个维度对应的图标
@@ -65,6 +69,27 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                                                 {t('按日期')}
                                           </ToggleGroupItem>
                                     </ToggleGroup>
+
+                                    {/* 日期分组选择 - 仅在日期维度时显示 */}
+                                    {selectedDimension === 'date' && onGroupByChange && (
+                                          <div className="space-y-2">
+                                                <div className="text-sm font-medium">{t('分组方式')}</div>
+                                                <ToggleGroup type="single" value={groupBy} onValueChange={(value) => value && onGroupByChange(value as 'day' | 'week' | 'month' | 'year')}>
+                                                      <ToggleGroupItem value="day" aria-label={t('按日')} className="text-xs">
+                                                            {t('按日')}
+                                                      </ToggleGroupItem>
+                                                      <ToggleGroupItem value="week" aria-label={t('按周')} className="text-xs">
+                                                            {t('按周')}
+                                                      </ToggleGroupItem>
+                                                      <ToggleGroupItem value="month" aria-label={t('按月')} className="text-xs">
+                                                            {t('按月')}
+                                                      </ToggleGroupItem>
+                                                      <ToggleGroupItem value="year" aria-label={t('按年')} className="text-xs">
+                                                            {t('按年')}
+                                                      </ToggleGroupItem>
+                                                </ToggleGroup>
+                                          </div>
+                                    )}
                               </div>
 
                               <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center w-full md:w-auto">
