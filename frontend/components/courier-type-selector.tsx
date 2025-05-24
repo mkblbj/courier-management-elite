@@ -2,14 +2,14 @@
 import { useTranslation } from "react-i18next";
 
 import { useState, useEffect } from "react"
-import { 
+import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue 
+  SelectValue
 } from "@/components/ui/select"
 import { api, type CourierType } from "@/services/api"
 import { Loader2 } from "lucide-react"
@@ -22,9 +22,9 @@ interface CourierTypeSelectorProps {
   className?: string
 }
 
-export function CourierTypeSelector({ 
-  value, 
-  onChange, 
+export function CourierTypeSelector({
+  value,
+  onChange,
   placeholder = "选择快递类型",
   className
 }: CourierTypeSelectorProps) {
@@ -41,8 +41,10 @@ export function CourierTypeSelector({
       try {
         // 只获取启用状态的快递类型
         const types = await api.getCourierTypes({ active_only: true })
-        // 再次过滤，确保只保留激活的快递类型
-        const activeTypes = types.filter(type => Boolean(type.is_active))
+        // 再次过滤，确保只保留激活的快递类型，并排除包含"未指定"的快递类型
+        const activeTypes = types.filter(type =>
+          Boolean(type.is_active) && !type.name?.includes('未指定')
+        )
         setCourierTypes(activeTypes)
       } catch (err) {
         console.error("获取快递类型失败:", err)

@@ -32,6 +32,11 @@ export function StatisticsTable({
 
   const [showDetails, setShowDetails] = useState(false)
 
+  // 过滤掉名字中包含"未指定"的快递类型
+  const filterUnspecifiedCouriers = (items: any[]) => {
+    return items.filter(item => !item.courierName?.includes('未指定'))
+  }
+
   if (isLoading) {
     return (
       (<div className="flex justify-center items-center h-[300px]">
@@ -48,6 +53,17 @@ export function StatisticsTable({
     return <div className="text-center py-8 text-muted-foreground">{t("暂无统计数据")}</div>;
   }
 
+  // 过滤数据
+  const filteredByCourier = filterUnspecifiedCouriers(data.byCourier)
+  const filteredByDate = data.byDate.map(dateItem => ({
+    ...dateItem,
+    details: dateItem.details ? filterUnspecifiedCouriers(dateItem.details) : []
+  }))
+
+  // 重新计算总计（基于过滤后的数据）
+  const filteredTotal = filteredByCourier.reduce((sum, item) => sum + item.total, 0)
+  const filteredRecordCount = filteredByCourier.reduce((sum, item) => sum + item.recordCount, 0)
+
   return (
     (<div className="space-y-6">
       {/* 总计数据卡片 */}
@@ -56,7 +72,7 @@ export function StatisticsTable({
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm font-medium text-muted-foreground">{t("总发货量")}</p>
-              <p className="text-3xl font-bold mt-1">{data.summary.total}</p>
+              <p className="text-3xl font-bold mt-1">{filteredTotal}</p>
             </div>
           </CardContent>
         </Card>
@@ -74,7 +90,7 @@ export function StatisticsTable({
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-sm font-medium text-muted-foreground">{t("记录数量")}</p>
-              <p className="text-3xl font-bold mt-1">{data.summary.recordCount}</p>
+              <p className="text-3xl font-bold mt-1">{filteredRecordCount}</p>
             </div>
           </CardContent>
         </Card>
@@ -96,21 +112,21 @@ export function StatisticsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.byCourier.map((item) => (
+              {filteredByCourier.map((item) => (
                 <TableRow key={item.courierId}>
                   <TableCell className="font-medium">{item.courierName}</TableCell>
                   <TableCell className="text-right">{item.total}</TableCell>
                   <TableCell className="text-right">
-                    {data.summary.total > 0 ? `${((item.total / data.summary.total) * 100).toFixed(2)}%` : "0%"}
+                    {filteredTotal > 0 ? `${((item.total / filteredTotal) * 100).toFixed(2)}%` : "0%"}
                   </TableCell>
                   <TableCell className="text-right">{item.recordCount}</TableCell>
                 </TableRow>
               ))}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-bold">{t("总计")}</TableCell>
-                <TableCell className="text-right font-bold">{data.summary.total}</TableCell>
+                <TableCell className="text-right font-bold">{filteredTotal}</TableCell>
                 <TableCell className="text-right font-bold">100%</TableCell>
-                <TableCell className="text-right font-bold">{data.summary.recordCount}</TableCell>
+                <TableCell className="text-right font-bold">{filteredRecordCount}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
@@ -139,7 +155,7 @@ export function StatisticsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.byDate.map((dateItem) => (
+              {filteredByDate.map((dateItem) => (
                 <React.Fragment key={dateItem.date}>
                   <TableRow key={`row-${dateItem.date}`}>
                     <TableCell className="font-medium">
@@ -150,7 +166,7 @@ export function StatisticsTable({
                     </TableCell>
                     <TableCell className="text-right">{dateItem.total}</TableCell>
                     <TableCell className="text-right">
-                      {data.summary.total > 0 ? `${((dateItem.total / data.summary.total) * 100).toFixed(2)}%` : "0%"}
+                      {filteredTotal > 0 ? `${((dateItem.total / filteredTotal) * 100).toFixed(2)}%` : "0%"}
                     </TableCell>
                     <TableCell className="text-right">{dateItem.recordCount}</TableCell>
                   </TableRow>
@@ -172,9 +188,9 @@ export function StatisticsTable({
               ))}
               <TableRow className="bg-muted/50">
                 <TableCell className="font-bold">{t("总计")}</TableCell>
-                <TableCell className="text-right font-bold">{data.summary.total}</TableCell>
+                <TableCell className="text-right font-bold">{filteredTotal}</TableCell>
                 <TableCell className="text-right font-bold">100%</TableCell>
-                <TableCell className="text-right font-bold">{data.summary.recordCount}</TableCell>
+                <TableCell className="text-right font-bold">{filteredRecordCount}</TableCell>
               </TableRow>
             </TableBody>
           </Table>

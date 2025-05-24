@@ -250,12 +250,12 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
                   return (
                         <div className="bg-slate-50 rounded-lg px-3 py-2 inline-flex flex-col items-center gap-1 min-w-[120px]">
                               <div className="flex items-center gap-1">
-                                    <span className="text-xs text-slate-600 font-medium">同比</span>
+                                    <span className="text-xs text-slate-600 font-medium">{t('同比')}</span>
                                     {yoyElement}
                               </div>
                               <div className="w-full h-px bg-slate-200"></div>
                               <div className="flex items-center gap-1">
-                                    <span className="text-xs text-slate-600 font-medium">环比</span>
+                                    <span className="text-xs text-slate-600 font-medium">{t('环比')}</span>
                                     {momElement}
                               </div>
                         </div>
