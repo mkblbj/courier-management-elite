@@ -177,7 +177,7 @@ const CourierStatsChart: React.FC<CourierStatsChartProps> = ({
                               <CardTitle>{t('按快递类型统计图表')}</CardTitle>
                               <div className="flex items-center gap-2">
                                     <span className="text-sm text-muted-foreground">
-                                          {t('共')} {data.length} {t('个快递类型')}
+                                          {t('共{count}个快递类型', { count: data.length })}
                                     </span>
                                     <DropdownMenu>
                                           <DropdownMenuTrigger asChild>

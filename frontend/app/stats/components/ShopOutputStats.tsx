@@ -301,6 +301,7 @@ const ShopOutputStats = () => {
                               dataSize: JSON.stringify(data).length
                         }));
                   } else if (selectedDimension === 'courier') {
+                        // 处理快递类型统计的筛选参数
                         if (filters.shop_ids && filters.shop_ids.length > 0) {
                               const shopId = parseInt(filters.shop_ids[0]);
                               if (!isNaN(shopId) && shopId !== -1) {
@@ -314,6 +315,9 @@ const ShopOutputStats = () => {
                                     params.category_id = categoryId;
                               }
                         }
+
+                        console.log('快递类型统计API调用参数:', params);
+                        console.log('当前筛选器状态:', filters);
 
                         const data = await getCourierStats(params);
 

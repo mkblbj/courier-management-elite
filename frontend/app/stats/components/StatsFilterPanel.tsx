@@ -41,10 +41,15 @@ const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({
       // 处理应用筛选按钮点击
       const handleApplyFilter = () => {
             if (onFilterChange) {
+                  // 过滤掉无效值（-1是加载中的占位值）
+                  const validCourierIds = courierTypeFilter.filter(id => id !== '-1');
+                  const validCategoryIds = categoryFilter.filter(id => id !== '-1');
+                  const validShopIds = shopFilter.filter(id => id !== '-1');
+
                   onFilterChange({
-                        courier_ids: courierTypeFilter.length > 0 ? courierTypeFilter : undefined,
-                        category_ids: categoryFilter.length > 0 ? categoryFilter : undefined,
-                        shop_ids: shopFilter.length > 0 ? shopFilter : undefined
+                        courier_ids: validCourierIds.length > 0 ? validCourierIds : undefined,
+                        category_ids: validCategoryIds.length > 0 ? validCategoryIds : undefined,
+                        shop_ids: validShopIds.length > 0 ? validShopIds : undefined
                   });
             }
       };
@@ -134,17 +139,19 @@ const StatsFilterPanel: React.FC<StatsFilterPanelProps> = ({
                               ) : (
                                     <>
                                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                {/* 快递类型筛选器 - 对于所有维度都显示 */}
-                                                <div className="space-y-2">
-                                                      <label className="text-sm font-medium">{t('快递类型')}</label>
-                                                      <MultiSelect
-                                                            value={courierTypeFilter}
-                                                            onChange={setCourierTypeFilter}
-                                                            placeholder={t('选择快递类型')}
-                                                      >
-                                                            {renderCourierTypeItems()}
-                                                      </MultiSelect>
-                                                </div>
+                                                {/* 快递类型筛选器 - 对于按类别和按店铺维度显示 */}
+                                                {(selectedDimension === 'category' || selectedDimension === 'shop') && (
+                                                      <div className="space-y-2">
+                                                            <label className="text-sm font-medium">{t('快递类型')}</label>
+                                                            <MultiSelect
+                                                                  value={courierTypeFilter}
+                                                                  onChange={setCourierTypeFilter}
+                                                                  placeholder={t('选择快递类型')}
+                                                            >
+                                                                  {renderCourierTypeItems()}
+                                                            </MultiSelect>
+                                                      </div>
+                                                )}
 
                                                 {/* 店铺类别筛选器 - 对于按店铺或按快递类型维度显示 */}
                                                 {(selectedDimension === 'shop' || selectedDimension === 'courier') && (

@@ -56,5 +56,14 @@
   "第 {{currentPage}}/{{totalPages}} 页": "Page {{currentPage}}/{{totalPages}}",
   "虚拟滚动模式 - 共 {{count}} 条记录": "Virtual Scroll Mode - {{count}} records",
   "分页模式 - 第 {{currentPage}}/{{totalPages}} 页": "Pagination Mode - Page {{currentPage}}/{{totalPages}}",
-  "堆叠柱状图": "Stacked Bar Chart"
+  "堆叠柱状图": "Stacked Bar Chart",
+  "共{count}个快递类型": "{{count}} courier types",
+  "按快递类型统计图表": "Courier Type Statistics Chart",
+  "趋势图": "Trend Chart",
+  "环比变化": "MoM Change",
+  "同比变化": "YoY Change",
+  "按快递类型统计": "By Courier Type Statistics",
+  "涉及店铺数": "Shops Count",
+  "日均出力": "Daily Average Output",
+  "变化趋势": "Change Trend"
 }
