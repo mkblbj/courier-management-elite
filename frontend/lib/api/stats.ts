@@ -333,7 +333,25 @@ export const getShopStats = async (
 export const getCourierStats = async (
   params: Pick<StatsQueryParams, 'date_from' | 'date_to' | 'shop_id' | 'category_id'>
 ): Promise<CourierStatsItem[]> => {
-  return fetchWithCache<CourierStatsItem[]>('/couriers', params);
+  try {
+    const data = await fetchWithCache<CourierStatsItem[]>('/couriers', params);
+    
+    // 如果是直接的数组格式（新版本API）
+    if (Array.isArray(data)) {
+      return data;
+    }
+    
+    // 检查旧版本数据结构（兼容性）
+    if (data && typeof data === 'object' && 'by_courier' in data) {
+      return (data as any).by_courier || [];
+    }
+    
+    console.warn('API返回的快递类型统计数据结构不正确:', data);
+    return [];
+  } catch (error) {
+    console.error('获取快递类型统计数据失败:', error);
+    throw error;
+  }
 };
 
 /**

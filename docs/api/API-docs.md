@@ -1760,19 +1760,19 @@
 
 ### 2. 按快递类型统计出力数据
 
-获取按快递类型分组的出力数据统计。
+获取按快递类型分组的出力数据统计，包含占比、日均量、同比环比变化率等详细信息。
 
 **请求方法**: GET  
 **URL**: `/api/stats/shop-outputs/couriers`
 
 **查询参数**:
 
-| 参数       | 类型   | 必需 | 描述                      |
-| ---------- | ------ | ---- | ------------------------- |
-| start_date | string | 否   | 开始日期，格式 YYYY-MM-DD |
-| end_date   | string | 否   | 结束日期，格式 YYYY-MM-DD |
-| shop_id    | number | 否   | 筛选特定店铺              |
-| courier_id | number | 否   | 筛选特定快递类型          |
+| 参数        | 类型   | 必需 | 描述                      |
+| ----------- | ------ | ---- | ------------------------- |
+| date_from   | string | 否   | 开始日期，格式 YYYY-MM-DD |
+| date_to     | string | 否   | 结束日期，格式 YYYY-MM-DD |
+| shop_id     | number | 否   | 筛选特定店铺              |
+| category_id | number | 否   | 筛选特定店铺类别          |
 
 **响应示例**:
 
@@ -1780,28 +1780,58 @@
 {
   "code": 0,
   "message": "获取成功",
-  "data": {
-    "by_courier": [
-      {
-        "courier_id": 1,
-        "courier_name": "顺丰速运",
-        "total_quantity": 600,
-        "percentage": 60
-      },
-      {
-        "courier_id": 2,
-        "courier_name": "中通快递",
-        "total_quantity": 400,
-        "percentage": 40
-      }
-    ],
-    "total": {
-      "total_quantity": 1000,
-      "courier_count": 2
+  "data": [
+    {
+      "courier_id": 1,
+      "courier_name": "顺丰速运",
+      "total_quantity": 1250,
+      "percentage": 62.5,
+      "daily_average": 41.67,
+      "shops_count": 8,
+      "days_count": 30,
+      "mom_change_rate": 15.5,
+      "mom_change_type": "increase",
+      "yoy_change_rate": -2.3,
+      "yoy_change_type": "decrease"
+    },
+    {
+      "courier_id": 2,
+      "courier_name": "中通快递",
+      "total_quantity": 750,
+      "percentage": 37.5,
+      "daily_average": 25.0,
+      "shops_count": 5,
+      "days_count": 30,
+      "mom_change_rate": 8.2,
+      "mom_change_type": "increase",
+      "yoy_change_rate": 12.1,
+      "yoy_change_type": "increase"
     }
-  }
+  ]
 }
 ```
+
+**响应字段说明**:
+
+| 字段            | 类型   | 描述                                                                  |
+| --------------- | ------ | --------------------------------------------------------------------- |
+| courier_id      | number | 快递类型 ID                                                           |
+| courier_name    | string | 快递类型名称                                                          |
+| total_quantity  | number | 总出力量                                                              |
+| percentage      | number | 占总量的百分比                                                        |
+| daily_average   | number | 日均出力量                                                            |
+| shops_count     | number | 涉及的店铺数量                                                        |
+| days_count      | number | 统计周期内的天数                                                      |
+| mom_change_rate | number | 环比变化率(百分比)，环比指与上一个相同时间段相比                      |
+| mom_change_type | string | 环比变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
+| yoy_change_rate | number | 同比变化率(百分比)，同比指与去年同期相比                              |
+| yoy_change_type | string | 同比变化类型：'increase'(增加)、'decrease'(减少)或'unchanged'(无变化) |
+
+**注意事项**:
+
+- 占比计算基于查询范围内所有快递类型的总量
+- 同比环比计算需要有历史数据支持，仅在提供 date_from 和 date_to 参数时计算
+- 如果没有对比数据，变化率字段将为 0，变化类型为 'unchanged'
 
 ### 3. 按日期统计出力数据
 

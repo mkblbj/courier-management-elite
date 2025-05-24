@@ -9,11 +9,13 @@ import StatsDataDisplay from './StatsDataDisplay';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
-import { getCategoryStats, getShopStats, getCourierTypes, getShopCategories, getShops, prefetchStatsData, clearStatsCache } from '@/lib/api/stats';
-import { CategoryStatsItem, ShopStatsItem, CourierType, ShopCategory, Shop } from '@/lib/types/stats';
+import { getCategoryStats, getShopStats, getCourierStats, getCourierTypes, getShopCategories, getShops, prefetchStatsData, clearStatsCache } from '@/lib/api/stats';
+import { CategoryStatsItem, ShopStatsItem, CourierStatsItem, CourierType, ShopCategory, Shop } from '@/lib/types/stats';
 import { useTranslation } from 'react-i18next';
 import ShopStatsTable from './ShopStatsTable';
 import ShopStatsChart from './ShopStatsChart';
+import CourierStatsTable from './CourierStatsTable';
+import CourierStatsChart from './CourierStatsChart';
 import PerformanceMonitor from './PerformanceMonitor';
 
 export type StatsDimension = 'category' | 'shop' | 'courier' | 'date';
@@ -92,6 +94,7 @@ const ShopOutputStats = () => {
       });
       const [categoryData, setCategoryData] = useState<CategoryStatsItem[]>([]);
       const [shopData, setShopData] = useState<ShopStatsItem[]>([]);
+      const [courierData, setCourierData] = useState<CourierStatsItem[]>([]);
       const [error, setError] = useState<Error | null>(null);
       const [filters, setFilters] = useState<{
             courier_ids?: string[];
@@ -213,6 +216,8 @@ const ShopOutputStats = () => {
                                     setCategoryData(cachedData as CategoryStatsItem[]);
                               } else if (selectedDimension === 'shop') {
                                     setShopData(cachedData as ShopStatsItem[]);
+                              } else if (selectedDimension === 'courier') {
+                                    setCourierData(cachedData as CourierStatsItem[]);
                               }
                               cacheHit = true;
                               setIsLoading(false);
@@ -296,8 +301,46 @@ const ShopOutputStats = () => {
                               dataSize: JSON.stringify(data).length
                         }));
                   } else if (selectedDimension === 'courier') {
-                        // 暂时留空，未来实现
-                        console.log('快递类型统计维度暂未实现');
+                        if (filters.shop_ids && filters.shop_ids.length > 0) {
+                              const shopId = parseInt(filters.shop_ids[0]);
+                              if (!isNaN(shopId) && shopId !== -1) {
+                                    params.shop_id = shopId;
+                              }
+                        }
+
+                        if (filters.category_ids && filters.category_ids.length > 0) {
+                              const categoryId = parseInt(filters.category_ids[0]);
+                              if (!isNaN(categoryId) && categoryId !== -1) {
+                                    params.category_id = categoryId;
+                              }
+                        }
+
+                        const data = await getCourierStats(params);
+
+                        // 验证数据结构并添加详细日志
+                        if (!Array.isArray(data)) {
+                              console.warn('快递类型统计API返回的数据格式不正确:', data);
+                              setCourierData([]);
+                        } else {
+                              console.log('成功获取快递类型统计数据:', {
+                                    count: data.length,
+                                    sample: data.slice(0, 2), // 显示前两条数据作为样本
+                                    totalQuantitySum: data.reduce((sum, courier) => sum + (courier.total_quantity || 0), 0),
+                                    couriersFound: data.map(courier => courier.courier_name)
+                              });
+                              setCourierData(data);
+                        }
+
+                        statsCache.set(cacheKey, data);
+
+                        // 更新性能指标
+                        const loadTime = performance.now() - startTime;
+                        setPerformanceMetrics(prev => ({
+                              ...prev,
+                              loadTime,
+                              cacheHitRate: cacheHit ? 100 : 0,
+                              dataSize: JSON.stringify(data).length
+                        }));
                   }
             } catch (error) {
                   console.error('获取数据失败:', error);
@@ -378,7 +421,12 @@ const ShopOutputStats = () => {
                   // 预取其他维度的数据
                   if (selectedDimension === 'shop') {
                         prefetchStatsData('category', params);
+                        prefetchStatsData('courier', params);
                   } else if (selectedDimension === 'category') {
+                        prefetchStatsData('shop', params);
+                        prefetchStatsData('courier', params);
+                  } else if (selectedDimension === 'courier') {
+                        prefetchStatsData('category', params);
                         prefetchStatsData('shop', params);
                   }
             }
@@ -528,6 +576,140 @@ const ShopOutputStats = () => {
                               </Card>
                         </div>
                   );
+            } else if (selectedDimension === 'courier') {
+                  return (
+                        <div className="space-y-6">
+                              {/* 错误提示 */}
+                              {error && (
+                                    <Alert variant="destructive">
+                                          <AlertCircle className="h-4 w-4" />
+                                          <AlertDescription className="flex items-center justify-between">
+                                                <span>{error.message}</span>
+                                                <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={handleRetry}
+                                                      className="ml-4"
+                                                >
+                                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                                      重试
+                                                </Button>
+                                          </AlertDescription>
+                                    </Alert>
+                              )}
+
+                              {/* 数据概览卡片 */}
+                              {!isLoading && courierData.length > 0 && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                          <Card>
+                                                <CardHeader className="pb-2">
+                                                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                                                            {t('快递类型总数')}
+                                                      </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                      <div className="text-2xl font-bold">{courierData.length}</div>
+                                                </CardContent>
+                                          </Card>
+                                          <Card>
+                                                <CardHeader className="pb-2">
+                                                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                                                            {t('总出力量')}
+                                                      </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                      <div className="text-2xl font-bold">
+                                                            {courierData.reduce((sum, courier) => sum + courier.total_quantity, 0).toLocaleString()}
+                                                      </div>
+                                                </CardContent>
+                                          </Card>
+                                          <Card>
+                                                <CardHeader className="pb-2">
+                                                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                                                            {t('平均日出力量')}
+                                                      </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                      <div className="text-2xl font-bold">
+                                                            {(courierData.reduce((sum, courier) => sum + (courier.daily_average || 0), 0) / courierData.length).toFixed(2)}
+                                                      </div>
+                                                </CardContent>
+                                          </Card>
+                                    </div>
+                              )}
+
+                              {/* 加载状态 */}
+                              {isLoading && (
+                                    <Card>
+                                          <CardContent className="flex items-center justify-center py-8">
+                                                <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                                                <span>{t('正在加载数据...')}</span>
+                                          </CardContent>
+                                    </Card>
+                              )}
+
+                              {/* 空数据状态 */}
+                              {!isLoading && !error && courierData.length === 0 && (
+                                    <Card>
+                                          <CardContent className="flex flex-col items-center justify-center py-8">
+                                                <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                                                <h3 className="text-lg font-medium mb-2">{t('暂无数据')}</h3>
+                                                <p className="text-muted-foreground text-center mb-4">
+                                                      {t('当前时间范围内没有找到快递类型统计数据，请尝试调整筛选条件')}
+                                                </p>
+                                                <Button onClick={handleRefresh} variant="outline">
+                                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                                      {t('重新加载')}
+                                                </Button>
+                                          </CardContent>
+                                    </Card>
+                              )}
+
+                              {/* 图表区域 */}
+                              <Card>
+                                    <CardHeader>
+                                          <CardTitle className="flex items-center justify-between">
+                                                {t('数据图表')}
+                                                <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={handleRefresh}
+                                                      disabled={isLoading}
+                                                >
+                                                      <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                                                      {t('刷新')}
+                                                </Button>
+                                          </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                          <CourierStatsChart
+                                                data={courierData}
+                                                isLoading={isLoading}
+                                                error={error}
+                                                onRetry={handleRetry}
+                                          />
+                                    </CardContent>
+                              </Card>
+
+                              {/* 数据表格 */}
+                              <Card>
+                                    <CardHeader>
+                                          <CardTitle>{t('详细数据')}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                          <CourierStatsTable
+                                                data={courierData}
+                                                isLoading={isLoading}
+                                                error={error}
+                                                onRetry={handleRetry}
+                                                enableVirtualization={courierData.length > 100}
+                                                maxHeight={600}
+                                                pageSize={20}
+                                          />
+                                    </CardContent>
+                              </Card>
+                        </div>
+                  );
             } else {
                   // 其他维度，使用默认的数据展示
                   return (
@@ -538,7 +720,7 @@ const ShopOutputStats = () => {
                         />
                   );
             }
-      }, [selectedDimension, isLoading, categoryData, shopData, error, handleRetry, handleRefresh, t]);
+      }, [selectedDimension, isLoading, categoryData, shopData, courierData, error, handleRetry, handleRefresh, t]);
 
       return (
             <div className="space-y-6">

@@ -673,29 +673,81 @@ class StatsController {
       const dateFrom = req.query.date_from || null;
       const dateTo = req.query.date_to || null;
       const shopId = req.query.shop_id ? parseInt(req.query.shop_id) : null;
+      const categoryId = req.query.category_id ? parseInt(req.query.category_id) : null;
+      
+      console.log('按快递类型统计请求参数:', { date_from: dateFrom, date_to: dateTo, shop_id: shopId, category_id: categoryId });
       
       // 创建一个自定义SQL查询来按快递类型统计出力数据
       const db = require('../db');
       
+      // 首先获取总量用于计算百分比
+      let totalSql = `
+        SELECT SUM(so.quantity) as grand_total
+        FROM shop_outputs so
+        JOIN couriers c ON so.courier_id = c.id
+      `;
+      
+      if (shopId || categoryId) {
+        totalSql += ` JOIN shops s ON so.shop_id = s.id`;
+      }
+      
+      totalSql += ` WHERE 1=1`;
+      
+      const totalParams = [];
+      
+      if (shopId) {
+        totalSql += ` AND so.shop_id = ?`;
+        totalParams.push(shopId);
+      }
+      
+      if (categoryId) {
+        totalSql += ` AND s.category_id = ?`;
+        totalParams.push(categoryId);
+      }
+      
+      if (dateFrom) {
+        totalSql += ` AND so.output_date >= ?`;
+        totalParams.push(dateFrom);
+      }
+      
+      if (dateTo) {
+        totalSql += ` AND so.output_date <= ?`;
+        totalParams.push(dateTo);
+      }
+      
+      const totalResult = await db.query(totalSql, totalParams);
+      const grandTotal = totalResult[0]?.grand_total || 0;
+      
+      // 获取按快递类型统计的数据
       let sql = `
         SELECT 
           c.id as courier_id, 
           c.name as courier_name, 
           SUM(so.quantity) as total_quantity,
-          COUNT(DISTINCT so.output_date) as days_count
+          COUNT(DISTINCT so.output_date) as days_count,
+          COUNT(DISTINCT so.shop_id) as shops_count
         FROM 
           shop_outputs so
         JOIN 
           couriers c ON so.courier_id = c.id
-        WHERE 
-          1=1
       `;
+      
+      if (shopId || categoryId) {
+        sql += ` JOIN shops s ON so.shop_id = s.id`;
+      }
+      
+      sql += ` WHERE 1=1`;
       
       const params = [];
       
       if (shopId) {
         sql += ` AND so.shop_id = ?`;
         params.push(shopId);
+      }
+      
+      if (categoryId) {
+        sql += ` AND s.category_id = ?`;
+        params.push(categoryId);
       }
       
       if (dateFrom) {
@@ -717,10 +769,233 @@ class StatsController {
       
       const results = await db.query(sql, params);
       
+      // 计算百分比和日均量
+      const processedResults = (Array.isArray(results) ? results : []).map(item => {
+        const totalQuantity = parseInt(item.total_quantity) || 0;
+        const daysCount = parseInt(item.days_count) || 1;
+        const percentage = grandTotal > 0 ? parseFloat(((totalQuantity / grandTotal) * 100).toFixed(2)) : 0;
+        const dailyAverage = parseFloat((totalQuantity / daysCount).toFixed(2));
+        
+        return {
+          courier_id: item.courier_id,
+          courier_name: item.courier_name,
+          total_quantity: totalQuantity,
+          percentage: percentage,
+          daily_average: dailyAverage,
+          shops_count: parseInt(item.shops_count) || 0,
+          days_count: daysCount
+        };
+      });
+      
+      // 计算同比和环比变化率
+      if (dateFrom && dateTo) {
+        try {
+          const currentPeriodStart = new Date(dateFrom);
+          const currentPeriodEnd = new Date(dateTo);
+          const currentPeriodDays = Math.round((currentPeriodEnd.getTime() - currentPeriodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          
+          // 计算环比和同比的日期范围
+          // 1. 环比（上个时间段）
+          const momPeriodEnd = new Date(currentPeriodStart);
+          momPeriodEnd.setDate(momPeriodEnd.getDate() - 1);
+          
+          const momPeriodStart = new Date(momPeriodEnd);
+          momPeriodStart.setDate(momPeriodStart.getDate() - currentPeriodDays + 1);
+          
+          // 2. 同比（去年同期）
+          const yoyPeriodStart = new Date(currentPeriodStart);
+          yoyPeriodStart.setFullYear(yoyPeriodStart.getFullYear() - 1);
+          
+          const yoyPeriodEnd = new Date(currentPeriodEnd);
+          yoyPeriodEnd.setFullYear(yoyPeriodEnd.getFullYear() - 1);
+          
+          // 格式化日期为 YYYY-MM-DD
+          const formatDate = (date) => {
+            return date.toISOString().split('T')[0];
+          };
+          
+          const momDateFrom = formatDate(momPeriodStart);
+          const momDateTo = formatDate(momPeriodEnd);
+          const yoyDateFrom = formatDate(yoyPeriodStart);
+          const yoyDateTo = formatDate(yoyPeriodEnd);
+          
+          console.log('环比日期范围:', { momDateFrom, momDateTo });
+          console.log('同比日期范围:', { yoyDateFrom, yoyDateTo });
+          
+          // 获取环比周期的数据
+          let momSql = `
+            SELECT 
+              c.id as courier_id, 
+              c.name as courier_name, 
+              SUM(so.quantity) as total_quantity
+            FROM 
+              shop_outputs so
+            JOIN 
+              couriers c ON so.courier_id = c.id
+          `;
+          
+          if (shopId || categoryId) {
+            momSql += ` JOIN shops s ON so.shop_id = s.id`;
+          }
+          
+          momSql += ` WHERE so.output_date >= ? AND so.output_date <= ?`;
+          
+          const momParams = [momDateFrom, momDateTo];
+          
+          if (shopId) {
+            momSql += ` AND so.shop_id = ?`;
+            momParams.push(shopId);
+          }
+          
+          if (categoryId) {
+            momSql += ` AND s.category_id = ?`;
+            momParams.push(categoryId);
+          }
+          
+          momSql += `
+            GROUP BY 
+              c.id, c.name
+          `;
+          
+          // 获取同比周期的数据
+          let yoySql = `
+            SELECT 
+              c.id as courier_id, 
+              c.name as courier_name, 
+              SUM(so.quantity) as total_quantity
+            FROM 
+              shop_outputs so
+            JOIN 
+              couriers c ON so.courier_id = c.id
+          `;
+          
+          if (shopId || categoryId) {
+            yoySql += ` JOIN shops s ON so.shop_id = s.id`;
+          }
+          
+          yoySql += ` WHERE so.output_date >= ? AND so.output_date <= ?`;
+          
+          const yoyParams = [yoyDateFrom, yoyDateTo];
+          
+          if (shopId) {
+            yoySql += ` AND so.shop_id = ?`;
+            yoyParams.push(shopId);
+          }
+          
+          if (categoryId) {
+            yoySql += ` AND s.category_id = ?`;
+            yoyParams.push(categoryId);
+          }
+          
+          yoySql += `
+            GROUP BY 
+              c.id, c.name
+          `;
+          
+          // 执行查询
+          const momResults = await db.query(momSql, momParams);
+          const yoyResults = await db.query(yoySql, yoyParams);
+          
+          // 创建映射表用于快速查找
+          const momDataMap = new Map();
+          (Array.isArray(momResults) ? momResults : []).forEach(item => {
+            momDataMap.set(item.courier_id, parseFloat(item.total_quantity) || 0);
+          });
+          
+          const yoyDataMap = new Map();
+          (Array.isArray(yoyResults) ? yoyResults : []).forEach(item => {
+            yoyDataMap.set(item.courier_id, parseFloat(item.total_quantity) || 0);
+          });
+          
+          console.log('环比数据:', momResults);
+          console.log('同比数据:', yoyResults);
+          
+          // 计算变化率并添加到结果中
+          for (const item of processedResults) {
+            const currentQuantity = Number(item.total_quantity) || 0;
+            const momPreviousQuantity = momDataMap.get(item.courier_id) || 0;
+            const yoyPreviousQuantity = yoyDataMap.get(item.courier_id) || 0;
+            
+            console.log(`快递类型 ${item.courier_name}: 当前=${currentQuantity}, 环比上期=${momPreviousQuantity}, 同比上期=${yoyPreviousQuantity}`);
+            
+            // 计算环比变化率
+            if (momPreviousQuantity > 0) {
+              const momChangeRate = ((currentQuantity - momPreviousQuantity) / momPreviousQuantity) * 100;
+              item.mom_change_rate = parseFloat(momChangeRate.toFixed(2));
+              
+              if (momChangeRate > 0) {
+                item.mom_change_type = 'increase';
+              } else if (momChangeRate < 0) {
+                item.mom_change_type = 'decrease';
+              } else {
+                item.mom_change_type = 'unchanged';
+              }
+            } else if (currentQuantity > 0 && momPreviousQuantity === 0) {
+              item.mom_change_rate = 100;
+              item.mom_change_type = 'increase';
+            } else if (currentQuantity === 0 && momPreviousQuantity === 0) {
+              item.mom_change_rate = 0;
+              item.mom_change_type = 'unchanged';
+            } else if (currentQuantity === 0 && momPreviousQuantity > 0) {
+              item.mom_change_rate = -100;
+              item.mom_change_type = 'decrease';
+            } else {
+              item.mom_change_rate = 0;
+              item.mom_change_type = 'unchanged';
+            }
+            
+            // 计算同比变化率
+            if (yoyPreviousQuantity > 0) {
+              const yoyChangeRate = ((currentQuantity - yoyPreviousQuantity) / yoyPreviousQuantity) * 100;
+              item.yoy_change_rate = parseFloat(yoyChangeRate.toFixed(2));
+              
+              if (yoyChangeRate > 0) {
+                item.yoy_change_type = 'increase';
+              } else if (yoyChangeRate < 0) {
+                item.yoy_change_type = 'decrease';
+              } else {
+                item.yoy_change_type = 'unchanged';
+              }
+            } else if (currentQuantity > 0 && yoyPreviousQuantity === 0) {
+              item.yoy_change_rate = 100;
+              item.yoy_change_type = 'increase';
+            } else if (currentQuantity === 0 && yoyPreviousQuantity === 0) {
+              item.yoy_change_rate = 0;
+              item.yoy_change_type = 'unchanged';
+            } else if (currentQuantity === 0 && yoyPreviousQuantity > 0) {
+              item.yoy_change_rate = -100;
+              item.yoy_change_type = 'decrease';
+            } else {
+              item.yoy_change_rate = 0;
+              item.yoy_change_type = 'unchanged';
+            }
+            
+            console.log(`    环比变化率: ${item.mom_change_rate}%, 同比变化率: ${item.yoy_change_rate}%`);
+          }
+        } catch (error) {
+          console.error('计算变化率出错:', error);
+          // 如果计算出错，确保仍然返回数据，但不包含变化率信息
+          processedResults.forEach(item => {
+            item.mom_change_rate = 0;
+            item.mom_change_type = 'unchanged';
+            item.yoy_change_rate = 0;
+            item.yoy_change_type = 'unchanged';
+          });
+        }
+      }
+      
+      // 打印响应数据
+      console.log('按快递类型统计响应数据:', {
+        code: 0,
+        message: '获取成功',
+        data: processedResults.slice(0, 2) // 只打印前两条作为样本
+      });
+      
+      // 返回符合前端期望的数据结构
       res.status(200).json({
         code: 0,
         message: '获取成功',
-        data: results
+        data: processedResults
       });
     } catch (error) {
       console.error('按快递类型统计出力数据失败:', error);
