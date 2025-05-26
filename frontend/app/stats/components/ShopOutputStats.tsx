@@ -83,15 +83,31 @@ const ShopOutputStats = () => {
       const searchParams = useSearchParams();
       const [isLoading, setIsLoading] = useState(false);
       const [selectedDimension, setSelectedDimension] = useState<StatsDimension>(() => {
-            // 从URL参数或localStorage中获取初始维度，默认为'category'
+            // 从URL参数或localStorage中获取初始维度，默认为'date'
             const dimensionFromUrl = searchParams.get('dimension') as StatsDimension;
             const storedDimension = typeof window !== 'undefined' ?
                   localStorage.getItem('selectedStatsDimension') as StatsDimension : null;
-            return dimensionFromUrl || storedDimension || 'category';
+            return dimensionFromUrl || storedDimension || 'date';
       });
       const [dateRange, setDateRange] = useState<DateRange>({
             from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // 当前月第一天
             to: new Date(), // 今天
+      });
+
+      // 月份和年份范围状态
+      interface MonthYearRange {
+            from?: { year: number; month?: number };
+            to?: { year: number; month?: number };
+      }
+
+      const [monthRange, setMonthRange] = useState<MonthYearRange>({
+            from: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 },
+            to: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 }
+      });
+
+      const [yearRange, setYearRange] = useState<MonthYearRange>({
+            from: { year: new Date().getFullYear() },
+            to: { year: new Date().getFullYear() }
       });
       const [categoryData, setCategoryData] = useState<CategoryStatsItem[]>([]);
       const [shopData, setShopData] = useState<ShopStatsItem[]>([]);
@@ -196,6 +212,69 @@ const ShopOutputStats = () => {
             fetchFilterData();
       }, [fetchFilterData]);
 
+      // 处理月份和年份范围变化的函数
+      const handleMonthRangeChange = useCallback((range: MonthYearRange | undefined) => {
+            setMonthRange(range || {});
+            setError(null);
+            statsCache.clear();
+      }, []);
+
+      const handleYearRangeChange = useCallback((range: MonthYearRange | undefined) => {
+            setYearRange(range || {});
+            setError(null);
+            statsCache.clear();
+      }, []);
+
+      // 根据 groupBy 获取合适的时间参数
+      const getTimeParams = useCallback(() => {
+            if (selectedDimension !== 'date') {
+                  // 非日期维度始终使用日期范围
+                  return {
+                        date_from: dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+                        date_to: dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
+                  };
+            }
+
+            switch (groupBy) {
+                  case 'day':
+                  case 'week':
+                        return {
+                              date_from: dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+                              date_to: dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
+                        };
+                  case 'month':
+                        if (monthRange.from) {
+                              const fromDate = new Date(monthRange.from.year, (monthRange.from.month || 1) - 1, 1);
+                              const toDate = monthRange.to
+                                    ? new Date(monthRange.to.year, (monthRange.to.month || 12), 0) // 月末
+                                    : new Date(monthRange.from.year, (monthRange.from.month || 1), 0); // 同月月末
+                              return {
+                                    date_from: format(fromDate, 'yyyy-MM-dd'),
+                                    date_to: format(toDate, 'yyyy-MM-dd'),
+                              };
+                        }
+                        break;
+                  case 'year':
+                        if (yearRange.from) {
+                              const fromDate = new Date(yearRange.from.year, 0, 1); // 年初
+                              const toDate = yearRange.to
+                                    ? new Date(yearRange.to.year, 11, 31) // 年末
+                                    : new Date(yearRange.from.year, 11, 31); // 同年年末
+                              return {
+                                    date_from: format(fromDate, 'yyyy-MM-dd'),
+                                    date_to: format(toDate, 'yyyy-MM-dd'),
+                              };
+                        }
+                        break;
+            }
+
+            // 默认返回日期范围
+            return {
+                  date_from: dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+                  date_to: dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
+            };
+      }, [selectedDimension, groupBy, dateRange, monthRange, yearRange]);
+
       // 获取数据的函数（带缓存和错误重试）
       const fetchData = useCallback(async (useCache = true) => {
             const startTime = performance.now();
@@ -204,15 +283,17 @@ const ShopOutputStats = () => {
             setError(null);
 
             try {
-                  const dateFrom = dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined;
-                  const dateTo = dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined;
-
+                  const timeParams = getTimeParams();
                   const params: any = {
-                        date_from: dateFrom,
-                        date_to: dateTo,
+                        ...timeParams,
                   };
 
-                  const cacheKey = generateCacheKey(selectedDimension, { ...params, ...filters });
+                  // 对于日期维度，需要包含groupBy参数到缓存键中
+                  const cacheParams = selectedDimension === 'date'
+                        ? { ...params, ...filters, group_by: groupBy }
+                        : { ...params, ...filters };
+
+                  const cacheKey = generateCacheKey(selectedDimension, cacheParams);
                   let cacheHit = false;
 
                   // 尝试从缓存获取数据
@@ -426,7 +507,7 @@ const ShopOutputStats = () => {
             } finally {
                   setIsLoading(false);
             }
-      }, [selectedDimension, dateRange, filters, groupBy, generateCacheKey]);
+      }, [selectedDimension, filters, groupBy, generateCacheKey, getTimeParams]);
 
       useEffect(() => {
             fetchData();
@@ -437,6 +518,14 @@ const ShopOutputStats = () => {
             setError(null);
             // 清除相关缓存
             statsCache.clearByPattern(dimension);
+      }, []);
+
+      const handleGroupByChange = useCallback((newGroupBy: 'day' | 'week' | 'month' | 'year') => {
+            setGroupBy(newGroupBy);
+            setError(null);
+            // 清除日期相关的缓存
+            statsCache.clearByPattern('date');
+            statsCache.clearByPattern('stats_date');
       }, []);
 
       const handleDateRangeChange = useCallback((range: DateRange) => {
@@ -818,9 +907,21 @@ const ShopOutputStats = () => {
                         onDimensionChange={handleDimensionChange}
                         dateRange={dateRange}
                         onDateRangeChange={handleDateRangeChange}
+                        monthRange={monthRange}
+                        onMonthRangeChange={handleMonthRangeChange}
+                        yearRange={yearRange}
+                        onYearRangeChange={handleYearRangeChange}
                         onRefresh={handleRefresh}
                         groupBy={groupBy}
-                        onGroupByChange={setGroupBy}
+                        onGroupByChange={(newGroupBy) => {
+                              console.log('GroupBy 变化:', newGroupBy);
+                              setGroupBy(newGroupBy);
+                              setError(null);
+                              // 清除所有缓存，因为groupBy参数会影响缓存键
+                              statsCache.clear();
+                              clearStatsCache();
+                              // 注意：不需要手动调用fetchData，因为groupBy变化会触发fetchData重新创建和执行
+                        }}
                   />
 
                   <StatsFilterPanel

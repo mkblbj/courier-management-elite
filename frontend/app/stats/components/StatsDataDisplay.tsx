@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2 } from 'lucide-react';
+
+import { Loader2, AlertCircle } from 'lucide-react';
 import type { StatsDimension } from './ShopOutputStats';
 import CategoryStatsTable from './CategoryStatsTable';
 import CategoryStatsChart from './CategoryStatsChart';
@@ -38,52 +38,75 @@ const StatsDataDisplay: React.FC<StatsDataDisplayProps> = ({
             onDateClick?.(date);
       };
 
-      const selectedDateData = selectedDate ? dateData.find(item => item.date === selectedDate) : null; // 使用'stats'命名空间
-      const getChartPlaceholder = () => {
+      const selectedDateData = selectedDate ? dateData.find(item => item.date === selectedDate) : null;
+
+      // 检查是否有数据
+      const hasData = () => {
             switch (selectedDimension) {
                   case 'category':
-                        return categoryData && categoryData.length > 0 ? null : '类别分布图表区域';
-                  case 'shop':
-                        return '店铺分布饼图（将在后续故事中实现）';
-                  case 'courier':
-                        return '快递类型分布折线图（将在后续故事中实现）';
+                        return categoryData.length > 0;
                   case 'date':
-                        return dateData && dateData.length > 0 ? null : '日期趋势图表区域';
+                        return dateData.length > 0;
                   default:
-                        return '图表区域（将在后续故事中实现）';
+                        return false;
             }
       };
+
+      // 获取维度显示名称
+      const getDimensionDisplayName = () => {
+            switch (selectedDimension) {
+                  case 'category':
+                        return t('店铺类别统计');
+                  case 'shop':
+                        return t('店铺统计');
+                  case 'courier':
+                        return t('快递类型统计');
+                  case 'date':
+                        return t('日期统计');
+                  default:
+                        return t('数据统计');
+            }
+      };
+
+      // 渲染空数据状态
+      const renderEmptyState = () => (
+            <div className="flex flex-col items-center justify-center py-12">
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">{t('暂无数据')}</h3>
+                  <p className="text-muted-foreground text-center">
+                        {t('当前时间范围内没有找到相关统计数据，请尝试调整筛选条件')}
+                  </p>
+            </div>
+      );
 
       return (
             <div className="space-y-4">
                   {/* 图表区域 */}
                   <Card>
                         <CardHeader>
-                              <CardTitle className="text-lg">{t('数据图表')}</CardTitle>
+                              <CardTitle className="text-lg">{getDimensionDisplayName()} - {t('数据图表')}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4">
                               {isLoading ? (
                                     <div className="flex justify-center items-center h-60">
                                           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                          <span className="ml-2 text-muted-foreground">{t('正在加载图表数据...')}</span>
                                     </div>
-                              ) : (
+                              ) : hasData() ? (
                                     <>
-                                          {selectedDimension === 'category' && categoryData.length > 0 && (
+                                          {selectedDimension === 'category' && (
                                                 <CategoryStatsChart data={categoryData} />
                                           )}
-                                          {selectedDimension === 'date' && dateData.length > 0 && (
+                                          {selectedDimension === 'date' && (
                                                 <DateStatsChart
                                                       data={dateData}
                                                       isLoading={isLoading}
                                                       groupBy={groupBy}
                                                 />
                                           )}
-                                          {getChartPlaceholder() && (
-                                                <div className="h-60 w-full flex items-center justify-center bg-muted/20 rounded-md">
-                                                      <p className="text-muted-foreground">{getChartPlaceholder()}</p>
-                                                </div>
-                                          )}
                                     </>
+                              ) : (
+                                    renderEmptyState()
                               )}
                         </CardContent>
                   </Card>
@@ -91,19 +114,20 @@ const StatsDataDisplay: React.FC<StatsDataDisplayProps> = ({
                   {/* 数据表格 */}
                   <Card>
                         <CardHeader>
-                              <CardTitle className="text-lg">{t('数据表格')}</CardTitle>
+                              <CardTitle className="text-lg">{getDimensionDisplayName()} - {t('详细数据')}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4">
                               {isLoading ? (
                                     <div className="flex justify-center items-center h-40">
                                           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                          <span className="ml-2 text-muted-foreground">{t('正在加载表格数据...')}</span>
                                     </div>
-                              ) : (
+                              ) : hasData() ? (
                                     <>
-                                          {selectedDimension === 'category' && categoryData.length > 0 && (
+                                          {selectedDimension === 'category' && (
                                                 <CategoryStatsTable data={categoryData} />
                                           )}
-                                          {selectedDimension === 'date' && dateData.length > 0 && (
+                                          {selectedDimension === 'date' && (
                                                 <DateStatsTable
                                                       data={dateData}
                                                       isLoading={isLoading}
@@ -111,101 +135,9 @@ const StatsDataDisplay: React.FC<StatsDataDisplayProps> = ({
                                                       groupBy={groupBy}
                                                 />
                                           )}
-                                          {/* 占位表格 - 当没有数据或维度不支持时显示 */}
-                                          {((selectedDimension === 'category' && categoryData.length === 0) ||
-                                                (selectedDimension === 'date' && dateData.length === 0) ||
-                                                (selectedDimension !== 'category' && selectedDimension !== 'date')) && (
-                                                      <div className="border rounded-md">
-                                                            <Table>
-                                                                  <TableHeader>
-                                                                        {selectedDimension === 'category' && (
-                                                                              <TableRow>
-                                                                                    <TableHead>类别名称</TableHead>
-                                                                                    <TableHead className="text-right">总量</TableHead>
-                                                                                    <TableHead className="text-right">占比</TableHead>
-                                                                                    <TableHead className="text-right">日均量</TableHead>
-                                                                              </TableRow>
-                                                                        )}
-
-                                                                        {selectedDimension === 'shop' && (
-                                                                              <TableRow>
-                                                                                    <TableHead>店铺名称</TableHead>
-                                                                                    <TableHead>所属类别</TableHead>
-                                                                                    <TableHead className="text-right">总量</TableHead>
-                                                                                    <TableHead className="text-right">占比</TableHead>
-                                                                                    <TableHead className="text-right">日均量</TableHead>
-                                                                              </TableRow>
-                                                                        )}
-
-                                                                        {selectedDimension === 'courier' && (
-                                                                              <TableRow>
-                                                                                    <TableHead>快递类型</TableHead>
-                                                                                    <TableHead className="text-right">总量</TableHead>
-                                                                                    <TableHead className="text-right">占比</TableHead>
-                                                                                    <TableHead className="text-right">日均量</TableHead>
-                                                                              </TableRow>
-                                                                        )}
-
-                                                                        {selectedDimension === 'date' && (
-                                                                              <TableRow>
-                                                                                    <TableHead>日期</TableHead>
-                                                                                    <TableHead className="text-right">总量</TableHead>
-                                                                                    <TableHead className="text-right">占比</TableHead>
-                                                                                    <TableHead className="text-center">活跃店铺</TableHead>
-                                                                                    <TableHead className="text-center">环比变化</TableHead>
-                                                                                    <TableHead className="text-center">同比变化</TableHead>
-                                                                              </TableRow>
-                                                                        )}
-                                                                  </TableHeader>
-                                                                  <TableBody>
-                                                                        {/* 占位数据行 */}
-                                                                        {[1, 2, 3].map((idx) => (
-                                                                              <TableRow key={idx}>
-                                                                                    {selectedDimension === 'category' && (
-                                                                                          <>
-                                                                                                <TableCell>示例类别 {idx}</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 100}</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 10}%</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 20}</TableCell>
-                                                                                          </>
-                                                                                    )}
-
-                                                                                    {selectedDimension === 'shop' && (
-                                                                                          <>
-                                                                                                <TableCell>示例店铺 {idx}</TableCell>
-                                                                                                <TableCell>示例类别 {idx}</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 100}</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 10}%</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 20}</TableCell>
-                                                                                          </>
-                                                                                    )}
-
-                                                                                    {selectedDimension === 'courier' && (
-                                                                                          <>
-                                                                                                <TableCell>示例快递 {idx}</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 100}</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 10}%</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 20}</TableCell>
-                                                                                          </>
-                                                                                    )}
-
-                                                                                    {selectedDimension === 'date' && (
-                                                                                          <>
-                                                                                                <TableCell>2023-06-{idx.toString().padStart(2, '0')}</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 100}</TableCell>
-                                                                                                <TableCell className="text-right">{idx * 10}%</TableCell>
-                                                                                                <TableCell className="text-center">{idx * 5}</TableCell>
-                                                                                                <TableCell className="text-center">+{idx * 2}%</TableCell>
-                                                                                                <TableCell className="text-center">+{idx * 3}%</TableCell>
-                                                                                          </>
-                                                                                    )}
-                                                                              </TableRow>
-                                                                        ))}
-                                                                  </TableBody>
-                                                            </Table>
-                                                      </div>
-                                                )}
                                     </>
+                              ) : (
+                                    renderEmptyState()
                               )}
                         </CardContent>
                   </Card>

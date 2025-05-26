@@ -39,8 +39,8 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
 }) => {
       const { t } = useTranslation('stats');
       const [chartType, setChartType] = useState<ChartType>('line');
-      const [showMovingAverage, setShowMovingAverage] = useState(false);
-      const [showComparison, setShowComparison] = useState(false);
+      const [showMovingAverage, setShowMovingAverage] = useState(true);
+      const [showComparison, setShowComparison] = useState(true);
       const [movingAveragePeriod, setMovingAveragePeriod] = useState(7);
 
       // 处理和格式化数据
