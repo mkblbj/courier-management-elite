@@ -18,8 +18,8 @@ import {
 import { TrendingUp, Calendar } from 'lucide-react';
 import { DateStatsItem } from '@/lib/types/stats';
 import { useTranslation } from 'react-i18next';
-import { format, parseISO } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
+import { format, parseISO, getDay } from 'date-fns';
+import { zhCN, enUS, ja } from 'date-fns/locale';
 
 interface DateStatsChartProps {
       data: DateStatsItem[];
@@ -92,21 +92,75 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
             const sortedData = [...sampledData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
             return sortedData.map((item, index) => {
+                  // 获取当前语言的 date-fns locale
+                  const getDateLocale = () => {
+                        const currentLang = t('language') || 'zh-CN';
+                        switch (currentLang) {
+                              case 'en':
+                              case 'English':
+                                    return enUS;
+                              case 'ja':
+                              case '日本語':
+                                    return ja;
+                              default:
+                                    return zhCN;
+                        }
+                  };
+
+                  // 获取星期的翻译
+                  const getWeekdayTranslation = (date: Date, useShort: boolean = true) => {
+                        const dayOfWeek = getDay(date); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+                        const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        const weekdayKey = weekdays[dayOfWeek];
+                        const translationKey = useShort ? `weekday.short.${weekdayKey}` : `weekday.full.${weekdayKey}`;
+                        return t(translationKey, { ns: 'common' });
+                  };
+
                   // 格式化日期显示
                   let formattedDate;
                   try {
+                        const currentLang = t('language') || 'zh-CN';
+                        const locale = getDateLocale();
+
                         if (groupBy === 'week') {
                               const [year, week] = item.date.split('-');
-                              formattedDate = `${year}年第${week}周`;
+                              if (currentLang === 'en' || currentLang === 'English') {
+                                    formattedDate = `W${week}`;
+                              } else if (currentLang === 'ja' || currentLang === '日本語') {
+                                    formattedDate = `第${week}週`;
+                              } else {
+                                    formattedDate = `第${week}周`;
+                              }
                         } else if (groupBy === 'month') {
                               const [year, month] = item.date.split('-');
-                              formattedDate = `${year}年${month}月`;
+                              if (currentLang === 'en' || currentLang === 'English') {
+                                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                    formattedDate = monthNames[parseInt(month) - 1];
+                              } else {
+                                    formattedDate = `${month}月`;
+                              }
                         } else if (groupBy === 'year') {
-                              formattedDate = `${item.date}年`;
+                              if (currentLang === 'en' || currentLang === 'English') {
+                                    formattedDate = item.date;
+                              } else {
+                                    formattedDate = `${item.date}年`;
+                              }
                         } else {
-                              // day
+                              // day - 根据数据量决定显示格式
                               const date = parseISO(item.date);
-                              formattedDate = format(date, 'MM-dd', { locale: zhCN });
+                              const weekday = getWeekdayTranslation(date, true);
+
+                              // 如果数据点很多，只显示月-日格式
+                              if (sampledData.length > 30) {
+                                    const formattedDateOnly = format(date, 'MM-dd');
+                                    formattedDate = `${formattedDateOnly}`;
+                              } else if (sampledData.length > 15) {
+                                    const formattedDateOnly = format(date, 'MM-dd');
+                                    formattedDate = `${formattedDateOnly} (${weekday})`;
+                              } else {
+                                    const formattedDateOnly = format(date, 'yyyy-MM-dd');
+                                    formattedDate = `${formattedDateOnly} (${weekday})`;
+                              }
                         }
                   } catch (error) {
                         formattedDate = item.date;
@@ -133,7 +187,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                         yoy_change_rate: Number(item.yoy_change_rate) || 0
                   };
             });
-      }, [sampledData, groupBy, showMovingAverage, movingAveragePeriod]);
+      }, [sampledData, groupBy, showMovingAverage, movingAveragePeriod, t]);
 
       // 计算统计信息
       const stats = useMemo(() => {
@@ -172,16 +226,16 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                               <p className="font-semibold">{label}</p>
                               <div className="space-y-1">
                                     <p className="text-sm">
-                                          <span className="text-muted-foreground">总出力量:</span>
+                                          <span className="text-muted-foreground">{t('总出力量')}:</span>
                                           <span className="font-mono ml-2">{data.total_quantity.toLocaleString()}</span>
                                     </p>
                                     <p className="text-sm">
-                                          <span className="text-muted-foreground">活跃店铺:</span>
+                                          <span className="text-muted-foreground">{t('活跃店铺')}:</span>
                                           <span className="ml-2">{data.shops_count}</span>
                                     </p>
                                     {data.percentage > 0 && (
                                           <p className="text-sm">
-                                                <span className="text-muted-foreground">占比:</span>
+                                                <span className="text-muted-foreground">{t('占比')}:</span>
                                                 <span className="ml-2">{data.percentage.toFixed(1)}%</span>
                                           </p>
                                     )}
@@ -205,7 +259,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                                 识别上升/下降趋势
                                                 过滤短期异常波动
                                                 作为预测参考线 */}
-                                                <span className="text-muted-foreground">{movingAveragePeriod}日均线:</span>
+                                                <span className="text-muted-foreground">{t('{{movingAveragePeriod}}日均线', { movingAveragePeriod })}:</span>
                                                 <span className="font-mono ml-2">{data.movingAverage.toLocaleString()}</span>
                                           </p>
                                     )}
@@ -213,7 +267,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                           <>
                                                 {data.mom_change_rate !== 0 && (
                                                       <p className="text-sm">
-                                                            <span className="text-muted-foreground">环比:</span>
+                                                            <span className="text-muted-foreground">{t('环比')}:</span>
                                                             <span className={`ml-2 ${data.mom_change_type === 'increase' ? 'text-green-600' : data.mom_change_type === 'decrease' ? 'text-red-600' : ''}`}>
                                                                   {data.mom_change_rate > 0 ? '+' : ''}{data.mom_change_rate.toFixed(1)}%
                                                             </span>
@@ -221,7 +275,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                                 )}
                                                 {data.yoy_change_rate !== 0 && (
                                                       <p className="text-sm">
-                                                            <span className="text-muted-foreground">同比:</span>
+                                                            <span className="text-muted-foreground">{t('同比')}:</span>
                                                             <span className={`ml-2 ${data.yoy_change_type === 'increase' ? 'text-green-600' : data.yoy_change_type === 'decrease' ? 'text-red-600' : ''}`}>
                                                                   {data.yoy_change_rate > 0 ? '+' : ''}{data.yoy_change_rate.toFixed(1)}%
                                                             </span>
@@ -234,7 +288,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                   );
             }
             return null;
-      }, [showMovingAverage, movingAveragePeriod, showComparison]);
+      }, [showMovingAverage, movingAveragePeriod, showComparison, t]);
 
       if (isLoading) {
             return (
@@ -242,7 +296,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                         <CardHeader>
                               <CardTitle className="flex items-center gap-2">
                                     <TrendingUp className="h-5 w-5" />
-                                    趋势图表
+                                    {t('趋势图表')}
                               </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -260,12 +314,12 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                         <CardHeader>
                               <CardTitle className="flex items-center gap-2">
                                     <TrendingUp className="h-5 w-5" />
-                                    趋势图表
+                                    {t('趋势图表')}
                               </CardTitle>
                         </CardHeader>
                         <CardContent>
                               <div className="text-center py-16 text-muted-foreground">
-                                    暂无数据
+                                    {t('no_data')}
                               </div>
                         </CardContent>
                   </Card>
@@ -278,10 +332,10 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                         <div className="flex items-center justify-between">
                               <CardTitle className="flex items-center gap-2">
                                     <TrendingUp className="h-5 w-5" />
-                                    趋势图表
+                                    {t('趋势图表')}
                                     {data.length > maxDataPoints && (
                                           <Badge variant="secondary" className="text-xs">
-                                                已采样 {chartData.length}/{data.length}
+                                                {t('sampled')} {chartData.length}/{data.length}
                                           </Badge>
                                     )}
                               </CardTitle>
@@ -290,15 +344,15 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                               {stats && (
                                     <div className="flex items-center gap-4 text-sm">
                                           <div className="text-center">
-                                                <div className="text-muted-foreground">总量</div>
+                                                <div className="text-muted-foreground">{t('总量')}</div>
                                                 <div className="font-mono font-semibold">{stats.totalQuantity.toLocaleString()}</div>
                                           </div>
                                           <div className="text-center">
-                                                <div className="text-muted-foreground">平均</div>
+                                                <div className="text-muted-foreground">{t('平均')}</div>
                                                 <div className="font-mono font-semibold">{stats.avgQuantity.toLocaleString()}</div>
                                           </div>
                                           <div className="text-center">
-                                                <div className="text-muted-foreground">趋势</div>
+                                                <div className="text-muted-foreground">{t('趋势')}</div>
                                                 <Badge
                                                       variant={stats.trendType === 'increase' ? 'default' : stats.trendType === 'decrease' ? 'destructive' : 'secondary'}
                                                       className={stats.trendType === 'increase' ? 'bg-green-100 text-green-800' : ''}
@@ -321,7 +375,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                                 onCheckedChange={setShowMovingAverage}
                                           />
                                           <Label htmlFor="moving-average" className="text-sm">
-                                                {movingAveragePeriod}日均线
+                                                {t('{{movingAveragePeriod}}日均线', { movingAveragePeriod })}
                                           </Label>
                                     </div>
 
@@ -333,7 +387,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                                 onCheckedChange={setShowComparison}
                                           />
                                           <Label htmlFor="comparison" className="text-sm">
-                                                同比环比
+                                                {t('同比环比')}
                                           </Label>
                                     </div>
                               </div>
@@ -341,17 +395,19 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                   </CardHeader>
 
                   <CardContent>
-                        <div ref={chartContainerRef} className="h-80">
+                        <div ref={chartContainerRef} className="h-96">
                               {isChartVisible ? (
                                     <ResponsiveContainer width="100%" height="100%">
-                                          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 100 }}>
                                                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                                                 <XAxis
                                                       dataKey="formattedDate"
-                                                      tick={{ fontSize: 12 }}
+                                                      tick={{ fontSize: 10 }}
                                                       angle={-45}
                                                       textAnchor="end"
-                                                      height={60}
+                                                      height={100}
+                                                      interval={chartData.length > 20 ? "preserveStartEnd" : chartData.length > 10 ? "preserveStart" : 0}
+                                                      minTickGap={chartData.length > 30 ? 10 : 5}
                                                 />
                                                 <YAxis tick={{ fontSize: 12 }} />
                                                 <Tooltip content={<CustomTooltip />} />
@@ -363,9 +419,10 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                                       dataKey="total_quantity"
                                                       stroke="#2563eb"
                                                       strokeWidth={2}
-                                                      dot={{ fill: '#2563eb', strokeWidth: 2, r: 4 }}
-                                                      activeDot={{ r: 6, stroke: '#2563eb', strokeWidth: 2 }}
-                                                      name="总出力量"
+                                                      dot={{ fill: '#2563eb', strokeWidth: 2, r: chartData.length > 50 ? 2 : 4 }}
+                                                      activeDot={{ r: 6, stroke: '#2563eb', strokeWidth: 2, fill: '#ffffff' }}
+                                                      name={t('总出力量')}
+                                                      connectNulls={false}
                                                 />
 
                                                 {/* 移动平均线 */}
@@ -377,7 +434,9 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                                             strokeWidth={2}
                                                             strokeDasharray="5 5"
                                                             dot={false}
-                                                            name={`${movingAveragePeriod}日均线`}
+                                                            activeDot={{ r: 4, stroke: '#f59e0b', strokeWidth: 2, fill: '#ffffff' }}
+                                                            name={t('{{movingAveragePeriod}}日均线', { movingAveragePeriod })}
+                                                            connectNulls={false}
                                                       />
                                                 )}
 
@@ -387,7 +446,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                                             y={stats.avgQuantity}
                                                             stroke="#6b7280"
                                                             strokeDasharray="2 2"
-                                                            label={{ value: "平均值", position: "top" }}
+                                                            label={{ value: t('平均值'), position: "top" }}
                                                       />
                                                 )}
                                           </LineChart>
@@ -396,7 +455,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                     <div className="flex justify-center items-center h-full">
                                           <div className="text-center">
                                                 <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                                                <p className="text-muted-foreground">图表正在加载...</p>
+                                                <p className="text-muted-foreground">{t('图表正在加载...')}</p>
                                           </div>
                                     </div>
                               )}

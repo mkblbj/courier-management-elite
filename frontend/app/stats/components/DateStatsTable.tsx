@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, TrendingDown, Minus, Calendar, Users, Package } from 'lucide-react';
 import { DateStatsItem } from '@/lib/types/stats';
 import { useTranslation } from 'react-i18next';
-import { format, parseISO } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
+import { format, parseISO, getDay } from 'date-fns';
+import { zhCN, enUS, ja } from 'date-fns/locale';
 
 interface DateStatsTableProps {
       data: DateStatsItem[];
@@ -89,21 +89,67 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
             return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
       };
 
+      // 获取当前语言的 date-fns locale
+      const getDateLocale = () => {
+            const currentLang = t('language') || 'zh-CN';
+            switch (currentLang) {
+                  case 'en':
+                  case 'English':
+                        return enUS;
+                  case 'ja':
+                  case '日本語':
+                        return ja;
+                  default:
+                        return zhCN;
+            }
+      };
+
+      // 获取星期的翻译
+      const getWeekdayTranslation = (date: Date, useShort: boolean = true) => {
+            const dayOfWeek = getDay(date); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const weekdayKey = weekdays[dayOfWeek];
+            const translationKey = useShort ? `weekday.short.${weekdayKey}` : `weekday.full.${weekdayKey}`;
+            return t(translationKey, { ns: 'common' });
+      };
+
       // 格式化日期显示
       const formatDate = (dateStr: string) => {
             try {
                   if (groupBy === 'week') {
                         const [year, week] = dateStr.split('-');
-                        return `${year}年第${week}周`;
+                        const currentLang = t('language') || 'zh-CN';
+                        if (currentLang === 'en' || currentLang === 'English') {
+                              return `Week ${week}, ${year}`;
+                        } else if (currentLang === 'ja' || currentLang === '日本語') {
+                              return `${year}年第${week}週`;
+                        } else {
+                              return `${year}年第${week}周`;
+                        }
                   } else if (groupBy === 'month') {
                         const [year, month] = dateStr.split('-');
-                        return `${year}年${month}月`;
+                        const currentLang = t('language') || 'zh-CN';
+                        if (currentLang === 'en' || currentLang === 'English') {
+                              const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                              return `${monthNames[parseInt(month) - 1]} ${year}`;
+                        } else if (currentLang === 'ja' || currentLang === '日本語') {
+                              return `${year}年${month}月`;
+                        } else {
+                              return `${year}年${month}月`;
+                        }
                   } else if (groupBy === 'year') {
-                        return `${dateStr}年`;
+                        const currentLang = t('language') || 'zh-CN';
+                        if (currentLang === 'en' || currentLang === 'English') {
+                              return dateStr;
+                        } else {
+                              return `${dateStr}年`;
+                        }
                   } else {
-                        // day
+                        // day - 使用 yyyy-MM-dd 格式并添加星期显示
                         const date = parseISO(dateStr);
-                        return format(date, 'yyyy年MM月dd日', { locale: zhCN });
+                        const weekday = getWeekdayTranslation(date, true);
+                        const formattedDateOnly = format(date, 'yyyy-MM-dd');
+                        return `${formattedDateOnly} (${weekday})`;
                   }
             } catch (error) {
                   return dateStr;
@@ -139,7 +185,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                         <CardHeader>
                               <CardTitle className="flex items-center gap-2">
                                     <Calendar className="h-5 w-5" />
-                                    按日期统计
+                                    {t('日期统计')}
                               </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -157,12 +203,12 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                         <CardHeader>
                               <CardTitle className="flex items-center gap-2">
                                     <Calendar className="h-5 w-5" />
-                                    按日期统计
+                                    {t('日期统计')}
                               </CardTitle>
                         </CardHeader>
                         <CardContent>
                               <div className="text-center py-8 text-muted-foreground">
-                                    暂无数据
+                                    {t('no_data')}
                               </div>
                         </CardContent>
                   </Card>
@@ -174,7 +220,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                   <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                               <Calendar className="h-5 w-5" />
-                              按日期统计 ({sortedData.length} 条记录)
+                              {t('日期统计')} ({sortedData.length} {t('记录数', { ns: 'common' })})
                         </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -188,7 +234,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                                                             onClick={() => handleSort('date')}
                                                             className="h-auto p-0 font-semibold hover:bg-transparent"
                                                       >
-                                                            日期
+                                                            {t('日期', { ns: 'common' })}
                                                             {getSortIcon('date')}
                                                       </Button>
                                                 </TableHead>
@@ -198,7 +244,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                                                             onClick={() => handleSort('total_quantity')}
                                                             className="h-auto p-0 font-semibold hover:bg-transparent"
                                                       >
-                                                            总出力量
+                                                            {t('总出力量')}
                                                             {getSortIcon('total_quantity')}
                                                       </Button>
                                                 </TableHead>
@@ -208,7 +254,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                                                             onClick={() => handleSort('percentage')}
                                                             className="h-auto p-0 font-semibold hover:bg-transparent"
                                                       >
-                                                            占比
+                                                            {t('占比')}
                                                             {getSortIcon('percentage')}
                                                       </Button>
                                                 </TableHead>
@@ -218,7 +264,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                                                             onClick={() => handleSort('shops_count')}
                                                             className="h-auto p-0 font-semibold hover:bg-transparent"
                                                       >
-                                                            活跃店铺
+                                                            {t('活跃店铺')}
                                                             {getSortIcon('shops_count')}
                                                       </Button>
                                                 </TableHead>
@@ -228,7 +274,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                                                             onClick={() => handleSort('mom_change_rate')}
                                                             className="h-auto p-0 font-semibold hover:bg-transparent"
                                                       >
-                                                            环比变化
+                                                            {t('环比变化')}
                                                             {getSortIcon('mom_change_rate')}
                                                       </Button>
                                                 </TableHead>
@@ -238,11 +284,11 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                                                             onClick={() => handleSort('yoy_change_rate')}
                                                             className="h-auto p-0 font-semibold hover:bg-transparent"
                                                       >
-                                                            同比变化
+                                                            {t('同比变化')}
                                                             {getSortIcon('yoy_change_rate')}
                                                       </Button>
                                                 </TableHead>
-                                                <TableHead className="text-center">操作</TableHead>
+                                                <TableHead className="text-center">{t('操作', { ns: 'common' })}</TableHead>
                                           </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -277,7 +323,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                                                                         onClick={() => onDateClick(item.date)}
                                                                         className="h-8 px-2"
                                                                   >
-                                                                        查看详情
+                                                                        {t('查看详情', { ns: 'common' })}
                                                                   </Button>
                                                             )}
                                                       </TableCell>
@@ -291,8 +337,12 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                         {totalPages > 1 && (
                               <div className="flex items-center justify-between mt-4">
                                     <div className="text-sm text-muted-foreground">
-                                          显示第 {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, sortedData.length)} 条，
-                                          共 {sortedData.length} 条记录
+                                          {t('showing_records', {
+                                                start: (currentPage - 1) * itemsPerPage + 1,
+                                                end: Math.min(currentPage * itemsPerPage, sortedData.length),
+                                                total: sortedData.length,
+                                                ns: 'common'
+                                          })}
                                     </div>
                                     <div className="flex items-center gap-2">
                                           <Button
@@ -301,7 +351,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                                                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                                                 disabled={currentPage === 1}
                                           >
-                                                上一页
+                                                {t('previous', { ns: 'common' })}
                                           </Button>
                                           <div className="flex items-center gap-1">
                                                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -335,7 +385,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                                                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                                                 disabled={currentPage === totalPages}
                                           >
-                                                下一页
+                                                {t('next', { ns: 'common' })}
                                           </Button>
                                     </div>
                               </div>

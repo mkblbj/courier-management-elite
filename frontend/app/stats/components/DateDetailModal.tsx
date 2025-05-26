@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, TrendingUp, TrendingDown, Minus, Package, Store, Truck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { format, getDay } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
 interface DateDetailModalProps {
@@ -44,16 +44,41 @@ const DateDetailModal: React.FC<DateDetailModalProps> = ({
       // 格式化日期显示
       const formatDateDisplay = (dateStr: string, groupBy: string) => {
             try {
+                  const currentLang = t('language') || 'zh-CN';
+
                   if (groupBy === 'day') {
-                        return format(new Date(dateStr), 'yyyy年MM月dd日', { locale: zhCN });
+                        const date = new Date(dateStr);
+                        const formattedDate = format(date, 'yyyy-MM-dd');
+                        const dayOfWeek = getDay(date);
+                        const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        const weekdayKey = weekdays[dayOfWeek];
+                        const weekdayFull = t(`weekday.full.${weekdayKey}`, { ns: 'common' });
+                        return `${formattedDate} (${weekdayFull})`;
                   } else if (groupBy === 'week') {
                         const [year, week] = dateStr.split('-');
-                        return `${year}年第${week}周`;
+                        if (currentLang === 'en' || currentLang === 'English') {
+                              return `Week ${week}, ${year}`;
+                        } else if (currentLang === 'ja' || currentLang === '日本語') {
+                              return `${year}年第${week}週`;
+                        } else {
+                              return `${year}年第${week}周`;
+                        }
                   } else if (groupBy === 'month') {
                         const [year, month] = dateStr.split('-');
-                        return `${year}年${month}月`;
+                        if (currentLang === 'en' || currentLang === 'English') {
+                              const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                              return `${monthNames[parseInt(month) - 1]} ${year}`;
+                        } else if (currentLang === 'ja' || currentLang === '日本語') {
+                              return `${year}年${month}月`;
+                        } else {
+                              return `${year}年${month}月`;
+                        }
                   } else if (groupBy === 'year') {
-                        return `${dateStr}年`;
+                        if (currentLang === 'en' || currentLang === 'English') {
+                              return dateStr;
+                        } else {
+                              return `${dateStr}年`;
+                        }
                   }
                   return dateStr;
             } catch (error) {
@@ -119,7 +144,7 @@ const DateDetailModal: React.FC<DateDetailModalProps> = ({
                                                 <CardContent>
                                                       <div className="text-2xl font-bold">{data.total_quantity.toLocaleString()}</div>
                                                       <div className="text-xs text-muted-foreground mt-1">
-                                                            占比 {data.percentage}%
+                                                            {t('占比')} {data.percentage}%
                                                       </div>
                                                 </CardContent>
                                           </Card>
@@ -163,7 +188,7 @@ const DateDetailModal: React.FC<DateDetailModalProps> = ({
                                                 <CardContent>
                                                       <div className="text-2xl font-bold">{data.avg_quantity.toFixed(2)}</div>
                                                       <div className="text-xs text-muted-foreground mt-1">
-                                                            {t('单位/天')}
+                                                            {t('单量/天')}
                                                       </div>
                                                 </CardContent>
                                           </Card>
@@ -242,7 +267,7 @@ const DateDetailModal: React.FC<DateDetailModalProps> = ({
                                                       <div className="flex items-center justify-between">
                                                             <span className="text-muted-foreground">{t('店铺活跃度')}:</span>
                                                             <span className="font-medium">
-                                                                  {data.shops_count > 0 ? '高' : '低'}
+                                                                  {data.shops_count > 0 ? t('高') : t('低')}
                                                             </span>
                                                       </div>
                                                 </div>
