@@ -1,15 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
       LineChart,
       Line,
-      BarChart,
-      Bar,
       XAxis,
       YAxis,
       CartesianGrid,
@@ -18,7 +15,7 @@ import {
       ResponsiveContainer,
       ReferenceLine
 } from 'recharts';
-import { TrendingUp, BarChart3, LineChart as LineChartIcon, Calendar } from 'lucide-react';
+import { TrendingUp, Calendar } from 'lucide-react';
 import { DateStatsItem } from '@/lib/types/stats';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
@@ -28,27 +25,71 @@ interface DateStatsChartProps {
       data: DateStatsItem[];
       isLoading?: boolean;
       groupBy?: 'day' | 'week' | 'month' | 'year';
+      maxDataPoints?: number; // 最大数据点数量
+      enableLazyLoading?: boolean; // 是否启用懒加载
 }
-
-type ChartType = 'line' | 'bar';
 
 const DateStatsChart: React.FC<DateStatsChartProps> = ({
       data,
       isLoading = false,
-      groupBy = 'day'
+      groupBy = 'day',
+      maxDataPoints = 100,
+      enableLazyLoading = true
 }) => {
       const { t } = useTranslation('stats');
-      const [chartType, setChartType] = useState<ChartType>('line');
       const [showMovingAverage, setShowMovingAverage] = useState(true);
       const [showComparison, setShowComparison] = useState(true);
       const [movingAveragePeriod, setMovingAveragePeriod] = useState(7);
+      const [isChartVisible, setIsChartVisible] = useState(!enableLazyLoading);
+
+      // 使用 ref 来避免不必要的重新计算
+      const chartContainerRef = useRef<HTMLDivElement>(null);
+      const observerRef = useRef<IntersectionObserver | null>(null);
+
+      // 懒加载逻辑
+      useEffect(() => {
+            if (enableLazyLoading && chartContainerRef.current) {
+                  observerRef.current = new IntersectionObserver(
+                        (entries) => {
+                              entries.forEach((entry) => {
+                                    if (entry.isIntersecting) {
+                                          setIsChartVisible(true);
+                                          observerRef.current?.disconnect();
+                                    }
+                              });
+                        },
+                        { threshold: 0.1 }
+                  );
+
+                  observerRef.current.observe(chartContainerRef.current);
+
+                  return () => {
+                        observerRef.current?.disconnect();
+                  };
+            }
+      }, [enableLazyLoading]);
+
+      // 数据采样和优化
+      const sampledData = useMemo(() => {
+            if (!data || data.length === 0) return [];
+
+            let processedData = [...data];
+
+            // 如果数据量过大，进行采样
+            if (processedData.length > maxDataPoints) {
+                  const step = Math.ceil(processedData.length / maxDataPoints);
+                  processedData = processedData.filter((_, index) => index % step === 0);
+            }
+
+            return processedData;
+      }, [data, maxDataPoints]);
 
       // 处理和格式化数据
       const chartData = useMemo(() => {
-            if (!data || data.length === 0) return [];
+            if (!sampledData || sampledData.length === 0) return [];
 
             // 按日期排序
-            const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            const sortedData = [...sampledData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
             return sortedData.map((item, index) => {
                   // 格式化日期显示
@@ -92,7 +133,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                         yoy_change_rate: Number(item.yoy_change_rate) || 0
                   };
             });
-      }, [data, groupBy, showMovingAverage, movingAveragePeriod]);
+      }, [sampledData, groupBy, showMovingAverage, movingAveragePeriod]);
 
       // 计算统计信息
       const stats = useMemo(() => {
@@ -122,8 +163,8 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
             };
       }, [chartData]);
 
-      // 自定义Tooltip
-      const CustomTooltip = ({ active, payload, label }: any) => {
+      // 自定义Tooltip - 使用 useCallback 避免重新创建
+      const CustomTooltip = useCallback(({ active, payload, label }: any) => {
             if (active && payload && payload.length) {
                   const data = payload[0].payload;
                   return (
@@ -146,6 +187,24 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                     )}
                                     {showMovingAverage && data.movingAverage && (
                                           <p className="text-sm">
+                                                {/* 日均线（移动平均线）含义
+                                                日均线是一种技术分析工具，用于平滑数据波动，显示趋势：
+                                                计算方式
+                                                7日均线：取当前日期及前6天共7天的平均值
+                                                动态计算：每个数据点都基于其前N天的平均值
+                                                趋势显示：帮助识别数据的整体走向，过滤掉短期波动
+                                                实际意义
+                                                趋势识别：平滑的曲线更容易看出上升/下降趋势
+                                                噪音过滤：减少单日异常数据的影响
+                                                预测参考：可作为未来走势的参考线
+                                                📊 日均线含义解释
+                                                日均线（移动平均线）是数据分析中的重要工具：
+                                                计算方式：取连续N天数据的平均值（如7日均线 = 当天及前6天的平均值）
+                                                作用：平滑数据波动，显示整体趋势
+                                                应用场景：
+                                                识别上升/下降趋势
+                                                过滤短期异常波动
+                                                作为预测参考线 */}
                                                 <span className="text-muted-foreground">{movingAveragePeriod}日均线:</span>
                                                 <span className="font-mono ml-2">{data.movingAverage.toLocaleString()}</span>
                                           </p>
@@ -175,7 +234,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                   );
             }
             return null;
-      };
+      }, [showMovingAverage, movingAveragePeriod, showComparison]);
 
       if (isLoading) {
             return (
@@ -220,6 +279,11 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                               <CardTitle className="flex items-center gap-2">
                                     <TrendingUp className="h-5 w-5" />
                                     趋势图表
+                                    {data.length > maxDataPoints && (
+                                          <Badge variant="secondary" className="text-xs">
+                                                已采样 {chartData.length}/{data.length}
+                                          </Badge>
+                                    )}
                               </CardTitle>
 
                               {/* 统计信息 */}
@@ -248,20 +312,6 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
 
                         {/* 控制面板 */}
                         <div className="flex items-center justify-between pt-4 border-t">
-                              <div className="flex items-center gap-4">
-                                    {/* 图表类型切换 */}
-                                    <ToggleGroup type="single" value={chartType} onValueChange={(value) => value && setChartType(value as ChartType)}>
-                                          <ToggleGroupItem value="line" aria-label="折线图">
-                                                <LineChartIcon className="h-4 w-4" />
-                                                <span className="ml-1">折线图</span>
-                                          </ToggleGroupItem>
-                                          <ToggleGroupItem value="bar" aria-label="柱状图">
-                                                <BarChart3 className="h-4 w-4" />
-                                                <span className="ml-1">柱状图</span>
-                                          </ToggleGroupItem>
-                                    </ToggleGroup>
-                              </div>
-
                               <div className="flex items-center gap-6">
                                     {/* 移动平均线开关 */}
                                     <div className="flex items-center gap-2">
@@ -291,9 +341,9 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                   </CardHeader>
 
                   <CardContent>
-                        <div className="h-80">
-                              <ResponsiveContainer width="100%" height="100%">
-                                    {chartType === 'line' ? (
+                        <div ref={chartContainerRef} className="h-80">
+                              {isChartVisible ? (
+                                    <ResponsiveContainer width="100%" height="100%">
                                           <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                                                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                                                 <XAxis
@@ -341,53 +391,15 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                                                       />
                                                 )}
                                           </LineChart>
-                                    ) : (
-                                          <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                                                <XAxis
-                                                      dataKey="formattedDate"
-                                                      tick={{ fontSize: 12 }}
-                                                      angle={-45}
-                                                      textAnchor="end"
-                                                      height={60}
-                                                />
-                                                <YAxis tick={{ fontSize: 12 }} />
-                                                <Tooltip content={<CustomTooltip />} />
-                                                <Legend />
-
-                                                {/* 主要数据柱 */}
-                                                <Bar
-                                                      dataKey="total_quantity"
-                                                      fill="#2563eb"
-                                                      name="总出力量"
-                                                      radius={[2, 2, 0, 0]}
-                                                />
-
-                                                {/* 移动平均线 */}
-                                                {showMovingAverage && (
-                                                      <Line
-                                                            type="monotone"
-                                                            dataKey="movingAverage"
-                                                            stroke="#f59e0b"
-                                                            strokeWidth={2}
-                                                            strokeDasharray="5 5"
-                                                            dot={false}
-                                                            name={`${movingAveragePeriod}日均线`}
-                                                      />
-                                                )}
-
-                                                {/* 平均值参考线 */}
-                                                {stats && (
-                                                      <ReferenceLine
-                                                            y={stats.avgQuantity}
-                                                            stroke="#6b7280"
-                                                            strokeDasharray="2 2"
-                                                            label={{ value: "平均值", position: "top" }}
-                                                      />
-                                                )}
-                                          </BarChart>
-                                    )}
-                              </ResponsiveContainer>
+                                    </ResponsiveContainer>
+                              ) : (
+                                    <div className="flex justify-center items-center h-full">
+                                          <div className="text-center">
+                                                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                                                <p className="text-muted-foreground">图表正在加载...</p>
+                                          </div>
+                                    </div>
+                              )}
                         </div>
                   </CardContent>
             </Card>

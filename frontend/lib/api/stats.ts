@@ -8,6 +8,7 @@ import {
   StatsQueryParams,
   ShopStatsResponse
 } from '@/lib/types/stats';
+import { statsCache, CacheKeyGenerator, withCache } from '@/lib/cache/stats-cache';
 
 // API响应格式
 interface ApiResponse<T> {

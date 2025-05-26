@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import CourierStatsTable from './CourierStatsTable';
 import CourierStatsChart from './CourierStatsChart';
 import PerformanceMonitor from './PerformanceMonitor';
 import DateDetailModal from './DateDetailModal';
+import CacheMonitor from './CacheMonitor';
 
 export type StatsDimension = 'category' | 'shop' | 'courier' | 'date';
 
@@ -30,52 +31,8 @@ interface PerformanceMetrics {
       memoryUsage?: number;
 }
 
-// 数据缓存接口
-interface CacheEntry<T> {
-      data: T;
-      timestamp: number;
-      key: string;
-}
-
-// 缓存管理类
-class StatsCache {
-      private cache = new Map<string, CacheEntry<any>>();
-      private readonly TTL = 5 * 60 * 1000; // 5分钟缓存
-
-      set<T>(key: string, data: T): void {
-            this.cache.set(key, {
-                  data,
-                  timestamp: Date.now(),
-                  key
-            });
-      }
-
-      get<T>(key: string): T | null {
-            const entry = this.cache.get(key);
-            if (!entry) return null;
-
-            if (Date.now() - entry.timestamp > this.TTL) {
-                  this.cache.delete(key);
-                  return null;
-            }
-
-            return entry.data;
-      }
-
-      clear(): void {
-            this.cache.clear();
-      }
-
-      clearByPattern(pattern: string): void {
-            for (const [key] of this.cache) {
-                  if (key.includes(pattern)) {
-                        this.cache.delete(key);
-                  }
-            }
-      }
-}
-
-const statsCache = new StatsCache();
+// 使用全局缓存系统
+import { statsCache, CacheKeyGenerator } from '@/lib/cache/stats-cache';
 
 const ShopOutputStats = () => {
       const { t } = useTranslation('stats'); // 使用'stats'命名空间
@@ -109,10 +66,16 @@ const ShopOutputStats = () => {
             from: { year: new Date().getFullYear() },
             to: { year: new Date().getFullYear() }
       });
-      const [categoryData, setCategoryData] = useState<CategoryStatsItem[]>([]);
-      const [shopData, setShopData] = useState<ShopStatsItem[]>([]);
-      const [courierData, setCourierData] = useState<CourierStatsItem[]>([]);
-      const [dateData, setDateData] = useState<DateStatsItem[]>([]);
+
+      // 使用 useRef 来存储数据，避免不必要的重新渲染
+      const categoryDataRef = useRef<CategoryStatsItem[]>([]);
+      const shopDataRef = useRef<ShopStatsItem[]>([]);
+      const courierDataRef = useRef<CourierStatsItem[]>([]);
+      const dateDataRef = useRef<DateStatsItem[]>([]);
+
+      // 使用状态来触发重新渲染
+      const [dataVersion, setDataVersion] = useState(0);
+
       const [error, setError] = useState<Error | null>(null);
       const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month' | 'year'>('day');
       const [filters, setFilters] = useState<{
@@ -129,6 +92,7 @@ const ShopOutputStats = () => {
 
       // 性能监控状态
       const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
+      const [showCacheMonitor, setShowCacheMonitor] = useState(false);
       const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics>({
             loadTime: 0,
             cacheHitRate: 0,
@@ -144,9 +108,98 @@ const ShopOutputStats = () => {
       const [isDateDetailModalOpen, setIsDateDetailModalOpen] = useState(false);
       const [selectedDateData, setSelectedDateData] = useState<DateStatsItem | null>(null);
 
-      // 生成缓存键
+      // 内存监控
+      const memoryCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+      const [memoryWarning, setMemoryWarning] = useState<string | null>(null);
+
+      // 启动内存监控
+      useEffect(() => {
+            if (isDevelopment && typeof window !== 'undefined' && 'performance' in window) {
+                  let baselineMemory = 0;
+                  let memoryGrowthCount = 0;
+
+                  const checkMemoryUsage = () => {
+                        try {
+                              // @ts-ignore
+                              if (performance.memory) {
+                                    // @ts-ignore
+                                    const memoryInfo = performance.memory;
+                                    const usedMB = memoryInfo.usedJSHeapSize / (1024 * 1024);
+                                    const totalMB = memoryInfo.totalJSHeapSize / (1024 * 1024);
+                                    const limitMB = memoryInfo.jsHeapSizeLimit / (1024 * 1024);
+
+                                    // 计算使用率
+                                    const usageRate = (usedMB / limitMB) * 100;
+
+                                    // 设置基线内存（首次检查时）
+                                    if (baselineMemory === 0) {
+                                          baselineMemory = usedMB;
+                                    }
+
+                                    // 检查内存增长
+                                    const memoryGrowth = usedMB - baselineMemory;
+                                    const growthRate = baselineMemory > 0 ? (memoryGrowth / baselineMemory) * 100 : 0;
+
+                                    // 内存泄漏检测：连续增长且增长幅度大
+                                    if (memoryGrowth > 50 && growthRate > 25) {
+                                          memoryGrowthCount++;
+                                    } else {
+                                          memoryGrowthCount = 0;
+                                    }
+
+                                    // 更严格的阈值判断
+                                    if (usageRate > 80 || usedMB > 800) {
+                                          setMemoryWarning(`内存使用过高: ${usedMB.toFixed(1)}MB (${usageRate.toFixed(1)}%)，建议刷新页面`);
+                                          // 自动清理缓存
+                                          statsCache.clear();
+                                          clearStatsCache();
+                                    } else if (usageRate > 60 || usedMB > 500 || memoryGrowthCount >= 3) {
+                                          setMemoryWarning(`内存使用较高: ${usedMB.toFixed(1)}MB (${usageRate.toFixed(1)}%)，建议清理缓存`);
+                                    } else if (usageRate > 40 && memoryGrowthCount >= 2) {
+                                          setMemoryWarning(`检测到内存持续增长: +${memoryGrowth.toFixed(1)}MB，建议清理缓存`);
+                                    } else {
+                                          setMemoryWarning(null);
+                                    }
+
+                                    // 定期重置基线（避免长期运行时基线过时）
+                                    if (memoryGrowthCount === 0 && Math.random() < 0.1) {
+                                          baselineMemory = usedMB;
+                                    }
+                              }
+                        } catch (error) {
+                              console.warn('内存检查失败:', error);
+                        }
+                  };
+
+                  memoryCheckIntervalRef.current = setInterval(checkMemoryUsage, 15000); // 改为每15秒检查一次
+
+                  return () => {
+                        if (memoryCheckIntervalRef.current) {
+                              clearInterval(memoryCheckIntervalRef.current);
+                              memoryCheckIntervalRef.current = null;
+                        }
+                  };
+            }
+      }, [isDevelopment]);
+
+      // 组件卸载时清理
+      useEffect(() => {
+            return () => {
+                  if (memoryCheckIntervalRef.current) {
+                        clearInterval(memoryCheckIntervalRef.current);
+                        memoryCheckIntervalRef.current = null;
+                  }
+                  // 清理数据引用
+                  categoryDataRef.current = [];
+                  shopDataRef.current = [];
+                  courierDataRef.current = [];
+                  dateDataRef.current = [];
+            };
+      }, []);
+
+      // 生成缓存键 - 使用全局缓存键生成器
       const generateCacheKey = useCallback((dimension: StatsDimension, params: any) => {
-            return `stats_${dimension}_${JSON.stringify(params)}`;
+            return CacheKeyGenerator.generateStatsKey(dimension, params);
       }, []);
 
       // 当维度变化时更新URL和localStorage
@@ -300,15 +353,18 @@ const ShopOutputStats = () => {
                   if (useCache) {
                         const cachedData = statsCache.get(cacheKey);
                         if (cachedData) {
+                              // 使用 ref 存储数据，避免不必要的重新渲染
                               if (selectedDimension === 'category') {
-                                    setCategoryData(cachedData as CategoryStatsItem[]);
+                                    categoryDataRef.current = cachedData as CategoryStatsItem[];
                               } else if (selectedDimension === 'shop') {
-                                    setShopData(cachedData as ShopStatsItem[]);
+                                    shopDataRef.current = cachedData as ShopStatsItem[];
                               } else if (selectedDimension === 'courier') {
-                                    setCourierData(cachedData as CourierStatsItem[]);
+                                    courierDataRef.current = cachedData as CourierStatsItem[];
                               } else if (selectedDimension === 'date') {
-                                    setDateData(cachedData as DateStatsItem[]);
+                                    dateDataRef.current = cachedData as DateStatsItem[];
                               }
+
+                              setDataVersion(prev => prev + 1); // 触发重新渲染
                               cacheHit = true;
                               setIsLoading(false);
 
@@ -324,6 +380,9 @@ const ShopOutputStats = () => {
                         }
                   }
 
+                  let data: any;
+                  let dataSize = 0;
+
                   if (selectedDimension === 'category') {
                         if (filters.courier_ids && filters.courier_ids.length > 0) {
                               const courierId = parseInt(filters.courier_ids[0]);
@@ -332,18 +391,10 @@ const ShopOutputStats = () => {
                               }
                         }
 
-                        const data = await getCategoryStats(params);
-                        setCategoryData(data);
+                        data = await getCategoryStats(params);
+                        categoryDataRef.current = data;
                         statsCache.set(cacheKey, data);
-
-                        // 更新性能指标
-                        const loadTime = performance.now() - startTime;
-                        setPerformanceMetrics(prev => ({
-                              ...prev,
-                              loadTime,
-                              cacheHitRate: cacheHit ? 100 : 0,
-                              dataSize: JSON.stringify(data).length
-                        }));
+                        dataSize = JSON.stringify(data).length;
                   } else if (selectedDimension === 'shop') {
                         if (filters.courier_ids && filters.courier_ids.length > 0) {
                               const courierId = parseInt(filters.courier_ids[0]);
@@ -363,12 +414,12 @@ const ShopOutputStats = () => {
                         params.include_trending_data = true;
                         params.include_category_info = true;
 
-                        const data = await getShopStats(params);
+                        data = await getShopStats(params);
 
                         // 验证数据结构并添加详细日志
                         if (!Array.isArray(data)) {
                               console.warn('店铺统计API返回的数据格式不正确:', data);
-                              setShopData([]);
+                              shopDataRef.current = [];
                         } else {
                               console.log('成功获取店铺统计数据:', {
                                     count: data.length,
@@ -377,19 +428,11 @@ const ShopOutputStats = () => {
                                     categoriesFound: [...new Set(data.map(shop => shop.category_name).filter(Boolean))],
                                     hasCategories: data.some(shop => shop.category_name)
                               });
-                              setShopData(data);
+                              shopDataRef.current = data;
                         }
 
                         statsCache.set(cacheKey, data);
-
-                        // 更新性能指标
-                        const loadTime = performance.now() - startTime;
-                        setPerformanceMetrics(prev => ({
-                              ...prev,
-                              loadTime,
-                              cacheHitRate: cacheHit ? 100 : 0,
-                              dataSize: JSON.stringify(data).length
-                        }));
+                        dataSize = JSON.stringify(data).length;
                   } else if (selectedDimension === 'courier') {
                         // 处理快递类型统计的筛选参数
                         if (filters.shop_ids && filters.shop_ids.length > 0) {
@@ -409,12 +452,12 @@ const ShopOutputStats = () => {
                         console.log('快递类型统计API调用参数:', params);
                         console.log('当前筛选器状态:', filters);
 
-                        const data = await getCourierStats(params);
+                        data = await getCourierStats(params);
 
                         // 验证数据结构并添加详细日志
                         if (!Array.isArray(data)) {
                               console.warn('快递类型统计API返回的数据格式不正确:', data);
-                              setCourierData([]);
+                              courierDataRef.current = [];
                         } else {
                               console.log('成功获取快递类型统计数据:', {
                                     count: data.length,
@@ -422,19 +465,11 @@ const ShopOutputStats = () => {
                                     totalQuantitySum: data.reduce((sum, courier) => sum + (courier.total_quantity || 0), 0),
                                     couriersFound: data.map(courier => courier.courier_name)
                               });
-                              setCourierData(data);
+                              courierDataRef.current = data;
                         }
 
                         statsCache.set(cacheKey, data);
-
-                        // 更新性能指标
-                        const loadTime = performance.now() - startTime;
-                        setPerformanceMetrics(prev => ({
-                              ...prev,
-                              loadTime,
-                              cacheHitRate: cacheHit ? 100 : 0,
-                              dataSize: JSON.stringify(data).length
-                        }));
+                        dataSize = JSON.stringify(data).length;
                   } else if (selectedDimension === 'date') {
                         // 处理日期统计的筛选参数
                         if (filters.shop_ids && filters.shop_ids.length > 0) {
@@ -465,12 +500,12 @@ const ShopOutputStats = () => {
                         console.log('当前筛选器状态:', filters);
                         console.log('分组方式:', groupBy);
 
-                        const data = await getDateStats(params);
+                        data = await getDateStats(params);
 
                         // 验证数据结构并添加详细日志
                         if (!Array.isArray(data)) {
                               console.warn('日期统计API返回的数据格式不正确:', data);
-                              setDateData([]);
+                              dateDataRef.current = [];
                         } else {
                               console.log('成功获取日期统计数据:', {
                                     count: data.length,
@@ -479,20 +514,23 @@ const ShopOutputStats = () => {
                                     dateRange: data.length > 0 ? `${data[0].date} - ${data[data.length - 1].date}` : 'N/A',
                                     groupBy: groupBy
                               });
-                              setDateData(data);
+                              dateDataRef.current = data;
                         }
 
                         statsCache.set(cacheKey, data);
-
-                        // 更新性能指标
-                        const loadTime = performance.now() - startTime;
-                        setPerformanceMetrics(prev => ({
-                              ...prev,
-                              loadTime,
-                              cacheHitRate: cacheHit ? 100 : 0,
-                              dataSize: JSON.stringify(data).length
-                        }));
+                        dataSize = JSON.stringify(data).length;
                   }
+
+                  setDataVersion(prev => prev + 1); // 触发重新渲染
+
+                  // 更新性能指标
+                  const loadTime = performance.now() - startTime;
+                  setPerformanceMetrics(prev => ({
+                        ...prev,
+                        loadTime,
+                        cacheHitRate: cacheHit ? 100 : 0,
+                        dataSize
+                  }));
             } catch (error) {
                   console.error('获取数据失败:', error);
                   setError(error instanceof Error ? error : new Error('获取数据失败，请重试'));
@@ -542,6 +580,12 @@ const ShopOutputStats = () => {
             if (typeof window !== 'undefined') {
                   localStorage.removeItem('selectedStatsDimension');
             }
+            // 清理数据引用
+            categoryDataRef.current = [];
+            shopDataRef.current = [];
+            courierDataRef.current = [];
+            dateDataRef.current = [];
+            setDataVersion(prev => prev + 1);
             fetchData(false);
       }, [fetchData]);
 
@@ -591,6 +635,16 @@ const ShopOutputStats = () => {
             }
       }, [selectedDimension, dateRange, filters]);
 
+      // 使用 useMemo 优化数据获取，避免不必要的重新计算
+      const currentData = useMemo(() => {
+            return {
+                  categoryData: categoryDataRef.current,
+                  shopData: shopDataRef.current,
+                  courierData: courierDataRef.current,
+                  dateData: dateDataRef.current
+            };
+      }, [dataVersion]); // 只有当 dataVersion 变化时才重新计算
+
       // 根据维度渲染不同的数据展示组件
       const renderDataDisplay = useMemo(() => {
             if (selectedDimension === 'category') {
@@ -598,7 +652,7 @@ const ShopOutputStats = () => {
                         <StatsDataDisplay
                               isLoading={isLoading}
                               selectedDimension={selectedDimension}
-                              categoryData={categoryData}
+                              categoryData={currentData.categoryData}
                         />
                   );
             } else if (selectedDimension === 'shop') {
@@ -624,7 +678,7 @@ const ShopOutputStats = () => {
                               )}
 
                               {/* 数据概览卡片 */}
-                              {!isLoading && shopData.length > 0 && (
+                              {!isLoading && currentData.shopData.length > 0 && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                           <Card>
                                                 <CardHeader className="pb-2">
@@ -633,7 +687,7 @@ const ShopOutputStats = () => {
                                                       </CardTitle>
                                                 </CardHeader>
                                                 <CardContent>
-                                                      <div className="text-2xl font-bold">{shopData.length}</div>
+                                                      <div className="text-2xl font-bold">{currentData.shopData.length}</div>
                                                 </CardContent>
                                           </Card>
                                           <Card>
@@ -644,7 +698,7 @@ const ShopOutputStats = () => {
                                                 </CardHeader>
                                                 <CardContent>
                                                       <div className="text-2xl font-bold">
-                                                            {shopData.reduce((sum, shop) => sum + shop.total_quantity, 0).toLocaleString()}
+                                                            {currentData.shopData.reduce((sum, shop) => sum + shop.total_quantity, 0).toLocaleString()}
                                                       </div>
                                                 </CardContent>
                                           </Card>
@@ -656,7 +710,7 @@ const ShopOutputStats = () => {
                                                 </CardHeader>
                                                 <CardContent>
                                                       <div className="text-2xl font-bold">
-                                                            {(shopData.reduce((sum, shop) => sum + (shop.daily_average || 0), 0) / shopData.length).toFixed(2)}
+                                                            {(currentData.shopData.reduce((sum, shop) => sum + (shop.daily_average || 0), 0) / currentData.shopData.length).toFixed(2)}
                                                       </div>
                                                 </CardContent>
                                           </Card>
@@ -674,7 +728,7 @@ const ShopOutputStats = () => {
                               )}
 
                               {/* 空数据状态 */}
-                              {!isLoading && !error && shopData.length === 0 && (
+                              {!isLoading && !error && currentData.shopData.length === 0 && (
                                     <Card>
                                           <CardContent className="flex flex-col items-center justify-center py-8">
                                                 <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -708,9 +762,9 @@ const ShopOutputStats = () => {
                                     </CardHeader>
                                     <CardContent>
                                           <ShopStatsChart
-                                                data={shopData}
+                                                data={currentData.shopData}
                                                 groupByCategory={true}
-                                                maxDataPoints={shopData.length > 50 ? 20 : shopData.length}
+                                                maxDataPoints={currentData.shopData.length > 50 ? 20 : currentData.shopData.length}
                                                 enableLazyLoading={true}
                                           />
                                     </CardContent>
@@ -723,12 +777,12 @@ const ShopOutputStats = () => {
                                     </CardHeader>
                                     <CardContent>
                                           <ShopStatsTable
-                                                data={shopData}
+                                                data={currentData.shopData}
                                                 isLoading={isLoading}
                                                 error={error}
                                                 onRetry={handleRetry}
                                                 groupByCategory={true}
-                                                enableVirtualization={shopData.length > 50}
+                                                enableVirtualization={currentData.shopData.length > 50}
                                                 maxHeight={600}
                                           />
                                     </CardContent>
@@ -758,7 +812,7 @@ const ShopOutputStats = () => {
                               )}
 
                               {/* 数据概览卡片 */}
-                              {!isLoading && courierData.length > 0 && (
+                              {!isLoading && currentData.courierData.length > 0 && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                           <Card>
                                                 <CardHeader className="pb-2">
@@ -767,7 +821,7 @@ const ShopOutputStats = () => {
                                                       </CardTitle>
                                                 </CardHeader>
                                                 <CardContent>
-                                                      <div className="text-2xl font-bold">{courierData.length}</div>
+                                                      <div className="text-2xl font-bold">{currentData.courierData.length}</div>
                                                 </CardContent>
                                           </Card>
                                           <Card>
@@ -778,7 +832,7 @@ const ShopOutputStats = () => {
                                                 </CardHeader>
                                                 <CardContent>
                                                       <div className="text-2xl font-bold">
-                                                            {courierData.reduce((sum, courier) => sum + courier.total_quantity, 0).toLocaleString()}
+                                                            {currentData.courierData.reduce((sum, courier) => sum + courier.total_quantity, 0).toLocaleString()}
                                                       </div>
                                                 </CardContent>
                                           </Card>
@@ -790,7 +844,7 @@ const ShopOutputStats = () => {
                                                 </CardHeader>
                                                 <CardContent>
                                                       <div className="text-2xl font-bold">
-                                                            {(courierData.reduce((sum, courier) => sum + (courier.daily_average || 0), 0) / courierData.length).toFixed(2)}
+                                                            {(currentData.courierData.reduce((sum, courier) => sum + (courier.daily_average || 0), 0) / currentData.courierData.length).toFixed(2)}
                                                       </div>
                                                 </CardContent>
                                           </Card>
@@ -808,7 +862,7 @@ const ShopOutputStats = () => {
                               )}
 
                               {/* 空数据状态 */}
-                              {!isLoading && !error && courierData.length === 0 && (
+                              {!isLoading && !error && currentData.courierData.length === 0 && (
                                     <Card>
                                           <CardContent className="flex flex-col items-center justify-center py-8">
                                                 <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -842,7 +896,7 @@ const ShopOutputStats = () => {
                                     </CardHeader>
                                     <CardContent>
                                           <CourierStatsChart
-                                                data={courierData}
+                                                data={currentData.courierData}
                                                 isLoading={isLoading}
                                                 error={error}
                                                 onRetry={handleRetry}
@@ -857,11 +911,11 @@ const ShopOutputStats = () => {
                                     </CardHeader>
                                     <CardContent>
                                           <CourierStatsTable
-                                                data={courierData}
+                                                data={currentData.courierData}
                                                 isLoading={isLoading}
                                                 error={error}
                                                 onRetry={handleRetry}
-                                                enableVirtualization={courierData.length > 100}
+                                                enableVirtualization={currentData.courierData.length > 100}
                                                 maxHeight={600}
                                                 pageSize={20}
                                           />
@@ -874,13 +928,13 @@ const ShopOutputStats = () => {
                         <StatsDataDisplay
                               isLoading={isLoading}
                               selectedDimension={selectedDimension}
-                              categoryData={categoryData}
-                              dateData={dateData}
+                              categoryData={currentData.categoryData}
+                              dateData={currentData.dateData}
                               groupBy={groupBy}
                               onDateClick={(date) => {
                                     console.log('点击日期:', date);
                                     // 查找对应的日期数据
-                                    const dateItem = dateData.find(item => item.date === date);
+                                    const dateItem = currentData.dateData.find(item => item.date === date);
                                     if (dateItem) {
                                           setSelectedDateData(dateItem);
                                           setIsDateDetailModalOpen(true);
@@ -894,14 +948,44 @@ const ShopOutputStats = () => {
                         <StatsDataDisplay
                               isLoading={isLoading}
                               selectedDimension={selectedDimension}
-                              categoryData={categoryData}
+                              categoryData={currentData.categoryData}
                         />
                   );
             }
-      }, [selectedDimension, isLoading, categoryData, shopData, courierData, dateData, groupBy, error, handleRetry, handleRefresh, t]);
+      }, [selectedDimension, isLoading, currentData, groupBy, error, handleRetry, handleRefresh, t]);
 
       return (
             <div className="space-y-6">
+                  {/* 内存警告 */}
+                  {memoryWarning && (
+                        <Alert variant="destructive">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertDescription className="flex items-center justify-between">
+                                    <span>{memoryWarning}</span>
+                                    <div className="flex gap-2">
+                                          <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                      statsCache.clear();
+                                                      clearStatsCache();
+                                                      setMemoryWarning(null);
+                                                }}
+                                          >
+                                                清理缓存
+                                          </Button>
+                                          <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => window.location.reload()}
+                                          >
+                                                刷新页面
+                                          </Button>
+                                    </div>
+                              </AlertDescription>
+                        </Alert>
+                  )}
+
                   <StatsControlPanel
                         selectedDimension={selectedDimension}
                         onDimensionChange={handleDimensionChange}
@@ -941,6 +1025,12 @@ const ShopOutputStats = () => {
                         metrics={performanceMetrics}
                         isVisible={showPerformanceMonitor && isDevelopment}
                         onToggle={() => setShowPerformanceMonitor(!showPerformanceMonitor)}
+                  />
+
+                  {/* 缓存监控组件 */}
+                  <CacheMonitor
+                        isVisible={showCacheMonitor && isDevelopment}
+                        onToggle={() => setShowCacheMonitor(!showCacheMonitor)}
                   />
 
                   {/* 日期详情模态框 */}
