@@ -141,26 +141,26 @@ CREATE TABLE uploaded_files (
 
 ## 前端页面结构
 
-```
-/admin
-├── layout.tsx                 # 后台布局组件
-├── page.tsx                   # 仪表盘首页
-├── notifications/
-│   ├── page.tsx              # 通知模板列表
-│   ├── create/
-│   │   └── page.tsx          # 创建模板
-│   ├── edit/
-│   │   └── [id]/
-│   │       └── page.tsx      # 编辑模板
-│   └── styles/
-│       └── page.tsx          # 样式管理
-├── performance/
-│   ├── page.tsx              # 性能监控仪表板
-│   └── alerts/
-│       └── page.tsx          # 告警管理
-└── settings/
-    └── page.tsx              # 系统设置
-```
+````
+frontend/app/admin
+              ├── layout.tsx                 # 后台布局组件
+              ├── page.tsx                   # 仪表盘首页
+              ├── notifications/
+              │   ├── page.tsx              # 通知模板列表
+              │   ├── create/
+              │   │   └── page.tsx          # 创建模板
+              │   ├── edit/
+              │   │   └── [id]/
+              │   │       └── page.tsx      # 编辑模板
+              │   └── styles/
+              │       └── page.tsx          # 样式管理
+              ├── performance/
+              │   ├── page.tsx              # 性能监控仪表板
+              │   └── alerts/
+              │       └── page.tsx          # 告警管理
+              └── settings/
+                  └── page.tsx              # 系统设置
+              ```
 
 ## 核心组件设计
 
@@ -176,7 +176,7 @@ interface NotificationPreviewProps {
   deviceType?: "desktop" | "tablet" | "mobile";
   onClose?: () => void;
 }
-```
+````
 
 ### 2. 富文本编辑器组件 (RichTextEditor)
 

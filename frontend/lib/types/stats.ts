@@ -85,8 +85,15 @@ export interface CourierStatsItem {
   total_quantity: number;
   percentage?: number;
   daily_average?: number;
+  shops_count?: number;
+  days_count?: number;
   change_rate?: number;
   change_type?: 'increase' | 'decrease' | 'unchanged';
+  // 同比环比数据
+  mom_change_rate?: number;  // 环比变化率
+  mom_change_type?: 'increase' | 'decrease' | 'unchanged';
+  yoy_change_rate?: number;  // 同比变化率
+  yoy_change_type?: 'increase' | 'decrease' | 'unchanged';
 }
 
 /**
@@ -107,6 +114,16 @@ export interface DateStatsItem {
   date: string;
   total_quantity: number;
   percentage?: number;
+  shops_count?: number;
+  couriers_count?: number;
+  avg_quantity?: number;
+  // 环比数据
+  mom_change_rate?: number;
+  mom_change_type?: 'increase' | 'decrease' | 'unchanged';
+  // 同比数据
+  yoy_change_rate?: number;
+  yoy_change_type?: 'increase' | 'decrease' | 'unchanged';
+  // 分布数据（可选）
   distribution?: {
     [key: string]: number | string;
   };

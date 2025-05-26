@@ -31,7 +31,7 @@ interface ShopOutputTrendCardProps {
 }
 
 // 维度定义类型
-type DimensionType = 'category' | 'shop' | 'courier';
+type DimensionType = 'category' | 'shop' | 'courier' | 'date';
 
 export function ShopOutputTrendCard({ className, style, maxDisplaySeries = 5 }: ShopOutputTrendCardProps) {
       const { t } = useTranslation();
@@ -41,7 +41,7 @@ export function ShopOutputTrendCard({ className, style, maxDisplaySeries = 5 }: 
       const [isLoading, setIsLoading] = useState(true);
       const [error, setError] = useState<string | null>(null);
       const [trendData, setTrendData] = useState<ShopOutputTrendData | null>(null);
-      const [dimension, setDimension] = useState<DimensionType>('category');
+      const [dimension, setDimension] = useState<DimensionType>('date');
       const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>("all");
       const [selectedShopId, setSelectedShopId] = useState<string | undefined>("all");
       const [selectedCourierId, setSelectedCourierId] = useState<string | undefined>("all");
@@ -648,6 +648,7 @@ export function ShopOutputTrendCard({ className, style, maxDisplaySeries = 5 }: 
                                     <div>
                                           <span className="text-sm font-medium mr-2">{t("统计维度")}:</span>
                                           <ToggleGroup type="single" value={dimension} onValueChange={handleDimensionChange}>
+                                                <ToggleGroupItem value="date">{t("按日期")}</ToggleGroupItem>
                                                 <ToggleGroupItem value="category">{t("按店铺类别")}</ToggleGroupItem>
                                                 <ToggleGroupItem value="shop">{t("按店铺")}</ToggleGroupItem>
                                                 <ToggleGroupItem value="courier">{t("按快递类型")}</ToggleGroupItem>

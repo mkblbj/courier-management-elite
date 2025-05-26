@@ -34,6 +34,11 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
   const { t } = useTranslation();
   const [chartType, setChartType] = useState<"bar" | "pie">("bar");
 
+  // 过滤掉名字中包含"未指定"的快递类型
+  const filterUnspecifiedCouriers = (items: any[]) => {
+    return items.filter(item => !item.courierName?.includes('未指定'))
+  }
+
   if (isLoading) {
     return <ChartSkeleton />;
   }
@@ -50,8 +55,15 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
     );
   }
 
+  // 过滤数据
+  const filteredByCourier = filterUnspecifiedCouriers(data.byCourier)
+  const filteredByDate = data.byDate.map(dateItem => ({
+    ...dateItem,
+    details: dateItem.details ? filterUnspecifiedCouriers(dateItem.details) : []
+  }))
+
   // 准备柱状图数据
-  const barData = data.byDate.map((item) => {
+  const barData = filteredByDate.map((item) => {
     const dateObj = new Date(item.date);
     const result: any = {
       // 使用时区日期格式化替代format
@@ -73,14 +85,14 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
   // 获取所有快递类型名称（用于柱状图图例）
   const courierTypes = Array.from(
     new Set(
-      data.byDate
+      filteredByDate
         .flatMap((item) => item.details || [])
         .map((detail) => detail.courierName)
     )
   );
 
   // 准备饼图数据
-  let pieData = data.byCourier
+  let pieData = filteredByCourier
     .filter((item) => item.total > 0) // 只保留有数据的项目
     .map((item) => ({
       name: item.courierName,

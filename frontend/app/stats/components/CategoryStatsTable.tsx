@@ -4,7 +4,7 @@ import { CategoryStatsItem } from '@/lib/types/stats';
 import { cn } from '@/lib/utils';
 import { ArrowDown, ArrowUp, ArrowRight, ChevronDown, ChevronUp, Download, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
+
 import { useTranslation } from "react-i18next";
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -26,7 +26,6 @@ interface CategoryStatsExtended extends CategoryStatsItem {
 }
 
 const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading = false }) => {
-      const router = useRouter();
       const { t } = useTranslation('stats'); // 使用'stats'命名空间
       const [processedData, setProcessedData] = useState<CategoryStatsExtended[]>([]);
       const [originalData, setOriginalData] = useState<CategoryStatsExtended[]>([]);
@@ -167,10 +166,7 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
                   : <ArrowDown className="ml-1 h-4 w-4 text-blue-600" />;
       };
 
-      const handleCategoryClick = (categoryId: number) => {
-            // 导航到类别详情页面
-            router.push(`/stats/category/${categoryId}`);
-      };
+
 
       const formatNumber = (value: number) => {
             return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -250,12 +246,12 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
                   return (
                         <div className="bg-slate-50 rounded-lg px-3 py-2 inline-flex flex-col items-center gap-1 min-w-[120px]">
                               <div className="flex items-center gap-1">
-                                    <span className="text-xs text-slate-600 font-medium">同比</span>
+                                    <span className="text-xs text-slate-600 font-medium">{t('同比')}</span>
                                     {yoyElement}
                               </div>
                               <div className="w-full h-px bg-slate-200"></div>
                               <div className="flex items-center gap-1">
-                                    <span className="text-xs text-slate-600 font-medium">环比</span>
+                                    <span className="text-xs text-slate-600 font-medium">{t('环比')}</span>
                                     {momElement}
                               </div>
                         </div>
@@ -362,12 +358,9 @@ const CategoryStatsTable: React.FC<CategoryStatsTableProps> = ({ data, isLoading
                                                       className="hover:bg-slate-50/50 transition-colors border-b border-slate-100"
                                                 >
                                                       <TableCell className="font-semibold text-slate-800 min-w-[120px]">
-                                                            <button
-                                                                  onClick={() => handleCategoryClick(category.category_id)}
-                                                                  className="text-primary font-medium hover:underline focus:outline-none flex items-center hover:text-blue-600 transition-colors"
-                                                            >
+                                                            <span className="text-slate-800 font-medium">
                                                                   {category.category_name}
-                                                            </button>
+                                                            </span>
                                                       </TableCell>
                                                       <TableCell className="text-right font-mono font-semibold text-slate-800 min-w-[100px]">
                                                             {typeof category.total_quantity === 'number'

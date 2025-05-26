@@ -101,21 +101,25 @@ export default function DashboardPage() {
         }).catch(() => null)
         setLastMonthStats(lastMonthStatsResponse || { total: { total: 0 } }) // 添加默认值
 
-        // 获取近7日统计数据
+        // 获取近7日统计数据（排除今天）
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
         const sevenDaysAgo = new Date()
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
         const weeklyStatsResponse = await shippingApi.getShippingStats({
           date_from: format(sevenDaysAgo, "yyyy-MM-dd"),
-          date_to: today,
+          date_to: format(yesterday, "yyyy-MM-dd"),
         })
         setWeeklyStats(weeklyStatsResponse || { total: { total: 0 }, by_date: [] }) // 添加默认值
 
         // 获取上周统计数据
         const fourteenDaysAgo = new Date()
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+        const eightDaysAgo = new Date()
+        eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
         const lastWeekStatsResponse = await shippingApi.getShippingStats({
           date_from: format(fourteenDaysAgo, "yyyy-MM-dd"),
-          date_to: format(sevenDaysAgo, "yyyy-MM-dd"),
+          date_to: format(eightDaysAgo, "yyyy-MM-dd"),
         }).catch(() => null)
         setLastWeekStats(lastWeekStatsResponse || { total: { total: 0 } }) // 添加默认值
 
@@ -167,12 +171,12 @@ export default function DashboardPage() {
 
   const weeklyGrowth = calculateWeeklyGrowth()
 
-  // 生成最近7天的每日数据
+  // 生成最近7天的每日数据（排除今天）
   const generateDailyData = () => {
     if (!weeklyStats) return []
 
     const daily = []
-    for (let i = 6; i >= 0; i--) {
+    for (let i = 7; i >= 1; i--) {
       const date = new Date()
       date.setDate(date.getDate() - i)
       const dateStr = format(date, "yyyy-MM-dd")
@@ -401,21 +405,25 @@ export default function DashboardPage() {
       }).catch(() => null)
       setLastMonthStats(lastMonthStatsResponse || { total: { total: 0 } }) // 添加默认值
 
-      // 获取近7日统计数据
+      // 获取近7日统计数据（排除今天）
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
       const sevenDaysAgo = new Date()
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
       const weeklyStatsResponse = await shippingApi.getShippingStats({
         date_from: format(sevenDaysAgo, "yyyy-MM-dd"),
-        date_to: today,
+        date_to: format(yesterday, "yyyy-MM-dd"),
       })
       setWeeklyStats(weeklyStatsResponse || { total: { total: 0 }, by_date: [] }) // 添加默认值
 
       // 获取上周统计数据
       const fourteenDaysAgo = new Date()
       fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+      const eightDaysAgo = new Date()
+      eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
       const lastWeekStatsResponse = await shippingApi.getShippingStats({
         date_from: format(fourteenDaysAgo, "yyyy-MM-dd"),
-        date_to: format(sevenDaysAgo, "yyyy-MM-dd"),
+        date_to: format(eightDaysAgo, "yyyy-MM-dd"),
       }).catch(() => null)
       setLastWeekStats(lastWeekStatsResponse || { total: { total: 0 } }) // 添加默认值
 
@@ -786,7 +794,7 @@ export default function DashboardPage() {
                     <div className="text-center">
                       <div className="text-4xl font-bold mb-1">{weeklyStats.total.total || 0}</div>
                       <div className="flex items-center justify-center text-sm mb-4">
-                        <span className="text-gray-500 mr-2">{t("同比上周:")}</span>
+                        <span className="text-gray-500 mr-2">{t("同比上周")}:</span>
                         {weeklyGrowth !== null ? (
                           <Badge
                             variant="outline"
