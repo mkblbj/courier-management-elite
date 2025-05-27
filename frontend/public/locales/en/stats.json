@@ -97,5 +97,10 @@
   "平均每类型出力量": "Average Output per Type",
   "店铺活跃度": "Shop Activity",
   "高": "High",
-  "低": "Low"
+  "低": "Low",
+  "按日": "By Day",
+  "按周": "By Week",
+  "按月": "By Month",
+  "按年": "By Year",
+  "分组方式": "Grouping Method"
 }

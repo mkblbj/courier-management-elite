@@ -4,7 +4,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import StatsControlPanel from './StatsControlPanel';
-import StatsFilterPanel from './StatsFilterPanel';
 import StatsDataDisplay from './StatsDataDisplay';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { DateRange } from 'react-day-picker';
@@ -1010,16 +1009,13 @@ const ShopOutputStats = () => {
                         shopId={filters.shop_ids && filters.shop_ids.length > 0 ? parseInt(filters.shop_ids[0]) : undefined}
                         categoryId={filters.category_ids && filters.category_ids.length > 0 ? parseInt(filters.category_ids[0]) : undefined}
                         courierId={filters.courier_ids && filters.courier_ids.length > 0 ? parseInt(filters.courier_ids[0]) : undefined}
-                  />
-
-                  <StatsFilterPanel
-                        selectedDimension={selectedDimension}
-                        isLoading={isLoadingFilterData}
+                        // 筛选条件相关
                         onFilterChange={handleFilterChange}
                         onResetFilters={handleResetFilters}
                         courierTypes={courierTypes}
                         shopCategories={shopCategories}
                         shops={shops}
+                        isFilterLoading={isLoadingFilterData}
                   />
 
                   {renderDataDisplay}
