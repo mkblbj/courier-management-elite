@@ -2,7 +2,6 @@
 import { useTranslation } from "react-i18next";
 
 import { useState, useEffect, Suspense } from "react"
-import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -82,19 +81,6 @@ function StatsPageContent() {
       <DashboardHeader />
       <DashboardNav />
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
-        <PageHeader
-          title={t("统计分析")}
-          description={t("查看和分析发货数据和店铺出力数据")}
-          className="max-w-5xl mx-auto"
-          action={
-            <Button
-              className="bg-blue-600 hover:bg-blue-700 transition-all duration-300"
-              onClick={() => setIsExportDialogOpen(true)}
-            >
-              <Download className="mr-2 h-4 w-4" />{t("导出数据")}</Button>
-          }
-        />
-
         <div
           className={cn(
             "transition-all duration-500",
@@ -158,15 +144,23 @@ function StatsPageContent() {
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  <StatisticsFilter
-                    timeRange={timeRange}
-                    courierTypeFilter={courierTypeFilter}
-                    onTimeRangeChange={setTimeRange}
-                    onCourierTypeFilterChange={setCourierTypeFilter}
-                    onRefresh={refetch}
-                    onReset={handleReset}
-                    isLoading={isLoading}
-                  />
+                  <div className="flex items-center gap-2">
+                    <StatisticsFilter
+                      timeRange={timeRange}
+                      courierTypeFilter={courierTypeFilter}
+                      onTimeRangeChange={setTimeRange}
+                      onCourierTypeFilterChange={setCourierTypeFilter}
+                      onRefresh={refetch}
+                      onReset={handleReset}
+                      isLoading={isLoading}
+                    />
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700 transition-all duration-300"
+                      onClick={() => setIsExportDialogOpen(true)}
+                    >
+                      <Download className="mr-2 h-4 w-4" />{t("导出数据")}
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -216,6 +210,7 @@ function StatsPageContent() {
           onOpenChange={setIsExportDialogOpen}
           timeRange={timeRange}
           courierTypeFilter={courierTypeFilter}
+          statsType={statsType as 'shipping' | 'shop-output'}
         />
       </main>
     </div>
@@ -230,9 +225,6 @@ function StatsPageSkeleton() {
       <DashboardNav />
       <main className="container mx-auto py-6 px-4 sm:px-6 space-y-6">
         <div className="max-w-5xl mx-auto">
-          <Skeleton className="h-10 w-1/3 mb-2" />
-          <Skeleton className="h-4 w-2/3 mb-8" />
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <Skeleton className="h-32 rounded-lg" />
             <Skeleton className="h-32 rounded-lg" />

@@ -18,7 +18,10 @@ router.get('/shop-outputs/total', StatsController.getShopOutputsTotal.bind(Stats
 // 按类别统计
 router.get('/shop-outputs/categories', StatsController.getShopOutputsByCategory.bind(StatsController));
 
-// 导出数据
+// 导出发货数据
+router.get('/export-shipping-data', StatsController.exportShippingData.bind(StatsController));
+
+// 导出数据（店铺出力数据）
 router.get('/export-data', StatsController.getExportData.bind(StatsController));
 
 module.exports = router; 

@@ -1,7 +1,7 @@
 "use client";
 import { useTranslation } from "react-i18next";
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import {
   Dialog,
@@ -22,21 +22,26 @@ import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Download, FileSpreadsheet, FileText, CheckCircle, AlertCircle, X, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import type { DateRange } from "react-day-picker"
-import { shippingApi } from "@/services/shipping-api"
+import { api, type CourierType, getBaseApiUrl } from "@/services/api"
 
 interface ExportDataDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   timeRange: DateRange
   courierTypeFilter: string[]
+  statsType?: 'shipping' | 'shop-output' // 新增统计类型参数
 }
 
 type ExportStatus = "idle" | "processing" | "success" | "error"
 
-export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFilter }: ExportDataDialogProps) {
+export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFilter, statsType = 'shipping' }: ExportDataDialogProps) {
   const { t } = useTranslation();
 
   const { toast } = useToast()
+
+  // 快递类型列表状态
+  const [courierTypes, setCourierTypes] = useState<CourierType[]>([])
+  const [courierTypesLoading, setCourierTypesLoading] = useState(false)
 
   // 导出选项状态
   const [fileFormat, setFileFormat] = useState("csv")
@@ -47,7 +52,8 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
   const [fileName, setFileName] = useState(() => {
     const from = timeRange.from ? format(timeRange.from, "yyyy-MM-dd") : ""
     const to = timeRange.to ? format(timeRange.to, "yyyy-MM-dd") : ""
-    return `发货统计_${from}_${to}`
+    const prefix = statsType === 'shipping' ? '发货统计' : '店铺出力统计'
+    return `${prefix}_${from}_${to}`
   })
 
   // 高级选项状态
@@ -60,6 +66,39 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
   const [estimatedTime, setEstimatedTime] = useState(0)
   const [errorMessage, setErrorMessage] = useState("")
   const [downloadUrl, setDownloadUrl] = useState("")
+
+  // 获取快递类型列表
+  const fetchCourierTypes = async () => {
+    setCourierTypesLoading(true)
+    try {
+      const types = await api.getCourierTypes({ active_only: true })
+      setCourierTypes(types)
+    } catch (error) {
+      console.error('获取快递类型列表失败:', error)
+      toast({
+        title: "获取快递类型失败",
+        description: "无法加载快递类型列表，请稍后重试",
+        variant: "destructive",
+      })
+    } finally {
+      setCourierTypesLoading(false)
+    }
+  }
+
+  // 组件挂载时获取快递类型列表
+  useEffect(() => {
+    if (open) {
+      fetchCourierTypes()
+    }
+  }, [open])
+
+  // 更新时间范围时更新文件名
+  useEffect(() => {
+    const from = exportTimeRange.from ? format(exportTimeRange.from, "yyyy-MM-dd") : ""
+    const to = exportTimeRange.to ? format(exportTimeRange.to, "yyyy-MM-dd") : ""
+    const prefix = statsType === 'shipping' ? '发货统计' : '店铺出力统计'
+    setFileName(`${prefix}_${from}_${to}`)
+  }, [exportTimeRange, statsType])
 
   // 重置表单
   const resetForm = () => {
@@ -109,47 +148,59 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
     setProgress(0)
 
     try {
-      // 构建导出参数
-      const exportParams = {
-        format: fileFormat,
+      // 根据统计类型构建不同的导出参数和API端点
+      let exportParams: Record<string, any>
+      let apiEndpoint: string
+
+      // 统一使用 export-data API，通过参数区分数据类型
+      exportParams = {
         date_from: exportTimeRange.from ? format(exportTimeRange.from, "yyyy-MM-dd") : "",
         date_to: exportTimeRange.to ? format(exportTimeRange.to, "yyyy-MM-dd") : "",
-        granularity,
-        include_details: includeDetails,
-        courier_ids: selectedCourierTypes.length > 0 ? selectedCourierTypes.join(",") : undefined,
-        filename: fileName,
-        background_process: processInBackground,
-        notification_email: processInBackground ? notificationEmail : undefined,
+        courier_id: selectedCourierTypes.length > 0 ? selectedCourierTypes.join(",") : undefined,
+        data_type: statsType // 添加数据类型参数
       }
+      apiEndpoint = '/api/stats/export-data'
 
       // 模拟进度更新
       const progressInterval = setInterval(() => {
         setProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(progressInterval)
-            return 100
+          if (prev >= 90) {
+            return prev
           }
-
-          // 计算剩余时间
-          const remaining = Math.ceil((100 - prev) / 10) // 每10%大约需要1秒
+          const remaining = Math.ceil((100 - prev) / 10)
           setEstimatedTime(remaining)
-
-          return prev + 2 // 每次增加2%
+          return prev + 5
         })
-      }, 200)
+      }, 300)
 
-      // 调用实际API
-      const response = await shippingApi.exportData(exportParams)
+      // 调用对应的导出数据API
+      const apiBaseUrl = getBaseApiUrl()
+      const response = await fetch(`${apiBaseUrl}${apiEndpoint}?${new URLSearchParams(exportParams).toString()}`)
 
       clearInterval(progressInterval)
+
+      if (!response.ok) {
+        throw new Error(`导出失败: ${response.status} ${response.statusText}`)
+      }
+
+      const result = await response.json()
+
+      if (result.code !== 0) {
+        throw new Error(result.message || "导出失败")
+      }
+
       setProgress(100)
       setExportStatus("success")
 
-      if (response && response.downloadUrl) {
-        setDownloadUrl(response.downloadUrl)
-      } else {
-        throw new Error(t("导出成功但未获取到下载链接"))
-      }
+      // 生成下载数据
+      const exportData = result.data
+      console.log('API返回的数据:', exportData) // 调试信息
+      const csvContent = generateCSVContent(exportData, fileFormat)
+      const blob = new Blob([csvContent], {
+        type: 'text/csv;charset=utf-8'
+      })
+      const url = URL.createObjectURL(blob)
+      setDownloadUrl(url)
 
       toast({
         title: "导出成功",
@@ -168,15 +219,96 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
     }
   }
 
+  // 生成CSV内容
+  const generateCSVContent = (data: any, format: string): string => {
+    // 统一处理API返回的orders数据
+    if (!data || !data.orders || !Array.isArray(data.orders)) {
+      console.log('导出数据为空或格式不正确:', data)
+      return ""
+    }
+
+    if (statsType === 'shipping') {
+      // 发货数据格式
+      const headers = [
+        "订单编号",
+        "店铺名称",
+        "店铺类别",
+        "快递类型",
+        "订单日期",
+        "数量",
+        "状态",
+        "创建时间",
+        "更新时间"
+      ]
+
+      const rows = data.orders.map((order: any) => [
+        order.orderId || "",
+        order.shopName || "",
+        order.shopCategory || "",
+        order.courierType || "",
+        order.orderDate || "",
+        order.amount || 0,
+        order.status || "",
+        order.createTime || "",
+        order.updateTime || ""
+      ])
+
+      // 统一CSV格式，添加BOM以确保Excel正确识别编码
+      const csvRows = [headers, ...rows]
+      const csvContent = csvRows.map(row =>
+        row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+      ).join('\n')
+      return '\ufeff' + csvContent // 添加UTF-8 BOM
+    } else {
+      // 店铺出力数据格式
+      const headers = [
+        "订单编号",
+        "店铺名称",
+        "店铺类别",
+        "快递类型",
+        "订单日期",
+        "数量",
+        "状态",
+        "创建时间",
+        "更新时间"
+      ]
+
+      const rows = data.orders.map((order: any) => [
+        order.orderId || "",
+        order.shopName || "",
+        order.shopCategory || "",
+        order.courierType || "",
+        order.orderDate || "",
+        order.amount || 0,
+        order.status || "",
+        order.createTime || "",
+        order.updateTime || ""
+      ])
+
+      // 统一CSV格式，添加BOM以确保Excel正确识别编码
+      const csvRows = [headers, ...rows]
+      const csvContent = csvRows.map(row =>
+        row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+      ).join('\n')
+      return '\ufeff' + csvContent // 添加UTF-8 BOM
+    }
+  }
+
   // 处理下载
   const handleDownload = () => {
-    // 实际应用中应该使用真实的下载URL
+    if (!downloadUrl) return
+
     const link = document.createElement("a")
     link.href = downloadUrl
-    link.download = `${fileName}.${fileFormat}`
+    // 根据文件格式设置正确的扩展名
+    const fileExtension = 'csv'
+    link.download = `${fileName}.${fileExtension}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+
+    // 清理URL对象
+    URL.revokeObjectURL(downloadUrl)
 
     // 关闭对话框
     onOpenChange(false)
@@ -213,7 +345,7 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
                     <RadioGroupItem value="excel" id="excel" />
                     <Label htmlFor="excel" className="flex items-center">
                       <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Excel
+                      Excel (CSV)
                     </Label>
                   </div>
                 </RadioGroup>
@@ -251,34 +383,48 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
                   >{t("清除选择")}</button>
                 </div>
                 <div className="border rounded-md p-4 max-h-[150px] overflow-y-auto">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Checkbox
-                      id="all-types"
-                      checked={selectedCourierTypes.length === 0}
-                      onCheckedChange={(checked) => {
-                        if (checked) setSelectedCourierTypes([])
-                      }}
-                    />
-                    <Label htmlFor="all-types" className="font-medium">{t("全部类型")}</Label>
-                  </div>
-
-                  {/* 这里应该从API获取快递类型列表，目前使用模拟数据 */}
-                  {["顺丰速运", "中通快递", "圆通速递", "韵达快递", "申通快递"].map((type, index) => (
-                    <div key={index} className="flex items-center space-x-2 mb-2 ml-4">
-                      <Checkbox
-                        id={`type-${index}`}
-                        checked={selectedCourierTypes.includes(index.toString())}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedCourierTypes((prev) => [...prev, index.toString()])
-                          } else {
-                            setSelectedCourierTypes((prev) => prev.filter((id) => id !== index.toString()))
-                          }
-                        }}
-                      />
-                      <Label htmlFor={`type-${index}`}>{type}</Label>
+                  {courierTypesLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span className="text-sm text-muted-foreground">{t("加载中...")}</span>
                     </div>
-                  ))}
+                  ) : (
+                    <>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Checkbox
+                          id="all-types"
+                          checked={selectedCourierTypes.length === 0}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSelectedCourierTypes([])
+                          }}
+                        />
+                        <Label htmlFor="all-types" className="font-medium">{t("全部类型")}</Label>
+                      </div>
+
+                      {courierTypes.map((type) => (
+                        <div key={type.id} className="flex items-center space-x-2 mb-2 ml-4">
+                          <Checkbox
+                            id={`type-${type.id}`}
+                            checked={selectedCourierTypes.includes(type.id.toString())}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedCourierTypes((prev) => [...prev, type.id.toString()])
+                              } else {
+                                setSelectedCourierTypes((prev) => prev.filter((id) => id !== type.id.toString()))
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`type-${type.id}`}>{type.name}</Label>
+                        </div>
+                      ))}
+
+                      {courierTypes.length === 0 && (
+                        <div className="text-center py-4 text-sm text-muted-foreground">
+                          {t("暂无快递类型数据")}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -374,7 +520,7 @@ export function ExportDataDialog({ open, onOpenChange, timeRange, courierTypeFil
               <div className="bg-green-50 text-green-700 rounded-full p-6 mb-4">
                 <CheckCircle className="h-12 w-12" />
               </div>
-              <p className="text-center">{t("文件名:")}{fileName}.{fileFormat}
+              <p className="text-center">{t("文件名:")}{fileName}.csv
               </p>
             </div>
 

@@ -1740,7 +1740,119 @@ class StatsController {
   }
 
   /**
-   * 获取导出数据
+   * 导出发货数据
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async exportShippingData(req, res) {
+    try {
+      // 解析请求参数
+      const dateFrom = req.query.date_from || null;
+      const dateTo = req.query.date_to || null;
+      const courierIds = req.query.courier_ids ? req.query.courier_ids.split(',').map(id => parseInt(id)) : null;
+      const format = req.query.format || 'excel';
+      
+      console.log('导出发货数据请求参数:', { date_from: dateFrom, date_to: dateTo, courier_ids: courierIds, format });
+      
+      // 创建SQL查询来获取详细的发货数据
+      const db = require('../db');
+      
+      let sql = `
+        SELECT 
+          CONCAT('SR', LPAD(sr.id, 8, '0')) as recordId,
+          c.name as courierName,
+          c.code as courierCode,
+          sr.quantity as quantity,
+          sr.date as shippingDate,
+          sr.created_at as createTime,
+          sr.updated_at as updateTime
+        FROM 
+          shipping_records sr
+        LEFT JOIN couriers c ON sr.courier_id = c.id
+        WHERE 
+          1=1
+      `;
+      
+      const params = [];
+      
+      if (courierIds && courierIds.length > 0) {
+        sql += ` AND sr.courier_id IN (${courierIds.map(() => '?').join(',')})`;
+        params.push(...courierIds);
+      }
+      
+      if (dateFrom) {
+        sql += ` AND sr.date >= ?`;
+        params.push(dateFrom);
+      }
+      
+      if (dateTo) {
+        sql += ` AND sr.date <= ?`;
+        params.push(dateTo);
+      }
+      
+      sql += ` ORDER BY sr.date DESC, sr.created_at DESC`;
+      
+      const records = await db.query(sql, params);
+      
+      // 计算汇总信息
+      const totalQuantity = records.reduce((sum, record) => sum + (record.quantity || 0), 0);
+      const totalRecords = records.length;
+      
+      // 按快递类型分组统计
+      const courierStats = {};
+      records.forEach(record => {
+        const courierName = record.courierName || '未知快递';
+        if (!courierStats[courierName]) {
+          courierStats[courierName] = {
+            courierName,
+            courierCode: record.courierCode || '',
+            totalQuantity: 0,
+            recordCount: 0
+          };
+        }
+        courierStats[courierName].totalQuantity += record.quantity || 0;
+        courierStats[courierName].recordCount += 1;
+      });
+      
+      // 构建响应数据
+      const responseData = {
+        records: records.map(record => ({
+          recordId: record.recordId,
+          courierName: record.courierName || '未知快递',
+          courierCode: record.courierCode || '',
+          quantity: record.quantity || 0,
+          shippingDate: record.shippingDate,
+          createTime: record.createTime,
+          updateTime: record.updateTime
+        })),
+        total: totalRecords,
+        summary: {
+          totalQuantity: totalQuantity,
+          totalRecords: totalRecords,
+          courierStats: Object.values(courierStats),
+          dateRange: {
+            from: dateFrom || (records.length > 0 ? records[records.length - 1].shippingDate : null),
+            to: dateTo || (records.length > 0 ? records[0].shippingDate : null)
+          }
+        }
+      };
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data: responseData
+      });
+    } catch (error) {
+      console.error('导出发货数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '导出发货数据失败'
+      });
+    }
+  }
+
+  /**
+   * 获取导出数据（店铺出力数据）
    * @param {Object} req 请求对象
    * @param {Object} res 响应对象
    */
