@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Google Fonts 导入 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 @theme {
   /* Light theme colors */
   --color-background: hsl(0 0% 100%);
@@ -33,6 +39,44 @@
     background-color: hsl(var(--color-background));
     color: hsl(var(--color-foreground));
     transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: 
+      "Inter", 
+      "Noto Sans JP", 
+      "Hiragino Sans", 
+      "Hiragino Kaku Gothic ProN", 
+      "Yu Gothic", 
+      "YuGothic", 
+      "Meiryo", 
+      "MS Gothic", 
+      sans-serif;
+  }
+
+  /* 日语字体优化 */
+  :lang(ja) {
+    font-family: 
+      "Noto Sans JP", 
+      "Hiragino Sans", 
+      "Hiragino Kaku Gothic ProN", 
+      "Yu Gothic", 
+      "YuGothic", 
+      "Meiryo", 
+      "MS Gothic", 
+      sans-serif;
+    font-feature-settings: "palt" 1; /* 比例字距调整 */
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 中文字体优化 */
+  :lang(zh), :lang(zh-CN), :lang(zh-TW) {
+    font-family: 
+      "Inter", 
+      "Noto Sans SC", 
+      "Noto Sans TC", 
+      "PingFang SC", 
+      "PingFang TC", 
+      "Microsoft YaHei", 
+      "SimHei", 
+      sans-serif;
   }
 
   /* Dark theme overrides */
