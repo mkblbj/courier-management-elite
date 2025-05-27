@@ -1006,6 +1006,10 @@ const ShopOutputStats = () => {
                               clearStatsCache();
                               // 注意：不需要手动调用fetchData，因为groupBy变化会触发fetchData重新创建和执行
                         }}
+                        // 导出相关的筛选参数
+                        shopId={filters.shop_ids && filters.shop_ids.length > 0 ? parseInt(filters.shop_ids[0]) : undefined}
+                        categoryId={filters.category_ids && filters.category_ids.length > 0 ? parseInt(filters.category_ids[0]) : undefined}
+                        courierId={filters.courier_ids && filters.courier_ids.length > 0 ? parseInt(filters.courier_ids[0]) : undefined}
                   />
 
                   <StatsFilterPanel

@@ -1987,6 +1987,56 @@
 }
 ```
 
+### 6. 获取导出数据
+
+获取用于导出的详细订单数据，支持多种筛选条件。
+
+**请求方法**: GET  
+**URL**: `/api/stats/export-data`
+
+**查询参数**:
+
+| 参数        | 类型   | 必需 | 描述                      |
+| ----------- | ------ | ---- | ------------------------- |
+| date_from   | string | 否   | 开始日期，格式 YYYY-MM-DD |
+| date_to     | string | 否   | 结束日期，格式 YYYY-MM-DD |
+| shop_id     | number | 否   | 筛选特定店铺              |
+| category_id | number | 否   | 筛选特定店铺类别          |
+| courier_id  | number | 否   | 筛选特定快递类型          |
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": {
+    "orders": [
+      {
+        "orderId": "SO00000001",
+        "shopName": "东京旗舰店",
+        "shopCategory": "电商平台",
+        "courierType": "顺丰速运",
+        "orderDate": "2023-08-01",
+        "amount": 25,
+        "status": "已完成",
+        "createTime": "2023-08-01T17:00:00.000Z",
+        "updateTime": "2023-08-01T17:00:00.000Z"
+      }
+    ],
+    "total": 100,
+    "summary": {
+      "totalAmount": 2500,
+      "totalOrders": 100,
+      "dateRange": {
+        "from": "2023-08-01",
+        "to": "2023-08-31"
+      }
+    }
+  }
+}
+```
+
 ## 仪表盘 API
 
 仪表盘用于展示快递管理系统的关键指标。

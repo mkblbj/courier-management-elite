@@ -1738,6 +1738,118 @@ class StatsController {
       });
     }
   }
+
+  /**
+   * 获取导出数据
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async getExportData(req, res) {
+    try {
+      // 解析请求参数
+      const dateFrom = req.query.date_from || null;
+      const dateTo = req.query.date_to || null;
+      const shopId = req.query.shop_id ? parseInt(req.query.shop_id) : null;
+      const categoryId = req.query.category_id ? parseInt(req.query.category_id) : null;
+      const courierId = req.query.courier_id ? parseInt(req.query.courier_id) : null;
+      
+      console.log('导出数据请求参数:', { date_from: dateFrom, date_to: dateTo, shop_id: shopId, category_id: categoryId, courier_id: courierId });
+      
+      // 创建SQL查询来获取详细的出力数据
+      const db = require('../db');
+      
+      let sql = `
+        SELECT 
+          CONCAT('SO', LPAD(so.id, 8, '0')) as orderId,
+          s.name as shopName,
+          sc.name as shopCategory,
+          c.name as courierType,
+          so.output_date as orderDate,
+          so.quantity as amount,
+          '已完成' as status,
+          so.created_at as createTime,
+          so.updated_at as updateTime
+        FROM 
+          shop_outputs so
+        LEFT JOIN shops s ON so.shop_id = s.id
+        LEFT JOIN shop_categories sc ON s.category_id = sc.id
+        LEFT JOIN couriers c ON so.courier_id = c.id
+        WHERE 
+          1=1
+      `;
+      
+      const params = [];
+      
+      if (shopId) {
+        sql += ` AND so.shop_id = ?`;
+        params.push(shopId);
+      }
+      
+      if (categoryId) {
+        sql += ` AND s.category_id = ?`;
+        params.push(categoryId);
+      }
+      
+      if (courierId) {
+        sql += ` AND so.courier_id = ?`;
+        params.push(courierId);
+      }
+      
+      if (dateFrom) {
+        sql += ` AND so.output_date >= ?`;
+        params.push(dateFrom);
+      }
+      
+      if (dateTo) {
+        sql += ` AND so.output_date <= ?`;
+        params.push(dateTo);
+      }
+      
+      sql += ` ORDER BY so.output_date DESC, so.created_at DESC`;
+      
+      const orders = await db.query(sql, params);
+      
+      // 计算汇总信息
+      const totalAmount = orders.reduce((sum, order) => sum + (order.amount || 0), 0);
+      const totalOrders = orders.length;
+      
+      // 构建响应数据
+      const responseData = {
+        orders: orders.map(order => ({
+          orderId: order.orderId,
+          shopName: order.shopName || '未知店铺',
+          shopCategory: order.shopCategory || '未分类',
+          courierType: order.courierType || '未知快递',
+          orderDate: order.orderDate,
+          amount: order.amount || 0,
+          status: order.status,
+          createTime: order.createTime,
+          updateTime: order.updateTime
+        })),
+        total: totalOrders,
+        summary: {
+          totalAmount: totalAmount,
+          totalOrders: totalOrders,
+          dateRange: {
+            from: dateFrom || (orders.length > 0 ? orders[orders.length - 1].orderDate : null),
+            to: dateTo || (orders.length > 0 ? orders[0].orderDate : null)
+          }
+        }
+      };
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data: responseData
+      });
+    } catch (error) {
+      console.error('获取导出数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '获取导出数据失败'
+      });
+    }
+  }
 }
 
 module.exports = new StatsController(); 
