@@ -17,6 +17,33 @@ const nextConfig = {
       ? process.env.ALLOWED_ORIGINS.split(',') 
       : ['localhost', '.local', 'host.docker.internal'],
   },
+  // 添加webpack配置来减少警告
+  webpack: (config, { dev, isServer }) => {
+    // 减少开发环境的警告
+    if (dev) {
+      config.infrastructureLogging = {
+        level: 'error',
+      };
+      
+      // 忽略特定的弃用警告
+      config.ignoreWarnings = [
+        /Critical dependency: the request of a dependency is an expression/,
+        /Module not found: Can't resolve/,
+      ];
+    }
+
+    // 优化构建性能
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+
+    return config;
+  },
   async headers() {
     return [
       {

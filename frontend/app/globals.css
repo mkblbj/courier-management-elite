@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  /* Light theme colors */
   --color-background: hsl(0 0% 100%);
   --color-foreground: hsl(222.2 84% 4.9%);
   --color-card: hsl(0 0% 100%);
@@ -24,61 +25,68 @@
 }
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
-
   * {
-    border-color: hsl(var(--border));
+    border-color: transparent;
   }
+  
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: hsl(var(--color-background));
+    color: hsl(var(--color-foreground));
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Dark theme overrides */
+  .dark {
+    --color-background: hsl(224 71% 4%);
+    --color-foreground: hsl(213 31% 91%);
+    --color-card: hsl(224 71% 4%);
+    --color-card-foreground: hsl(213 31% 91%);
+    --color-popover: hsl(224 71% 4%);
+    --color-popover-foreground: hsl(213 31% 91%);
+    --color-primary: hsl(210 40% 98%);
+    --color-primary-foreground: hsl(222.2 47.4% 11.2%);
+    --color-secondary: hsl(222.2 84% 4.9%);
+    --color-secondary-foreground: hsl(210 40% 98%);
+    --color-muted: hsl(223 47% 11%);
+    --color-muted-foreground: hsl(215.4 16.3% 56.9%);
+    --color-accent: hsl(223 47% 11%);
+    --color-accent-foreground: hsl(210 40% 98%);
+    --color-destructive: hsl(0 63% 31%);
+    --color-destructive-foreground: hsl(210 40% 98%);
+    --color-border: hsl(223 47% 11%);
+    --color-input: hsl(223 47% 11%);
+    --color-ring: hsl(212.7 26.8% 83.9%);
   }
 }
 
-
+@layer components {
+  /* 卡片样式优化 */
+  .card {
+    background-color: hsl(var(--color-card));
+    border: 1px solid hsl(var(--color-border) / 0.1);
+    border-radius: calc(var(--radius) + 2px);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    transition: all 0.2s ease;
+  }
+  
+  .dark .card {
+    background-color: hsl(var(--color-card));
+    border: 1px solid hsl(var(--color-border) / 0.2);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  }
+  
+  /* 按钮样式优化 */
+  .btn-primary {
+    background-color: hsl(var(--color-primary));
+    color: hsl(var(--color-primary-foreground));
+    border: none;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary:hover {
+    background-color: hsl(var(--color-primary) / 0.9);
+  }
+}
 
 @layer utilities {
   /* Animation keyframes */
@@ -194,6 +202,15 @@
   .backface-hidden {
     backface-visibility: hidden;
   }
+  
+  /* 边框工具类 */
+  .border-subtle {
+    border: 1px solid hsl(var(--color-border) / 0.1);
+  }
+  
+  .dark .border-subtle {
+    border: 1px solid hsl(var(--color-border) / 0.2);
+  }
 }
 
 /* Respect user's motion preferences */
@@ -208,8 +225,8 @@
 
 /* Add smooth transition for theme changes */
 .theme-transition {
-  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-              color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-              border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-              box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
