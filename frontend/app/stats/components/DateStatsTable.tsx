@@ -25,7 +25,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
       onDateClick,
       groupBy = 'day'
 }) => {
-      const { t } = useTranslation('stats');
+      const { t, i18n } = useTranslation('stats');
       const [sortField, setSortField] = useState<SortField>('date');
       const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
       const [currentPage, setCurrentPage] = useState(1);
@@ -91,7 +91,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
 
       // 获取当前语言的 date-fns locale
       const getDateLocale = () => {
-            const currentLang = t('language') || 'zh-CN';
+            const currentLang = i18n.language || 'zh-CN';
             switch (currentLang) {
                   case 'en':
                   case 'English':
@@ -118,7 +118,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
             try {
                   if (groupBy === 'week') {
                         const [year, week] = dateStr.split('-');
-                        const currentLang = t('language') || 'zh-CN';
+                        const currentLang = i18n.language || 'zh-CN';
                         if (currentLang === 'en' || currentLang === 'English') {
                               return `Week ${week}, ${year}`;
                         } else if (currentLang === 'ja' || currentLang === '日本語') {
@@ -128,7 +128,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                         }
                   } else if (groupBy === 'month') {
                         const [year, month] = dateStr.split('-');
-                        const currentLang = t('language') || 'zh-CN';
+                        const currentLang = i18n.language || 'zh-CN';
                         if (currentLang === 'en' || currentLang === 'English') {
                               const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                               return `${monthNames[parseInt(month) - 1]} ${year}`;
@@ -138,7 +138,7 @@ const DateStatsTable: React.FC<DateStatsTableProps> = ({
                               return `${year}年${month}月`;
                         }
                   } else if (groupBy === 'year') {
-                        const currentLang = t('language') || 'zh-CN';
+                        const currentLang = i18n.language || 'zh-CN';
                         if (currentLang === 'en' || currentLang === 'English') {
                               return dateStr;
                         } else {

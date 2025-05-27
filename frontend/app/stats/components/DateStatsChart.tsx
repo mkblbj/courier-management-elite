@@ -36,7 +36,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
       maxDataPoints = 100,
       enableLazyLoading = true
 }) => {
-      const { t } = useTranslation('stats');
+      const { t, i18n } = useTranslation('stats');
       const [showMovingAverage, setShowMovingAverage] = useState(true);
       const [showComparison, setShowComparison] = useState(true);
       const [movingAveragePeriod, setMovingAveragePeriod] = useState(7);
@@ -94,7 +94,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
             return sortedData.map((item, index) => {
                   // 获取当前语言的 date-fns locale
                   const getDateLocale = () => {
-                        const currentLang = t('language') || 'zh-CN';
+                        const currentLang = i18n.language || 'zh-CN';
                         switch (currentLang) {
                               case 'en':
                               case 'English':
@@ -119,7 +119,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                   // 格式化日期显示
                   let formattedDate;
                   try {
-                        const currentLang = t('language') || 'zh-CN';
+                        const currentLang = i18n.language || 'zh-CN';
                         const locale = getDateLocale();
 
                         if (groupBy === 'week') {
@@ -187,7 +187,7 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                         yoy_change_rate: Number(item.yoy_change_rate) || 0
                   };
             });
-      }, [sampledData, groupBy, showMovingAverage, movingAveragePeriod, t]);
+      }, [sampledData, groupBy, showMovingAverage, movingAveragePeriod, t, i18n.language]);
 
       // 计算统计信息
       const stats = useMemo(() => {

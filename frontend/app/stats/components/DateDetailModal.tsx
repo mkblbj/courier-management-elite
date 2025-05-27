@@ -38,13 +38,13 @@ const DateDetailModal: React.FC<DateDetailModalProps> = ({
       groupBy,
       data
 }) => {
-      const { t } = useTranslation('stats');
+      const { t, i18n } = useTranslation('stats');
       const [isLoading, setIsLoading] = useState(false);
 
       // 格式化日期显示
       const formatDateDisplay = (dateStr: string, groupBy: string) => {
             try {
-                  const currentLang = t('language') || 'zh-CN';
+                  const currentLang = i18n.language || 'zh-CN';
 
                   if (groupBy === 'day') {
                         const date = new Date(dateStr);
