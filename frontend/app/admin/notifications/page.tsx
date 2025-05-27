@@ -240,7 +240,7 @@ export default function NotificationsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
                               >
-                                    <Card className="group hover:shadow-lg transition-all duration-200">
+                                    <Card className="group">
                                           <CardHeader className="pb-3">
                                                 <div className="flex items-start justify-between">
                                                       <div className="flex-1">

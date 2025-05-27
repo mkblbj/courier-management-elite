@@ -583,9 +583,9 @@ export default function DashboardPage() {
                       <h3 className="text-lg font-medium mb-4">{t("发货数据")}</h3>
                       {/* 第一行：今日发货总量 */}
                       <div className="mb-4">
-                        <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-blue-50">
-                          <div className="text-sm text-gray-600 mb-1">{t("今日发货总量")}</div>
-                          <div className="text-3xl font-bold text-blue-700">
+                        <div className="border-2 border-blue-200 dark:border-blue-700 rounded-lg p-4 flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/20 shadow-sm">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 mb-1">{t("今日发货总量")}</div>
+                          <div className="text-3xl font-bold text-blue-700 dark:text-blue-400">
                             {todayStats?.total?.total || 0}
                           </div>
                         </div>
@@ -593,16 +593,16 @@ export default function DashboardPage() {
 
                       {/* 第二行：明日预测总量和今日未发送数目 */}
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-orange-50">
-                          <div className="text-sm text-gray-600 mb-1">{t("明日预测总量")}</div>
-                          <div className="text-3xl font-bold text-orange-700">
+                        <div className="border-2 border-orange-200 dark:border-orange-700 rounded-lg p-4 flex flex-col items-center justify-center bg-orange-50 dark:bg-orange-900/20 shadow-sm">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 mb-1">{t("明日预测总量")}</div>
+                          <div className="text-3xl font-bold text-orange-700 dark:text-orange-400">
                             {shippingData.tomorrowTotal || 0}
                           </div>
                         </div>
 
-                        <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-red-50">
-                          <div className="text-sm text-gray-600 mb-1">{t("今日未发送数目")}</div>
-                          <div className="text-3xl font-bold text-red-700">
+                        <div className="border-2 border-red-200 dark:border-red-700 rounded-lg p-4 flex flex-col items-center justify-center bg-red-50 dark:bg-red-900/20 shadow-sm">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 mb-1">{t("今日未发送数目")}</div>
+                          <div className="text-3xl font-bold text-red-700 dark:text-red-400">
                             {Math.max(0, (todayTotalOutput || 0) - (todayStats?.total?.total || 0))}
                           </div>
                         </div>
@@ -614,28 +614,28 @@ export default function DashboardPage() {
                       <h3 className="text-lg font-medium mb-4">{t("出力数据")}</h3>
                       {/* 第一行：今日出力总量 */}
                       <div className="mb-4">
-                        <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-green-50">
-                          <div className="text-sm text-gray-600 mb-1">{t("今日出力总量")}</div>
+                        <div className="border-2 border-green-200 dark:border-green-700 rounded-lg p-4 flex flex-col items-center justify-center bg-green-50 dark:bg-green-900/20 shadow-sm">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 mb-1">{t("今日出力总量")}</div>
                           {isLoadingTodayOutput ? (
                             <div className="h-10 flex items-center justify-center">
-                              <RefreshCw className="h-5 w-5 animate-spin text-green-700" />
+                              <RefreshCw className="h-5 w-5 animate-spin text-green-700 dark:text-green-400" />
                             </div>
                           ) : (
-                            <div className="text-3xl font-bold text-green-700">{todayTotalOutput}</div>
+                            <div className="text-3xl font-bold text-green-700 dark:text-green-400">{todayTotalOutput}</div>
                           )}
                         </div>
                       </div>
 
                       {/* 第二行：明日出力预测 */}
                       <div className="grid grid-cols-1 gap-4">
-                        <div className="border rounded-lg p-4 flex flex-col items-center justify-center bg-purple-50">
-                          <div className="text-sm text-gray-600 mb-1">{t("明日出力预测")}</div>
+                        <div className="border-2 border-purple-200 dark:border-purple-700 rounded-lg p-4 flex flex-col items-center justify-center bg-purple-50 dark:bg-purple-900/20 shadow-sm">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 mb-1">{t("明日出力预测")}</div>
                           {isLoadingTomorrowOutput ? (
                             <div className="h-10 flex items-center justify-center">
-                              <RefreshCw className="h-5 w-5 animate-spin text-purple-700" />
+                              <RefreshCw className="h-5 w-5 animate-spin text-purple-700 dark:text-purple-400" />
                             </div>
                           ) : (
-                            <div className="text-3xl font-bold text-purple-700">{tomorrowTotalOutput}</div>
+                            <div className="text-3xl font-bold text-purple-700 dark:text-purple-400">{tomorrowTotalOutput}</div>
                           )}
                         </div>
                       </div>
@@ -744,9 +744,9 @@ export default function DashboardPage() {
 
                         // 创建快递类型卡片
                         return (
-                          <div key={courierType.id} className="border rounded-lg p-3 flex flex-col items-center">
-                            <div className="text-sm font-medium text-gray-700 mb-2">{courierType.name}</div>
-                            <div className="text-2xl font-bold">{typeQuantity}</div>
+                          <div key={courierType.id} className="border-2 border-gray-200 dark:border-gray-600 rounded-lg p-3 flex flex-col items-center bg-white dark:bg-gray-800 shadow-sm">
+                            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{courierType.name}</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{typeQuantity}</div>
                           </div>
                         );
                       })}
