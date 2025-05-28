@@ -1,3 +1,10 @@
+/*
+ * 注意：此组件已暂时停用 (2024-01-XX)
+ * 原因：现在不再使用批量录入功能
+ * 保留代码以备将来可能重新启用
+ * 如需重新启用，请取消注释下面的代码和相关导出
+ */
+
 "use client";
 import { useTranslation } from "react-i18next";
 
@@ -56,7 +63,9 @@ interface BatchEntryFormProps {
   isLoading: boolean
 }
 
-export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
+// 暂时注释掉导出，保留代码以备将来使用
+// export function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
+function BatchEntryForm({ onSubmit, isLoading }: BatchEntryFormProps) {
   const { t } = useTranslation();
 
   const { courierTypes, isLoading: isLoadingCourierTypes } = useCourierTypes()

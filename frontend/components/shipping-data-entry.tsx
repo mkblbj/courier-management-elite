@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
-import { SingleEntryForm } from "@/components/single-entry-form"
-import { BatchEntryForm } from "@/components/batch-entry-form"
+// 暂时注释掉这两个组件的导入，因为它们现在不使用了
+// import { SingleEntryForm } from "@/components/single-entry-form"
+// import { BatchEntryForm } from "@/components/batch-entry-form"
 import { RecentEntries } from "@/components/recent-entries"
 import { useShippingData } from "@/hooks/use-shipping-data"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -85,10 +86,18 @@ export function ShippingDataEntry() {
             <TabsTrigger value="batch" className="text-sm sm:text-base transition-all duration-200">{t("批量录入")}</TabsTrigger>
           </TabsList>
           <TabsContent value="single" className="animate-fade-in">
-            <SingleEntryForm onSubmit={handleSingleSubmit} isLoading={isLoading} />
+            {/* <SingleEntryForm onSubmit={handleSingleSubmit} isLoading={isLoading} /> */}
+            <div className="p-8 text-center text-gray-500">
+              <p>{t("单条录入功能暂时停用")}</p>
+              <p className="text-sm mt-2">{t("如需使用，请联系管理员")}</p>
+            </div>
           </TabsContent>
           <TabsContent value="batch" className="animate-fade-in">
-            <BatchEntryForm onSubmit={handleBatchSubmit} isLoading={isLoading} />
+            {/* <BatchEntryForm onSubmit={handleBatchSubmit} isLoading={isLoading} /> */}
+            <div className="p-8 text-center text-gray-500">
+              <p>{t("批量录入功能暂时停用")}</p>
+              <p className="text-sm mt-2">{t("如需使用，请联系管理员")}</p>
+            </div>
           </TabsContent>
         </Tabs>
       </Card>

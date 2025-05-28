@@ -1,3 +1,10 @@
+/*
+ * 注意：此组件已暂时停用 (2024-01-XX)
+ * 原因：现在不再使用单条录入功能
+ * 保留代码以备将来可能重新启用
+ * 如需重新启用，请取消注释下面的代码
+ */
+
 "use client";
 import { useTranslation } from "react-i18next";
 
@@ -49,7 +56,8 @@ interface SingleEntryFormProps {
   initialData?: ShippingEntry
 }
 
-export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntryFormProps) {
+// export function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntryFormProps) {
+function SingleEntryForm({ onSubmit, isLoading, initialData }: SingleEntryFormProps) {
   const { t } = useTranslation();
 
   const { courierTypes, isLoading: isLoadingCourierTypes } = useCourierTypes()
