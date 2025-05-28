@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { SingleEntryForm } from "@/components/single-entry-form"
+import { EditEntryForm } from "@/components/edit-entry-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { DateRange } from "react-day-picker"
@@ -261,17 +261,37 @@ export function RecentEntries({
         </CardHeader>
         <CardContent>
           {entries.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">{t("暂无记录")}</div>
+            <div className="text-center py-12">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Package className="w-8 h-8 text-gray-400" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium text-gray-900">{t("暂无记录")}</h3>
+                  <p className="text-sm text-gray-500 max-w-sm">
+                    {dateFilter || courierTypeId
+                      ? t("当前筛选条件下没有找到记录，请尝试调整筛选条件")
+                      : t("还没有发货记录，点击上方表单开始录入数据")
+                    }
+                  </p>
+                </div>
+                {(dateFilter || courierTypeId) && (
+                  <Button variant="outline" onClick={onClearFilters} className="mt-2">
+                    {t("清除筛选条件")}
+                  </Button>
+                )}
+              </div>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="animate-fade-in" style={{ animationDelay: "50ms" }}>
-                    <TableHead className="w-[120px]">{t("日期")}</TableHead>
-                    <TableHead className="w-[180px]">{t("快递类型")}</TableHead>
-                    <TableHead className="w-[80px] text-center">{t("数量")}</TableHead>
-                    <TableHead>{t("备注")}</TableHead>
-                    <TableHead className="w-[100px] text-center">{t("操作")}</TableHead>
+                    <TableHead className="w-[100px]">{t("日期")}</TableHead>
+                    <TableHead className="w-[140px]">{t("快递类型")}</TableHead>
+                    <TableHead className="w-[60px] text-center">{t("数量")}</TableHead>
+                    <TableHead className="min-w-0">{t("备注")}</TableHead>
+                    <TableHead className="w-[80px] text-center">{t("操作")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -284,14 +304,16 @@ export function RecentEntries({
                       )}
                       style={{ transitionDelay: `${index * 50 + 100}ms` }}
                     >
-                      <TableCell className="w-[120px] whitespace-nowrap">
-                        {format(new Date(entry.date), "yyyy-MM-dd")}
+                      <TableCell className="w-[100px] whitespace-nowrap">
+                        <div className="text-sm">{format(new Date(entry.date), "MM-dd")}</div>
                         <div className="text-xs text-gray-500">
-                          {t(`weekday.full.${format(new Date(entry.date), 'EEEE').toLowerCase()}`)}
+                          {t(`weekday.short.${format(new Date(entry.date), 'EEE').toLowerCase()}`)}
                         </div>
                       </TableCell>
-                      <TableCell className="w-[180px] font-medium">{entry.courierTypeName}</TableCell>
-                      <TableCell className="w-[80px] text-center">{entry.quantity}</TableCell>
+                      <TableCell className="w-[140px] font-medium">
+                        <div className="truncate text-sm">{entry.courierTypeName}</div>
+                      </TableCell>
+                      <TableCell className="w-[60px] text-center text-sm">{entry.quantity}</TableCell>
                       <TableCell>
                         {entry.remarks ? (
                           <Tooltip delayDuration={200}>
@@ -317,16 +339,16 @@ export function RecentEntries({
                           <span className="text-sm text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="w-[100px]">
-                        <div className="flex justify-center gap-2">
+                      <TableCell className="w-[80px]">
+                        <div className="flex justify-center gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setEditingEntry(entry)}
                             disabled={isLoading}
-                            className="h-8 w-8 transition-colors hover:bg-blue-50"
+                            className="h-7 w-7 transition-colors hover:bg-blue-50"
                           >
-                            <Edit2 className="h-4 w-4 text-blue-600" />
+                            <Edit2 className="h-3 w-3 text-blue-600" />
                             <span className="sr-only">{t("编辑")}</span>
                           </Button>
                           <Button
@@ -334,9 +356,9 @@ export function RecentEntries({
                             size="icon"
                             onClick={() => setDeleteId(entry.id.toString())}
                             disabled={isLoading}
-                            className="h-8 w-8 transition-colors hover:bg-red-50"
+                            className="h-7 w-7 transition-colors hover:bg-red-50"
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-3 w-3 text-red-500" />
                             <span className="sr-only">{t("删除")}</span>
                           </Button>
                         </div>
@@ -407,7 +429,7 @@ export function RecentEntries({
           <DialogHeader>
             <DialogTitle>{t("编辑发货记录")}</DialogTitle>
           </DialogHeader>
-          {editingEntry && <SingleEntryForm onSubmit={handleUpdate} isLoading={isLoading} initialData={editingEntry} />}
+          {editingEntry && <EditEntryForm onSubmit={handleUpdate} isLoading={isLoading} initialData={editingEntry} onCancel={() => setEditingEntry(null)} />}
         </DialogContent>
       </Dialog>
     </TooltipProvider>)
