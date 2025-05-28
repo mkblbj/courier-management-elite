@@ -421,6 +421,8 @@ export function UnifiedEntryForm({ onSubmit, isLoading }: UnifiedEntryFormProps)
                                                       ? t("已填写 {{count}} 种，共 {{total}} 件", { count: getFilledCount(), total: getTotalQuantity() })
                                                       : t("填写数量后将自动统计")
                                                 }
+                                                <div>{t("请注意：提交后将自动清空表单，方便连续录入。按Enter键可快速提交表单。")}</div>
+
                                           </div>
                                           <div className="flex gap-2 justify-center">
                                                 <Button

@@ -139,5 +139,6 @@
   "数据已更新": "Data Updated",
   "刷新失败": "Refresh Failed",
   "获取数据失败": "Failed to get data",
-  "还没有发货记录，请从左边表单开始录入数据": "No shipping records yet, please start entering data from the left form"
+  "还没有发货记录，请从左边表单开始录入数据": "No shipping records yet, please start entering data from the left form",
+  "请注意：提交后将自动清空表单，方便连续录入。按Enter键可快速提交表单。": "Please note: After submitting, the form will be automatically cleared to facilitate continuous input. Press Enter to quickly submit the form."
 }
