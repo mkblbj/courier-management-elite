@@ -511,6 +511,7 @@ export function ShopOutputTrendCard({ className, style, maxDisplaySeries = 5 }: 
                               if (value !== undefined && value !== null) {
                                     return (
                                           <circle
+                                                key={`dot-${series.id}-${props.cx}-${props.cy}`}
                                                 cx={props.cx}
                                                 cy={props.cy}
                                                 r={4}

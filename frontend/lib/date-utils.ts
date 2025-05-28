@@ -13,6 +13,12 @@ export const APP_DATE_FORMAT = process.env.NEXT_PUBLIC_DATE_FORMAT || 'yyyy-MM-d
  * 
  * 时区处理：使用formatInTimeZone将日期对象按照应用配置的时区格式化
  * 这样无论用户浏览器时区如何，都会生成基于APP_TIMEZONE的日期字符串
+ * 
+ * 注意：如果用户浏览器时区与APP_TIMEZONE不一致，会导致日期显示不正确
+ * 例如：用户浏览器时区为Asia/Shanghai，APP_TIMEZONE为Asia/Tokyo
+ * 则会导致日期显示不正确
+ * 
+ * 解决方案：使用formatInTimeZone将日期对象按照应用配置的时区格式化
  */
 export function dateToApiString(date: Date): string {
   if (!date) return '';
