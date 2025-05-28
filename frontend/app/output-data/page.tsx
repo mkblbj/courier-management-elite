@@ -254,97 +254,121 @@ export default function OutputDataPage() {
       <main className="container mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold tracking-tight mb-6">{t("出力数据")}</h1>
 
-        <Card className="mb-6">
-          <CardHeader className="px-6 py-4 border-b">
-            <CardTitle className="text-xl">{t("录入出力数据")}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <DateSelector
-                    date={selectedDate}
-                    onDateChange={(date) => date && setSelectedDate(date)}
-                    showQuickButtons={true}
-                    label={t("日期")}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <CategoryShopSelector
-                    selectedShopId={selectedShopId}
-                    onSelectShop={setSelectedShopId}
-                    label={t("店铺选择")}
-                    onlyActive={true}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <CourierSelector
-                    selectedCourierId={selectedCourierId}
-                    onSelectCourier={setSelectedCourierId}
-                    label={t("快递类型")}
-                    onlyActive={true}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">{t("数量")}</label>
-                  <Input
-                    type="number"
-                    placeholder={t("请输入数量")}
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    min="1"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">{t("备注")}</label>
-                  <Textarea
-                    placeholder={t("请输入备注（可选）")}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full h-10 min-h-10 resize-none"
-                  />
-                  <div className="mt-1.5 flex gap-2">
-                    <div className="text-xs text-gray-500">{t("快速选择")}:</div>
-                    <button
-                      type="button"
-                      onClick={() => setNotes("再発送")}
-                      className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                    >
-                      再発送
-                    </button>
+        {/* 上半部分：录入表单和数据汇总左右排列 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* 录入出力数据 - 占 1/3 宽度 */}
+          <div className="lg:col-span-1">
+            <Card className="h-full">
+              <CardHeader className="px-6 py-4 border-b">
+                <CardTitle className="text-xl">{t("录入出力数据")}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <DateSelector
+                        date={selectedDate}
+                        onDateChange={(date) => date && setSelectedDate(date)}
+                        showQuickButtons={true}
+                        label={t("日期")}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <CategoryShopSelector
+                        selectedShopId={selectedShopId}
+                        onSelectShop={setSelectedShopId}
+                        label={t("店铺选择")}
+                        onlyActive={true}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <CourierSelector
+                        selectedCourierId={selectedCourierId}
+                        onSelectCourier={setSelectedCourierId}
+                        label={t("快递类型")}
+                        onlyActive={true}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">{t("数量")}</label>
+                      <Input
+                        type="number"
+                        placeholder={t("请输入数量")}
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        min="1"
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">{t("备注")}</label>
+                      <Textarea
+                        placeholder={t("请输入备注（可选）")}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="w-full h-10 min-h-10 resize-none"
+                      />
+                      <div className="mt-1.5 flex gap-2">
+                        <div className="text-xs text-gray-500">{t("快速选择")}:</div>
+                        <button
+                          type="button"
+                          onClick={() => setNotes("再発送")}
+                          className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          再発送
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      onClick={handleAddRecord}
+                      className="bg-blue-600 hover:bg-blue-700"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("添加中...")}</>
+                      ) : t("添加记录")}
+                    </Button>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground mt-2 text-right">{t("提示：按Enter键可快速提交表单")}</div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          </div>
 
-              <div className="flex justify-end mt-4">
-                <Button
-                  onClick={handleAddRecord}
-                  className="bg-blue-600 hover:bg-blue-700"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("添加中...")}</>
-                  ) : t("添加记录")}
-                </Button>
-              </div>
+          {/* 当日数据汇总 - 占 2/3 宽度 */}
+          <div className="lg:col-span-2">
+            <Card className="h-full">
+              <CardHeader className="px-6 py-4">
+                <CardTitle className="text-xl">{t("当日数据汇总")}</CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pb-6">
+                <Suspense fallback={<ListSkeleton />}>
+                  <OutputSummary
+                    key={`summary-${refreshKey}`}
+                    selectedDate={selectedDate}
+                  />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-              <div className="text-xs text-muted-foreground mt-2 text-right">{t("提示：按Enter键可快速提交表单")}</div>
-            </div>
-          </CardContent>
-        </Card>
-
+        {/* 下半部分：最近录入数据 */}
         <Card className="mb-6">
           <CardHeader className="px-6 py-4">
             <CardTitle className="text-xl">{t("最近录入数据")}</CardTitle>
@@ -357,20 +381,6 @@ export default function OutputDataPage() {
                 onDelete={handleDeleteOutput}
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
-              />
-            </Suspense>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-6">
-          <CardHeader className="px-6 py-4">
-            <CardTitle className="text-xl">{t("当日数据汇总")}</CardTitle>
-          </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <Suspense fallback={<ListSkeleton />}>
-              <OutputSummary
-                key={`summary-${refreshKey}`}
-                selectedDate={selectedDate}
               />
             </Suspense>
           </CardContent>
