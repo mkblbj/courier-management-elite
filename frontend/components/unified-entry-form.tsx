@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { format } from "date-fns"
+import { format, getDay } from "date-fns"
 import { CalendarIcon, Plus, Minus, Package, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -58,8 +58,18 @@ interface UnifiedEntryFormProps {
 }
 
 export function UnifiedEntryForm({ onSubmit, isLoading }: UnifiedEntryFormProps) {
-      const { t } = useTranslation();
+      const { t } = useTranslation(["courier"]);
       const { courierTypes, isLoading: isLoadingCourierTypes } = useCourierTypes()
+
+      // 获取星期的翻译
+      const getWeekdayTranslation = (date: Date, useShort: boolean = true) => {
+            const dayOfWeek = getDay(date); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const weekdayKey = weekdays[dayOfWeek];
+            const translationKey = useShort ? `weekday.short.${weekdayKey}` : `weekday.full.${weekdayKey}`;
+            return t(translationKey, { ns: 'common' });
+      };
+
       const [submitting, setSubmitting] = useState(false)
       const [showResetConfirm, setShowResetConfirm] = useState(false)
       const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
@@ -140,7 +150,7 @@ export function UnifiedEntryForm({ onSubmit, isLoading }: UnifiedEntryFormProps)
                   // 显示成功提示
                   toast({
                         title: t("提交成功"),
-                        description: t(`已成功录入 ${entries.length} 条发货记录`),
+                        description: t("已成功录入 {{count}} 条发货记录", { count: entries.length }),
                         variant: "default",
                   })
             } catch (error) {
@@ -246,7 +256,7 @@ export function UnifiedEntryForm({ onSubmit, isLoading }: UnifiedEntryFormProps)
                                                                                           <>
                                                                                                 {format(field.value, "yyyy-MM-dd")}
                                                                                                 <span className="ml-2 text-xs text-gray-500">
-                                                                                                      {t(`weekday.full.${format(field.value, 'EEEE').toLowerCase()}`)}
+                                                                                                      {getWeekdayTranslation(field.value)}
                                                                                                 </span>
                                                                                           </>
                                                                                     ) : <span>{t("选择日期")}</span>}
@@ -408,7 +418,7 @@ export function UnifiedEntryForm({ onSubmit, isLoading }: UnifiedEntryFormProps)
                                     <div className="space-y-3 pt-4 border-t">
                                           <div className="text-xs text-gray-500 text-center">
                                                 {hasData
-                                                      ? t(`已填写 ${getFilledCount()} 种，共 ${getTotalQuantity()} 件`)
+                                                      ? t("已填写 {{count}} 种，共 {{total}} 件", { count: getFilledCount(), total: getTotalQuantity() })
                                                       : t("填写数量后将自动统计")
                                                 }
                                           </div>
@@ -427,7 +437,7 @@ export function UnifiedEntryForm({ onSubmit, isLoading }: UnifiedEntryFormProps)
                                                       disabled={submitting || isLoading || isLoadingCourierTypes || !hasData}
                                                       className="bg-blue-600 transition-colors hover:bg-blue-700 flex-1"
                                                 >
-                                                      {submitting ? t("提交中...") : t("提交录入")}
+                                                      {submitting ? t("提交中...") : t("提交")}
                                                 </Button>
                                           </div>
                                     </div>

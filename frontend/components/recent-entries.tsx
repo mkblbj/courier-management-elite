@@ -2,7 +2,7 @@
 import { useTranslation } from "react-i18next";
 
 import { useState, useEffect } from "react"
-import { format } from "date-fns"
+import { format, getDay } from "date-fns"
 import { Edit2, Trash2, RefreshCw, ChevronLeft, ChevronRight, X, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -64,7 +64,16 @@ export function RecentEntries({
   onClearFilters,
   isLoading,
 }: RecentEntriesProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("courier");
+
+  // 获取星期的翻译
+  const getWeekdayTranslation = (date: Date, useShort: boolean = true) => {
+    const dayOfWeek = getDay(date); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const weekdayKey = weekdays[dayOfWeek];
+    const translationKey = useShort ? `weekday.short.${weekdayKey}` : `weekday.full.${weekdayKey}`;
+    return t(translationKey, { ns: 'common' });
+  };
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [editingEntry, setEditingEntry] = useState<ShippingEntry | null>(null)
@@ -199,9 +208,9 @@ export function RecentEntries({
 
     // 添加日期筛选描述
     if (dateFilter.type === "date" && dateFilter.date) {
-      descriptions.push(`日期: ${dateFilter.date}`);
+      descriptions.push(`${t("日期")}: ${dateFilter.date}`);
     } else if (dateFilter.type === "range" && dateFilter.dateFrom && dateFilter.dateTo) {
-      descriptions.push(`日期范围: ${dateFilter.dateFrom} 至 ${dateFilter.dateTo}`);
+      descriptions.push(`${t("日期范围")}: ${dateFilter.dateFrom} 至 ${dateFilter.dateTo}`);
     } else if (dateFilter.type === "week" && dateFilter.week) {
       descriptions.push(`第 ${dateFilter.week} 周`);
     } else if (dateFilter.type === "month" && dateFilter.month) {
@@ -214,7 +223,7 @@ export function RecentEntries({
 
     // 添加快递类型筛选描述
     if (dateFilter.courierTypeId && courierTypes[dateFilter.courierTypeId.toString()]) {
-      descriptions.push(`快递类型: ${courierTypes[dateFilter.courierTypeId.toString()]}`);
+      descriptions.push(`${t("快递类型")}: ${courierTypes[dateFilter.courierTypeId.toString()]}`);
     }
 
     // 如果有多个描述，用逗号连接
@@ -271,7 +280,7 @@ export function RecentEntries({
                   <p className="text-sm text-gray-500 max-w-sm">
                     {dateFilter || courierTypeId
                       ? t("当前筛选条件下没有找到记录，请尝试调整筛选条件")
-                      : t("还没有发货记录，点击上方表单开始录入数据")
+                      : t("还没有发货记录，请从左边表单开始录入数据")
                     }
                   </p>
                 </div>
@@ -307,7 +316,7 @@ export function RecentEntries({
                       <TableCell className="w-[100px] whitespace-nowrap">
                         <div className="text-sm">{format(new Date(entry.date), "MM-dd")}</div>
                         <div className="text-xs text-gray-500">
-                          {t(`weekday.short.${format(new Date(entry.date), 'EEE').toLowerCase()}`)}
+                          {getWeekdayTranslation(new Date(entry.date))}
                         </div>
                       </TableCell>
                       <TableCell className="w-[140px] font-medium">
@@ -371,7 +380,7 @@ export function RecentEntries({
           )}
         </CardContent>
         <CardFooter className="flex items-center justify-between border-t px-6 py-3">
-          <div className="text-sm text-muted-foreground">共 {totalRecords}{t("条记录")}</div>
+          <div className="text-sm text-muted-foreground">{t("共 {{total}} 条记录", { total: totalRecords })}</div>
           <div className="flex items-center gap-2">
             <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(Number.parseInt(value))}>
               <SelectTrigger className="h-8 w-[70px]">

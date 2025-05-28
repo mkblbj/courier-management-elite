@@ -89,5 +89,6 @@
   "shop_name": "店铺名称",
   "shop_management": "店铺管理",
   "manage_courier_services_and_categories": "快递服务和分类管理",
-  "category_list": "分类列表"
+  "category_list": "分类列表",
+  "已填写 {{count}} 种，共 {{total}} 件": "已填写 {{count}} 种，共 {{total}} 件"
 }

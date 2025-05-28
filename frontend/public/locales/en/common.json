@@ -590,5 +590,8 @@
   "默认字体": "Default Font",
   "字体设置": "Font Settings",
   "为特定语言自定义字体显示": "Customize font display for specific languages",
-  "同比上周": "Compared to Last Week"
+  "同比上周": "Compared to Last Week",
+  "提交": "Submit",
+  "件": "pieces",
+  "选填项目": "Optional Items"
 }
