@@ -593,5 +593,6 @@
   "同比上周": "Compared to Last Week",
   "提交": "Submit",
   "件": "pieces",
-  "选填项目": "Optional Items"
+  "选填项目": "Optional Items",
+  "数量已更新为 {{count}}": "Quantity updated to {{count}}"
 }

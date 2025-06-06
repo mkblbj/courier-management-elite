@@ -122,5 +122,11 @@
   "noCategoriesFound": "No shop categories found",
   "shops": "Shops",
   "noAvailableShops": "No available shops",
-  "allShops": "All Shops"
+  "allShops": "All Shops",
+  "quick_edit_quantity": "Quick Edit Quantity",
+  "数量已更新为 {{count}}": "Quantity updated to {{count}}",
+  "update_failed": "Update failed",
+  "quantity_updated_success": "Quantity updated successfully",
+  "quantity_update_success": "Quantity updated successfully",
+  "quantity_update_failed": "Quantity update failed"
 }

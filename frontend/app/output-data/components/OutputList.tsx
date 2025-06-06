@@ -19,10 +19,16 @@ import {
   X,
   Clock,
   Calendar as CalendarIcon,
+  Plus,
+  Minus,
+  Check,
+  X as XIcon,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getShopOutputs } from "@/lib/api/shop-output";
+import { getShopOutputs, updateShopOutput } from "@/lib/api/shop-output";
 import { ShopOutput, ShopOutputFilter } from "@/lib/types/shop-output";
+import { useToast } from "@/components/ui/use-toast";
 import { DATE_FORMAT, DATETIME_FORMAT, FRIENDLY_DATETIME_FORMAT } from "@/lib/constants";
 import { DateSelector } from "@/components/shop-output/DateSelector";
 import {
@@ -62,10 +68,12 @@ interface OutputListProps {
   onDelete?: (id: string | number) => void;
   selectedDate?: Date;
   onDateChange?: (date: Date) => void;
+  onDataUpdate?: () => void; // 新增：数据更新回调
 }
 
-export default function OutputList({ onEdit, onDelete, selectedDate: propSelectedDate, onDateChange }: OutputListProps) {
+export default function OutputList({ onEdit, onDelete, selectedDate: propSelectedDate, onDateChange, onDataUpdate }: OutputListProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   // 状态定义
   const [loading, setLoading] = useState(true);
@@ -82,6 +90,10 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
   const [shops, setShops] = useState<{ id: number, name: string, category_id?: number, category_name?: string }[]>([]);
   const [categories, setCategories] = useState<{ id: number, name: string }[]>([]);
   const [couriers, setCouriers] = useState<{ id: number, name: string }[]>([]);
+
+  // 快捷编辑状态
+  const [editingQuantity, setEditingQuantity] = useState<{ [key: number]: number }>({});
+  const [updatingQuantity, setUpdatingQuantity] = useState<{ [key: number]: boolean }>({});
 
   // 加载商店、分类和快递类型数据
   useEffect(() => {
@@ -250,6 +262,110 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
   // 刷新数据
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  // 开始编辑数量
+  const startEditQuantity = (outputId: number, currentQuantity: number) => {
+    setEditingQuantity(prev => ({
+      ...prev,
+      [outputId]: currentQuantity
+    }));
+  };
+
+  // 取消编辑数量
+  const cancelEditQuantity = (outputId: number) => {
+    setEditingQuantity(prev => {
+      const newState = { ...prev };
+      delete newState[outputId];
+      return newState;
+    });
+  };
+
+  // 增加数量
+  const increaseQuantity = (outputId: number) => {
+    setEditingQuantity(prev => ({
+      ...prev,
+      [outputId]: (prev[outputId] || 0) + 1
+    }));
+  };
+
+  // 减少数量
+  const decreaseQuantity = (outputId: number) => {
+    setEditingQuantity(prev => ({
+      ...prev,
+      [outputId]: Math.max(0, (prev[outputId] || 0) - 1)
+    }));
+  };
+
+  // 手动输入数量
+  const handleQuantityInputChange = (outputId: number, value: string) => {
+    const numValue = parseInt(value) || 0;
+    setEditingQuantity(prev => ({
+      ...prev,
+      [outputId]: Math.max(0, numValue)
+    }));
+  };
+
+  // 确认更新数量
+  const confirmUpdateQuantity = async (output: ShopOutput) => {
+    const newQuantity = editingQuantity[output.id];
+    if (newQuantity === undefined || newQuantity === output.quantity) {
+      cancelEditQuantity(output.id);
+      return;
+    }
+
+    setUpdatingQuantity(prev => ({ ...prev, [output.id]: true }));
+
+    try {
+      // 构建更新数据 - 确保日期格式正确
+      let formattedDate = output.output_date;
+
+      // 如果output_date是ISO格式，转换为YYYY-MM-DD格式
+      if (output.output_date && output.output_date.includes('T')) {
+        const dateObj = apiStringToDate(output.output_date);
+        formattedDate = dateToApiString(dateObj);
+      }
+
+      const updateData = {
+        shop_id: output.shop_id,
+        courier_id: output.courier_id,
+        output_date: formattedDate,
+        quantity: newQuantity,
+        notes: output.notes
+      };
+
+      await updateShopOutput(output.id, updateData);
+
+      // 更新本地状态
+      setRecentOutputs(prev =>
+        prev.map(item =>
+          item.id === output.id
+            ? { ...item, quantity: newQuantity }
+            : item
+        )
+      );
+
+      // 清除编辑状态
+      cancelEditQuantity(output.id);
+
+      // 通知父组件数据已更新
+      onDataUpdate?.();
+
+      toast({
+        title: t("update_success"),
+        description: t("数量已更新为 {{count}}", { count: newQuantity }),
+      });
+
+    } catch (error) {
+      console.error("更新数量失败:", error);
+      toast({
+        title: t("update_failed"),
+        description: error instanceof Error ? error.message : t("quantity_update_error"),
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingQuantity(prev => ({ ...prev, [output.id]: false }));
+    }
   };
 
   // 获取筛选条件描述
@@ -463,7 +579,7 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
                     </TableCell>
                   </TableRow>
                   {group.outputs.map((output) => (
-                    <TableRow key={output.id}>
+                    <TableRow key={output.id} className="group">
                       <TableCell>
                         {output.output_date ? (
                           <div className="flex flex-col">
@@ -488,7 +604,73 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
                       </TableCell>
                       <TableCell>{output.shop_name || "未知"}</TableCell>
                       <TableCell>{output.courier_name || "未知"}</TableCell>
-                      <TableCell className="text-right font-medium">{output.quantity}</TableCell>
+                      <TableCell className="text-right">
+                        {editingQuantity[output.id] !== undefined ? (
+                          // 编辑模式
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => decreaseQuantity(output.id)}
+                              disabled={updatingQuantity[output.id]}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              value={editingQuantity[output.id]}
+                              onChange={(e) => handleQuantityInputChange(output.id, e.target.value)}
+                              className="w-16 h-6 text-center text-sm"
+                              min="0"
+                              disabled={updatingQuantity[output.id]}
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => increaseQuantity(output.id)}
+                              disabled={updatingQuantity[output.id]}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="icon"
+                              className="h-6 w-6 bg-green-600 hover:bg-green-700"
+                              onClick={() => confirmUpdateQuantity(output)}
+                              disabled={updatingQuantity[output.id]}
+                              title={t("确认")}
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => cancelEditQuantity(output.id)}
+                              disabled={updatingQuantity[output.id]}
+                              title={t("取消")}
+                            >
+                              <XIcon className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          // 显示模式
+                          <div className="flex items-center justify-end gap-1">
+                            <span className="font-medium">{output.quantity}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => startEditQuantity(output.id, output.quantity)}
+                              title={t("quick_edit_quantity")}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="max-w-[200px] truncate">
                         {output.notes || "-"}
                       </TableCell>

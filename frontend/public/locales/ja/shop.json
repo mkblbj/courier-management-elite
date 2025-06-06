@@ -149,5 +149,11 @@
   "shops": "お店",
   "noAvailableShops": "利用可能なお店がありません",
   "allShops": "すべてのお店",
-  "manage_shops_and_categories": "店舗とカテゴリを管理"
+  "manage_shops_and_categories": "店舗とカテゴリを管理",
+  "quick_edit_quantity": "数量を編集",
+  "数量已更新为 {{count}}": "数量は{{count}}に更新されました。",
+  "update_failed": "更新に失敗しました",
+  "quantity_updated_success": "数量が正常に更新されました",
+  "quantity_update_success": "数量が正常に更新されました",
+  "quantity_update_failed": "数量の更新に失敗しました"
 }

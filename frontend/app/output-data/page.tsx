@@ -203,6 +203,11 @@ export default function OutputDataPage() {
     }
   };
 
+  // 处理数据更新回调
+  const handleDataUpdate = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   const confirmDelete = async () => {
     if (!deletingOutput) return;
 
@@ -381,6 +386,7 @@ export default function OutputDataPage() {
                 onDelete={handleDeleteOutput}
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
+                onDataUpdate={handleDataUpdate}
               />
             </Suspense>
           </CardContent>

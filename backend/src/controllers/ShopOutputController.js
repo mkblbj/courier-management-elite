@@ -13,7 +13,7 @@ const validateShopOutput = [
   body('courier_id').notEmpty().withMessage('快递类型ID不能为空')
     .isInt().withMessage('快递类型ID必须是整数'),
   body('output_date').notEmpty().withMessage('出力日期不能为空')
-    .isDate().withMessage('出力日期格式不正确'),
+    .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('出力日期格式不正确，应为YYYY-MM-DD'),
   body('quantity').notEmpty().withMessage('出力数量不能为空')
     .isInt().withMessage('出力数量必须是整数'),
   body('notes').optional()
