@@ -581,20 +581,20 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
                   {group.outputs.map((output) => (
                     <TableRow key={output.id} className="group">
                       <TableCell>
-                        {output.output_date ? (
+                        {output.created_at ? (
                           <div className="flex flex-col">
                             <div className="flex items-center text-sm font-medium">
-                              <CalendarIcon className="mr-1 h-3 w-3 text-muted-foreground" />
-                              {formatDisplayDate(output.output_date)}
+                              <Clock className="mr-1 h-3 w-3 text-muted-foreground" />
+                              {formatInTimeZone(
+                                apiStringToDate(output.created_at),
+                                APP_TIMEZONE,
+                                'MM-dd HH:mm:ss'
+                              )}
                             </div>
-                            {output.created_at && (
+                            {output.output_date && (
                               <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                <Clock className="mr-1 h-3 w-3" />
-                                {formatInTimeZone(
-                                  apiStringToDate(output.created_at),
-                                  APP_TIMEZONE,
-                                  'HH:mm:ss'
-                                )}
+                                <CalendarIcon className="mr-1 h-3 w-3" />
+                                {formatDisplayDate(output.output_date)}
                               </div>
                             )}
                           </div>
