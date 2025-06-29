@@ -15,6 +15,7 @@ const shopOutputsTableMigration = require('./migrations/create_shop_outputs_tabl
 const shopCategoriesMigration = require('./migrations/create_shop_categories');
 const courierCategoriesMigration = require('./migrations/create_courier_categories');
 const addCategoryIdMigration = require('./migrations/add_category_id');
+const addOperationTypeMigration = require('./migrations/add_operation_type_to_shop_outputs');
 const unspecifiedCourierTypesMigration = require('./migrations/create_unspecified_courier_types');
 
 async function initializeDatabase() {
@@ -123,6 +124,10 @@ async function initializeDatabase() {
       // 3. 添加"未指定"快递类型记录
       console.log('执行添加"未指定"快递类型记录迁移...');
       await unspecifiedCourierTypesMigration.migrate();
+      
+      // 4. 添加operation_type到shop_outputs
+      console.log('执行添加operation_type到shop_outputs迁移...');
+      await addOperationTypeMigration.migrate();
       
       console.log('所有迁移脚本执行完成');
     } catch (migrationError) {
