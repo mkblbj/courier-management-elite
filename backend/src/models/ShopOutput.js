@@ -106,17 +106,25 @@ class ShopOutput {
    * @returns {Promise<number>} 新创建的ID
    */
   async add(data) {
-    // 直接创建新记录，不再检查是否存在
-    const sql = `INSERT INTO ${this.table} (shop_id, courier_id, output_date, quantity, notes) VALUES (?, ?, ?, ?, ?)`;
+    // 支持新的操作类型字段
+    const sql = `INSERT INTO ${this.table} (shop_id, courier_id, output_date, quantity, operation_type, original_quantity, merge_note, related_record_id, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     
     const quantity = data.quantity || 0;
     const notes = data.notes || null;
+    const operationType = data.operation_type || 'add';
+    const originalQuantity = data.original_quantity || null;
+    const mergeNote = data.merge_note || null;
+    const relatedRecordId = data.related_record_id || null;
 
     const result = await db.query(sql, [
       data.shop_id,
       data.courier_id,
       data.output_date,
       quantity,
+      operationType,
+      originalQuantity,
+      mergeNote,
+      relatedRecordId,
       notes
     ]);
 
@@ -154,6 +162,26 @@ class ShopOutput {
     if (data.quantity !== undefined) {
       setClauses.push("quantity = ?");
       params.push(data.quantity);
+    }
+    
+    if (data.operation_type !== undefined) {
+      setClauses.push("operation_type = ?");
+      params.push(data.operation_type);
+    }
+    
+    if (data.original_quantity !== undefined) {
+      setClauses.push("original_quantity = ?");
+      params.push(data.original_quantity);
+    }
+    
+    if (data.merge_note !== undefined) {
+      setClauses.push("merge_note = ?");
+      params.push(data.merge_note);
+    }
+    
+    if (data.related_record_id !== undefined) {
+      setClauses.push("related_record_id = ?");
+      params.push(data.related_record_id);
     }
     
     if (data.notes !== undefined) {
@@ -365,6 +393,191 @@ class ShopOutput {
     
     // 将分组结果转换为数组
     return Object.values(groupedOutputs);
+  }
+
+  /**
+   * 根据操作类型获取出力数据
+   * @param {string} operationType 操作类型 ('add', 'subtract', 'merge')
+   * @param {Object} options 其他过滤选项
+   * @returns {Promise<Array>} 出力数据列表
+   */
+  async getByOperationType(operationType, options = {}) {
+    let sql = `
+      SELECT so.*, s.name as shop_name, c.name as courier_name 
+      FROM ${this.table} so
+      LEFT JOIN shops s ON so.shop_id = s.id
+      LEFT JOIN couriers c ON so.courier_id = c.id
+      WHERE so.operation_type = ?
+    `;
+    const params = [operationType];
+
+    // 添加其他过滤条件
+    if (options.output_date) {
+      sql += ' AND so.output_date = ?';
+      params.push(options.output_date);
+    }
+
+    if (options.date_from) {
+      sql += ' AND so.output_date >= ?';
+      params.push(options.date_from);
+    }
+
+    if (options.date_to) {
+      sql += ' AND so.output_date <= ?';
+      params.push(options.date_to);
+    }
+
+    if (options.shop_id) {
+      sql += ' AND so.shop_id = ?';
+      params.push(options.shop_id);
+    }
+
+    if (options.courier_id) {
+      sql += ' AND so.courier_id = ?';
+      params.push(options.courier_id);
+    }
+
+    // 添加排序
+    sql += ' ORDER BY so.created_at DESC';
+
+    // 添加分页
+    if (options.limit && options.limit > 0) {
+      sql += ' LIMIT ?';
+      params.push(parseInt(options.limit));
+      
+      if (options.offset && options.offset > 0) {
+        sql += ' OFFSET ?';
+        params.push(parseInt(options.offset));
+      }
+    }
+
+    const results = await db.query(sql, params);
+    return Array.isArray(results) ? results : [];
+  }
+
+  /**
+   * 获取按操作类型分组的统计数据
+   * @param {Object} options 过滤选项
+   * @returns {Promise<Array>} 统计数据
+   */
+  async getStatsByOperationType(options = {}) {
+    let sql = `
+      SELECT 
+        so.operation_type,
+        COUNT(*) as record_count,
+        SUM(so.quantity) as total_quantity,
+        AVG(so.quantity) as avg_quantity
+      FROM ${this.table} so
+    `;
+    const params = [];
+    const whereClauses = [];
+
+    // 添加过滤条件
+    if (options.output_date) {
+      whereClauses.push('so.output_date = ?');
+      params.push(options.output_date);
+    }
+
+    if (options.date_from) {
+      whereClauses.push('so.output_date >= ?');
+      params.push(options.date_from);
+    }
+
+    if (options.date_to) {
+      whereClauses.push('so.output_date <= ?');
+      params.push(options.date_to);
+    }
+
+    if (options.shop_id) {
+      whereClauses.push('so.shop_id = ?');
+      params.push(options.shop_id);
+    }
+
+    if (options.courier_id) {
+      whereClauses.push('so.courier_id = ?');
+      params.push(options.courier_id);
+    }
+
+    // 添加WHERE子句
+    if (whereClauses.length > 0) {
+      sql += ' WHERE ' + whereClauses.join(' AND ');
+    }
+
+    sql += ' GROUP BY so.operation_type ORDER BY total_quantity DESC';
+
+    const results = await db.query(sql, params);
+    return Array.isArray(results) ? results : [];
+  }
+
+  /**
+   * 计算指定条件下的净增长量
+   * @param {Object} options 过滤选项
+   * @returns {Promise<Object>} 净增长统计
+   */
+  async getNetGrowthStats(options = {}) {
+    let sql = `
+      SELECT 
+        SUM(CASE WHEN so.operation_type = 'add' THEN so.quantity ELSE 0 END) as add_total,
+        SUM(CASE WHEN so.operation_type = 'subtract' THEN ABS(so.quantity) ELSE 0 END) as subtract_total,
+        SUM(CASE WHEN so.operation_type = 'merge' THEN so.quantity ELSE 0 END) as merge_total,
+        COUNT(CASE WHEN so.operation_type = 'add' THEN 1 END) as add_count,
+        COUNT(CASE WHEN so.operation_type = 'subtract' THEN 1 END) as subtract_count,
+        COUNT(CASE WHEN so.operation_type = 'merge' THEN 1 END) as merge_count
+      FROM ${this.table} so
+    `;
+    const params = [];
+    const whereClauses = [];
+
+    // 添加过滤条件
+    if (options.output_date) {
+      whereClauses.push('so.output_date = ?');
+      params.push(options.output_date);
+    }
+
+    if (options.date_from) {
+      whereClauses.push('so.output_date >= ?');
+      params.push(options.date_from);
+    }
+
+    if (options.date_to) {
+      whereClauses.push('so.output_date <= ?');
+      params.push(options.date_to);
+    }
+
+    if (options.shop_id) {
+      whereClauses.push('so.shop_id = ?');
+      params.push(options.shop_id);
+    }
+
+    if (options.courier_id) {
+      whereClauses.push('so.courier_id = ?');
+      params.push(options.courier_id);
+    }
+
+    // 添加WHERE子句
+    if (whereClauses.length > 0) {
+      sql += ' WHERE ' + whereClauses.join(' AND ');
+    }
+
+    const results = await db.query(sql, params);
+    const data = Array.isArray(results) && results.length > 0 ? results[0] : {};
+    
+    // 计算净增长量
+    const addTotal = parseInt(data.add_total) || 0;
+    const subtractTotal = parseInt(data.subtract_total) || 0;
+    const mergeTotal = parseInt(data.merge_total) || 0;
+    const netGrowth = addTotal - subtractTotal + mergeTotal;
+
+    return {
+      add_total: addTotal,
+      subtract_total: subtractTotal,
+      merge_total: mergeTotal,
+      net_growth: netGrowth,
+      add_count: parseInt(data.add_count) || 0,
+      subtract_count: parseInt(data.subtract_count) || 0,
+      merge_count: parseInt(data.merge_count) || 0,
+      total_operations: (parseInt(data.add_count) || 0) + (parseInt(data.subtract_count) || 0) + (parseInt(data.merge_count) || 0)
+    };
   }
 }
 

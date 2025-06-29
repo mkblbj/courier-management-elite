@@ -59,10 +59,18 @@ class DashboardControllerClass {
       const couriers = await Courier.getAll({ is_active: true });
       const courierMap = new Map(couriers.map(courier => [courier.id, courier]));
       
-      // 统计今日出力数据
+      // 统计今日出力数据（考虑操作类型）
       let totalQuantity = 0;
       let activeShops = 0;
       const courierStats = new Map();
+      
+      // 操作类型统计
+      let addQuantity = 0;
+      let subtractQuantity = 0;
+      let mergeQuantity = 0;
+      let addCount = 0;
+      let subtractCount = 0;
+      let mergeCount = 0;
       
       // 店铺和快递类型的关联统计
       const shopCourierStats = new Map();
@@ -76,7 +84,24 @@ class DashboardControllerClass {
           }
         }
         
-        // 累加总数量
+        // 根据操作类型统计
+        const operationType = output.operation_type || 'add';
+        switch (operationType) {
+          case 'add':
+            addQuantity += output.quantity;
+            addCount++;
+            break;
+          case 'subtract':
+            subtractQuantity += Math.abs(output.quantity);
+            subtractCount++;
+            break;
+          case 'merge':
+            mergeQuantity += output.quantity;
+            mergeCount++;
+            break;
+        }
+        
+        // 累加总数量（净增长）
         totalQuantity += output.quantity;
         
         // 添加到店铺统计
@@ -195,6 +220,16 @@ class DashboardControllerClass {
       const dashboardData = {
         date: today,
         total_quantity: totalQuantity,
+        net_growth: totalQuantity,
+        operation_stats: {
+          add_quantity: addQuantity,
+          subtract_quantity: subtractQuantity,
+          merge_quantity: mergeQuantity,
+          add_count: addCount,
+          subtract_count: subtractCount,
+          merge_count: mergeCount,
+          total_operations: addCount + subtractCount + mergeCount
+        },
         shops_count: shops.length,
         active_shops_count: activeShops,
         coverage_rate: coverageRate,

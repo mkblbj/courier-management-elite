@@ -19,6 +19,38 @@ const validateShopOutput = [
   body('notes').optional()
 ];
 
+/**
+ * 验证减少操作数据
+ */
+const validateSubtractOutput = [
+  body('shop_id').notEmpty().withMessage('店铺ID不能为空')
+    .isInt().withMessage('店铺ID必须是整数'),
+  body('courier_id').notEmpty().withMessage('快递类型ID不能为空')
+    .isInt().withMessage('快递类型ID必须是整数'),
+  body('output_date').notEmpty().withMessage('出力日期不能为空')
+    .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('出力日期格式不正确，应为YYYY-MM-DD'),
+  body('quantity').notEmpty().withMessage('减少数量不能为空')
+    .isInt({ min: 1 }).withMessage('减少数量必须是大于0的整数'),
+  body('notes').optional()
+];
+
+/**
+ * 验证合单操作数据
+ */
+const validateMergeOutput = [
+  body('shop_id').notEmpty().withMessage('店铺ID不能为空')
+    .isInt().withMessage('店铺ID必须是整数'),
+  body('courier_id').notEmpty().withMessage('快递类型ID不能为空')
+    .isInt().withMessage('快递类型ID必须是整数'),
+  body('output_date').notEmpty().withMessage('出力日期不能为空')
+    .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('出力日期格式不正确，应为YYYY-MM-DD'),
+  body('quantity').notEmpty().withMessage('合单数量不能为空')
+    .isInt({ min: 1 }).withMessage('合单数量必须是大于0的整数'),
+  body('merge_note').notEmpty().withMessage('合单备注不能为空')
+    .isLength({ min: 1, max: 500 }).withMessage('合单备注长度应在1-500字符之间'),
+  body('notes').optional()
+];
+
 class ShopOutputControllerClass {
   /**
    * 获取所有出力数据
@@ -118,8 +150,12 @@ class ShopOutputControllerClass {
         });
       }
       
-      // 创建新的出力记录
-      const id = await ShopOutput.add(req.body);
+      // 创建新的出力记录（默认为新增操作）
+      const outputData = {
+        ...req.body,
+        operation_type: 'add'
+      };
+      const id = await ShopOutput.add(outputData);
       
       if (!id) {
         return res.status(500).json({
@@ -303,11 +339,280 @@ class ShopOutputControllerClass {
       });
     }
   }
+
+  /**
+   * 减少出力数据
+   */
+  async subtractOutput(req, res) {
+    try {
+      // 验证请求数据
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          code: 400,
+          message: '请求数据验证失败',
+          errors: errors.array()
+        });
+      }
+      
+      const { shop_id, courier_id, output_date, quantity, notes } = req.body;
+      
+      // 检查店铺是否存在
+      const shop = await Shop.getById(shop_id);
+      if (!shop) {
+        return res.status(400).json({
+          code: 400,
+          message: '店铺不存在'
+        });
+      }
+      
+      // 检查快递类型是否存在
+      const courier = await Courier.getById(courier_id);
+      if (!courier) {
+        return res.status(400).json({
+          code: 400,
+          message: '快递类型不存在'
+        });
+      }
+      
+      // 计算当前该店铺该快递类型的总量
+      const currentStats = await ShopOutput.getNetGrowthStats({
+        shop_id,
+        courier_id,
+        output_date
+      });
+      
+      const currentTotal = currentStats.net_growth;
+      
+      // 验证是否有足够的数量可以减少
+      if (currentTotal < quantity) {
+        return res.status(400).json({
+          code: 400,
+          message: `减少数量(${quantity})超过当前库存(${currentTotal})`
+        });
+      }
+      
+      // 创建减少记录
+      const subtractData = {
+        shop_id,
+        courier_id,
+        output_date,
+        quantity: -quantity, // 负数表示减少
+        operation_type: 'subtract',
+        original_quantity: currentTotal,
+        notes: notes || `减少操作: 原库存${currentTotal}，减少${quantity}`
+      };
+      
+      const id = await ShopOutput.add(subtractData);
+      
+      if (!id) {
+        return res.status(500).json({
+          code: 500,
+          message: '创建减少记录失败'
+        });
+      }
+      
+      // 获取新创建的记录
+      const newRecord = await ShopOutput.getById(id);
+      
+      res.status(201).json({
+        code: 0,
+        message: '减少操作成功',
+        data: {
+          record: newRecord,
+          original_quantity: currentTotal,
+          subtract_quantity: quantity,
+          remaining_quantity: currentTotal - quantity
+        }
+      });
+    } catch (error) {
+      console.error('减少出力数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '减少出力数据失败'
+      });
+    }
+  }
+
+  /**
+   * 合单操作
+   */
+  async mergeOutput(req, res) {
+    try {
+      // 验证请求数据
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          code: 400,
+          message: '请求数据验证失败',
+          errors: errors.array()
+        });
+      }
+      
+      const { shop_id, courier_id, output_date, quantity, merge_note, notes } = req.body;
+      
+      // 检查店铺是否存在
+      const shop = await Shop.getById(shop_id);
+      if (!shop) {
+        return res.status(400).json({
+          code: 400,
+          message: '店铺不存在'
+        });
+      }
+      
+      // 检查快递类型是否存在
+      const courier = await Courier.getById(courier_id);
+      if (!courier) {
+        return res.status(400).json({
+          code: 400,
+          message: '快递类型不存在'
+        });
+      }
+      
+      // 创建合单记录
+      const mergeData = {
+        shop_id,
+        courier_id,
+        output_date,
+        quantity,
+        operation_type: 'merge',
+        merge_note,
+        notes: notes || `合单操作: ${merge_note}`
+      };
+      
+      const id = await ShopOutput.add(mergeData);
+      
+      if (!id) {
+        return res.status(500).json({
+          code: 500,
+          message: '创建合单记录失败'
+        });
+      }
+      
+      // 获取新创建的记录
+      const newRecord = await ShopOutput.getById(id);
+      
+      res.status(201).json({
+        code: 0,
+        message: '合单操作成功',
+        data: newRecord
+      });
+    } catch (error) {
+      console.error('合单操作失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '合单操作失败'
+      });
+    }
+  }
+
+  /**
+   * 根据操作类型获取出力数据
+   */
+  async getByOperationType(req, res) {
+    try {
+      const operationType = req.params.operationType;
+      
+      // 验证操作类型
+      if (!['add', 'subtract', 'merge'].includes(operationType)) {
+        return res.status(400).json({
+          code: 400,
+          message: '无效的操作类型，支持的类型: add, subtract, merge'
+        });
+      }
+      
+      // 从请求中获取过滤参数
+      const options = {
+        output_date: req.query.output_date || undefined,
+        date_from: req.query.date_from || undefined,
+        date_to: req.query.date_to || undefined,
+        shop_id: req.query.shop_id ? parseInt(req.query.shop_id) : undefined,
+        courier_id: req.query.courier_id ? parseInt(req.query.courier_id) : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit) : undefined,
+        offset: req.query.offset ? parseInt(req.query.offset) : undefined
+      };
+      
+      const data = await ShopOutput.getByOperationType(operationType, options);
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data
+      });
+    } catch (error) {
+      console.error('根据操作类型获取数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '获取数据失败'
+      });
+    }
+  }
+
+  /**
+   * 获取操作类型统计数据
+   */
+  async getOperationStats(req, res) {
+    try {
+      // 从请求中获取过滤参数
+      const options = {
+        output_date: req.query.output_date || undefined,
+        date_from: req.query.date_from || undefined,
+        date_to: req.query.date_to || undefined,
+        shop_id: req.query.shop_id ? parseInt(req.query.shop_id) : undefined,
+        courier_id: req.query.courier_id ? parseInt(req.query.courier_id) : undefined
+      };
+      
+      // 获取按操作类型分组的统计
+      const typeStats = await ShopOutput.getStatsByOperationType(options);
+      
+      // 获取净增长统计
+      const netStats = await ShopOutput.getNetGrowthStats(options);
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data: {
+          by_type: typeStats,
+          net_growth: netStats
+        }
+      });
+    } catch (error) {
+      console.error('获取操作统计失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '获取操作统计失败'
+      });
+    }
+  }
+
+  /**
+   * 获取最近录入数据（支持操作类型标识）
+   */
+  async getRecentWithOperationType(req, res) {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+      const outputs = await ShopOutput.getRecent(limit);
+      
+      res.status(200).json({
+        code: 0,
+        message: '获取成功',
+        data: outputs
+      });
+    } catch (error) {
+      console.error('获取最近录入数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '获取最近录入数据失败'
+      });
+    }
+  }
 }
 
 const ShopOutputController = new ShopOutputControllerClass();
 
 module.exports = {
   ShopOutputController,
-  validateShopOutput
+  validateShopOutput,
+  validateSubtractOutput,
+  validateMergeOutput
 }; 
