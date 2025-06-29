@@ -11,6 +11,11 @@
 5. [店铺类别 API](#店铺类别api)
 6. [店铺 API](#店铺api)
 7. [店铺出力 API](#店铺出力api)
+   - [基础 CRUD 操作](#基础-crud-操作)
+   - [扩展操作功能](#扩展操作功能)
+     - [减少出力记录](#8-减少出力记录)
+     - [合单操作记录](#9-合单操作记录)
+     - [操作统计数据](#10-获取操作统计数据)
 8. [统计分析 API](#统计分析api)
 9. [仪表盘 API](#仪表盘api)
 10. [错误处理](#错误处理)
@@ -1298,7 +1303,9 @@
 
 店铺出力用于记录店铺的出力数据。
 
-### 1. 获取出力数据列表
+### 基础 CRUD 操作
+
+#### 1. 获取出力数据列表
 
 获取店铺的出力数据，支持分页、筛选和排序。
 
@@ -1347,7 +1354,7 @@
 }
 ```
 
-### 2. 获取最近录入数据
+#### 2. 获取最近录入数据
 
 获取系统中最近录入的出力数据记录。
 
@@ -1384,7 +1391,7 @@
 }
 ```
 
-### 3. 获取今日出力数据
+#### 3. 获取今日出力数据
 
 获取今日的店铺出力数据。
 
@@ -1421,7 +1428,7 @@
 }
 ```
 
-### 4. 获取单条出力记录
+#### 4. 获取单条出力记录
 
 根据 ID 获取特定出力记录的详细信息。
 
@@ -1455,7 +1462,7 @@
 }
 ```
 
-### 5. 创建出力记录
+#### 5. 创建出力记录
 
 创建新的店铺出力记录。
 
@@ -1505,7 +1512,7 @@
 }
 ```
 
-### 6. 更新出力记录
+#### 6. 更新出力记录
 
 更新现有的出力记录信息。
 
@@ -1542,7 +1549,7 @@
 }
 ```
 
-### 7. 删除出力记录
+#### 7. 删除出力记录
 
 删除特定的出力记录。
 
@@ -1563,6 +1570,183 @@
   "message": "删除成功"
 }
 ```
+
+### 扩展操作功能
+
+#### 8. 减少出力记录
+
+创建减少操作的出力记录，用于减少库存或回退操作。
+
+**请求方法**: POST  
+**URL**: `/api/shop-outputs/subtract`
+
+**请求体**:
+
+| 字段名      | 类型    | 必需 | 描述                      |
+| ----------- | ------- | ---- | ------------------------- |
+| shop_id     | integer | 是   | 店铺 ID                   |
+| courier_id  | integer | 是   | 快递类型 ID               |
+| output_date | string  | 是   | 出力日期，格式 YYYY-MM-DD |
+| quantity    | integer | 是   | 减少数量（正数）          |
+| notes       | string  | 否   | 备注信息                  |
+
+**请求示例**:
+
+```json
+{
+  "shop_id": 1,
+  "courier_id": 1,
+  "output_date": "2024-12-27",
+  "quantity": 5,
+  "notes": "库存回退"
+}
+```
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "减少操作成功",
+  "data": {
+    "id": 110,
+    "shop_id": 1,
+    "shop_name": "东京旗舰店",
+    "courier_id": 1,
+    "courier_name": "顺丰速运",
+    "output_date": "2024-12-27",
+    "quantity": -5,
+    "operation_type": "subtract",
+    "original_quantity": 25,
+    "notes": "库存回退",
+    "created_at": "2024-12-27T10:30:00.000Z",
+    "updated_at": "2024-12-27T10:30:00.000Z"
+  }
+}
+```
+
+**错误响应示例**:
+
+```json
+{
+  "code": 1,
+  "message": "减少数量超过当前库存",
+  "data": {
+    "current_stock": 3,
+    "requested_quantity": 5
+  }
+}
+```
+
+#### 9. 合单操作记录
+
+创建合单操作记录，用于记录合并订单的操作。
+
+**请求方法**: POST  
+**URL**: `/api/shop-outputs/merge`
+
+**请求体**:
+
+| 字段名      | 类型    | 必需 | 描述                      |
+| ----------- | ------- | ---- | ------------------------- |
+| shop_id     | integer | 是   | 店铺 ID                   |
+| courier_id  | integer | 是   | 快递类型 ID               |
+| output_date | string  | 是   | 出力日期，格式 YYYY-MM-DD |
+| quantity    | integer | 是   | 合单数量                  |
+| merge_note  | string  | 否   | 合单备注信息              |
+| notes       | string  | 否   | 其他备注信息              |
+
+**请求示例**:
+
+```json
+{
+  "shop_id": 1,
+  "courier_id": 1,
+  "output_date": "2024-12-27",
+  "quantity": 10,
+  "merge_note": "多个小订单合并处理",
+  "notes": "合单操作"
+}
+```
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "合单操作成功",
+  "data": {
+    "id": 111,
+    "shop_id": 1,
+    "shop_name": "东京旗舰店",
+    "courier_id": 1,
+    "courier_name": "顺丰速运",
+    "output_date": "2024-12-27",
+    "quantity": 10,
+    "operation_type": "merge",
+    "merge_note": "多个小订单合并处理",
+    "notes": "合单操作",
+    "created_at": "2024-12-27T10:35:00.000Z",
+    "updated_at": "2024-12-27T10:35:00.000Z"
+  }
+}
+```
+
+#### 10. 获取操作统计数据
+
+获取按操作类型分组的统计数据，包括新增、减少、合单操作的统计信息。
+
+**请求方法**: GET  
+**URL**: `/api/shop-outputs/stats/operations`
+
+**查询参数**:
+
+| 参数      | 类型   | 必需 | 描述                      |
+| --------- | ------ | ---- | ------------------------- |
+| date_from | string | 否   | 开始日期，格式 YYYY-MM-DD |
+| date_to   | string | 否   | 结束日期，格式 YYYY-MM-DD |
+| shop_id   | number | 否   | 筛选特定店铺              |
+
+**响应示例**:
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": {
+    "add_operations": {
+      "count": 15,
+      "total_quantity": 150
+    },
+    "subtract_operations": {
+      "count": 3,
+      "total_quantity": 25
+    },
+    "merge_operations": {
+      "count": 5,
+      "total_quantity": 60
+    },
+    "net_growth": 125,
+    "period": {
+      "date_from": "2024-12-01",
+      "date_to": "2024-12-27"
+    }
+  }
+}
+```
+
+**响应字段说明**:
+
+| 字段                               | 类型   | 描述                     |
+| ---------------------------------- | ------ | ------------------------ |
+| add_operations.count               | number | 新增操作次数             |
+| add_operations.total_quantity      | number | 新增操作总数量           |
+| subtract_operations.count          | number | 减少操作次数             |
+| subtract_operations.total_quantity | number | 减少操作总数量（绝对值） |
+| merge_operations.count             | number | 合单操作次数             |
+| merge_operations.total_quantity    | number | 合单操作总数量           |
+| net_growth                         | number | 净增长（新增 - 减少）    |
+| period                             | object | 统计时间范围             |
 
 ### 8. 获取店铺出力统计数据（按店铺分组）
 

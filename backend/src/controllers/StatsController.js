@@ -384,7 +384,7 @@ class StatsController {
         LEFT JOIN 
           shop_categories sc ON s.category_id = sc.id
         WHERE 
-          1=1
+          (so.operation_type IS NULL OR so.operation_type != 'merge')
       `;
       
       const params = [];
@@ -691,7 +691,7 @@ class StatsController {
         totalSql += ` JOIN shops s ON so.shop_id = s.id`;
       }
       
-      totalSql += ` WHERE 1=1`;
+      totalSql += ` WHERE (so.operation_type IS NULL OR so.operation_type != 'merge')`;
       
       const totalParams = [];
       
@@ -736,7 +736,7 @@ class StatsController {
         sql += ` JOIN shops s ON so.shop_id = s.id`;
       }
       
-      sql += ` WHERE 1=1`;
+      sql += ` WHERE (so.operation_type IS NULL OR so.operation_type != 'merge')`;
       
       const params = [];
       
@@ -1064,7 +1064,7 @@ class StatsController {
         sql += ` JOIN shops s ON so.shop_id = s.id`;
       }
       
-      sql += ` WHERE 1=1`;
+      sql += ` WHERE (so.operation_type IS NULL OR so.operation_type != 'merge')`;
       
       const params = [];
       
@@ -1276,7 +1276,7 @@ class StatsController {
         FROM 
           shop_outputs so
         WHERE 
-          1=1
+          (so.operation_type IS NULL OR so.operation_type != 'merge')
       `;
       
       const params = [];
@@ -1471,7 +1471,7 @@ class StatsController {
         LEFT JOIN 
           shop_categories sc ON s.category_id = sc.id
         WHERE 
-          1=1
+          (so.operation_type IS NULL OR so.operation_type != 'merge')
       `;
       
       const params = [];
@@ -1878,7 +1878,12 @@ class StatsController {
           c.name as courierType,
           so.output_date as orderDate,
           so.quantity as amount,
-          '已完成' as status,
+          CASE 
+            WHEN so.operation_type = 'add' THEN '新增'
+            WHEN so.operation_type = 'subtract' THEN '减少'
+            WHEN so.operation_type = 'merge' THEN '合单'
+            ELSE '新增'
+          END as status,
           so.created_at as createTime,
           so.updated_at as updateTime
         FROM 
@@ -1887,7 +1892,7 @@ class StatsController {
         LEFT JOIN shop_categories sc ON s.category_id = sc.id
         LEFT JOIN couriers c ON so.courier_id = c.id
         WHERE 
-          1=1
+          (so.operation_type IS NULL OR so.operation_type != 'merge')
       `;
       
       const params = [];

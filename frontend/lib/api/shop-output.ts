@@ -490,4 +490,157 @@ export async function getTomorrowDashboard(): Promise<DashboardData> {
   }
   
   return result.data;
+}
+
+/**
+ * 减少店铺出力数据
+ * @param output 减少操作数据
+ */
+export async function subtractShopOutput(output: {
+  shop_id: number;
+  courier_id: number;
+  output_date: string;
+  quantity: number;
+  notes?: string;
+  original_quantity?: number;
+}): Promise<ShopOutput> {
+  const response = await fetch(`${API_URL}/subtract`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(output),
+  });
+  
+  if (!response.ok) {
+    let errorMessage = `减少店铺出力数据失败: ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      console.error('API错误响应:', errorData);
+      if (errorData.message) {
+        errorMessage = `减少店铺出力数据失败: ${errorData.message}`;
+      }
+    } catch (e) {
+      console.error('解析错误响应失败:', e);
+    }
+    throw new Error(errorMessage);
+  }
+  
+  const data: ApiResponse<ShopOutput> = await response.json();
+  
+  if (data.code !== 0) {
+    throw new Error(data.message || '减少店铺出力数据失败');
+  }
+  
+  return data.data;
+}
+
+/**
+ * 合单店铺出力数据
+ * @param output 合单操作数据
+ */
+export async function mergeShopOutput(output: {
+  shop_id: number;
+  courier_id: number;
+  output_date: string;
+  quantity: number;
+  merge_note?: string;
+  related_record_id?: number;
+}): Promise<ShopOutput> {
+  const response = await fetch(`${API_URL}/merge`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(output),
+  });
+  
+  if (!response.ok) {
+    let errorMessage = `合单店铺出力数据失败: ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      console.error('API错误响应:', errorData);
+      if (errorData.message) {
+        errorMessage = `合单店铺出力数据失败: ${errorData.message}`;
+      }
+    } catch (e) {
+      console.error('解析错误响应失败:', e);
+    }
+    throw new Error(errorMessage);
+  }
+  
+  const data: ApiResponse<ShopOutput> = await response.json();
+  
+  if (data.code !== 0) {
+    throw new Error(data.message || '合单店铺出力数据失败');
+  }
+  
+  return data.data;
+}
+
+/**
+ * 获取操作统计数据
+ * @param params 查询参数
+ */
+export async function getOperationStats(params?: {
+  date_from?: string;
+  date_to?: string;
+  shop_id?: number;
+  courier_id?: number;
+}): Promise<{
+  add: { count: number; total_quantity: number };
+  subtract: { count: number; total_quantity: number };
+  merge: { count: number; total_quantity: number };
+  net_growth: number;
+}> {
+  const queryParams = new URLSearchParams();
+  
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+  
+  const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+  
+  const response = await fetch(`${getApiEndpoint('/shop-outputs/stats/operations')}${query}`);
+  
+  if (!response.ok) {
+    throw new Error(`获取操作统计失败: ${response.statusText}`);
+  }
+  
+  const data: ApiResponse<{
+    by_type: Array<{
+      operation_type: string;
+      record_count: string;
+      total_quantity: string;
+      avg_quantity: string;
+    }>;
+    net_growth: {
+      add_total: number;
+      subtract_total: number;
+      merge_total: number;
+      net_growth: number;
+      add_count: number;
+      subtract_count: number;
+      merge_count: number;
+      total_operations: number;
+    };
+  }> = await response.json();
+  
+  if (data.code !== 0) {
+    throw new Error(data.message || '获取操作统计失败');
+  }
+
+  // 转换数据格式以匹配前端期望的结构
+  const result = {
+    add: { count: data.data.net_growth.add_count, total_quantity: data.data.net_growth.add_total },
+    subtract: { count: data.data.net_growth.subtract_count, total_quantity: data.data.net_growth.subtract_total },
+    merge: { count: data.data.net_growth.merge_count, total_quantity: data.data.net_growth.merge_total },
+    net_growth: data.data.net_growth.net_growth
+  };
+  
+  return result;
 } 

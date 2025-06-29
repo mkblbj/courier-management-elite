@@ -101,8 +101,10 @@ class DashboardControllerClass {
             break;
         }
         
-        // 累加总数量（净增长）
-        totalQuantity += output.quantity;
+        // 累加总数量（净增长）- 排除合单操作
+        if (operationType !== 'merge') {
+          totalQuantity += output.quantity;
+        }
         
         // 添加到店铺统计
         if (shopMap.has(output.shop_id)) {
@@ -130,7 +132,10 @@ class DashboardControllerClass {
           }
           
           const courierData = shopCouriers.get(courierId);
-          courierData.quantity += output.quantity;
+          // 只累加非合单操作的数量（净增长）
+          if (operationType !== 'merge') {
+            courierData.quantity += output.quantity;
+          }
         }
         
         // 添加到快递类型统计
@@ -146,7 +151,10 @@ class DashboardControllerClass {
           }
           
           const stats = courierStats.get(courierKey);
-          stats.total_quantity += output.quantity;
+          // 只累加非合单操作的数量（净增长）
+          if (operationType !== 'merge') {
+            stats.total_quantity += output.quantity;
+          }
           stats.shops.add(output.shop_id);
         }
       }
@@ -180,7 +188,9 @@ class DashboardControllerClass {
           shop_id: shop.id,
           shop_name: shop.name,
           has_data: shop.outputs.length > 0,
-          total_quantity: shop.outputs.reduce((sum, output) => sum + output.quantity, 0)
+          total_quantity: shop.outputs
+            .filter(output => (output.operation_type || 'add') !== 'merge')
+            .reduce((sum, output) => sum + output.quantity, 0)
         });
       });
       
@@ -211,7 +221,9 @@ class DashboardControllerClass {
             shop_name: shop.name,
             category_id: shop.category_id,
             category_name: shop.category_name,
-            total_quantity: shop.outputs.reduce((sum, output) => sum + output.quantity, 0),
+            total_quantity: shop.outputs
+              .filter(output => (output.operation_type || 'add') !== 'merge')
+              .reduce((sum, output) => sum + output.quantity, 0),
             couriers: Array.from(courierMap.values())
           });
         }
@@ -242,7 +254,9 @@ class DashboardControllerClass {
             category_id: shop.category_id,
             category_name: shop.category_name,
             has_data: shop.outputs.length > 0,
-            total_quantity: shop.outputs.reduce((sum, output) => sum + output.quantity, 0),
+            total_quantity: shop.outputs
+              .filter(output => (output.operation_type || 'add') !== 'merge')
+              .reduce((sum, output) => sum + output.quantity, 0),
             couriers: shopCourierStats.has(shop.id) 
               ? Array.from(shopCourierStats.get(shop.id).values()) 
               : []

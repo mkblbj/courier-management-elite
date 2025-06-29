@@ -15,8 +15,8 @@ import OutputSummary from "./components/OutputSummary";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { toast } from "@/components/ui/use-toast";
-import { createShopOutput, updateShopOutput, deleteShopOutput } from "@/lib/api/shop-output";
-import { Loader2 } from "lucide-react";
+import { createShopOutput, updateShopOutput, deleteShopOutput, subtractShopOutput, mergeShopOutput } from "@/lib/api/shop-output";
+import { Loader2, Minus, Merge } from "lucide-react";
 import { ShopOutput } from "@/lib/types/shop-output";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -38,6 +38,7 @@ export default function OutputDataPage() {
   const [selectedCourierId, setSelectedCourierId] = useState<number | undefined>(undefined);
   const [quantity, setQuantity] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [mergeNote, setMergeNote] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
@@ -252,20 +253,109 @@ export default function OutputDataPage() {
     }
   };
 
+  const handleSubtractRecord = async () => {
+    if (!selectedDate || !selectedShopId || !selectedCourierId || !quantity || parseInt(quantity) <= 0) {
+      toast({
+        title: "表单不完整",
+        description: "请填写所有必要字段",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const formattedDate = dateToApiString(selectedDate);
+
+      await subtractShopOutput({
+        shop_id: selectedShopId,
+        courier_id: selectedCourierId,
+        output_date: formattedDate,
+        quantity: parseInt(quantity),
+        notes: notes || undefined,
+      });
+
+      setQuantity("");
+      setNotes("");
+      setRefreshKey(prev => prev + 1);
+
+      toast({
+        title: t("减少成功"),
+        description: t("出力数据已成功减少"),
+      });
+    } catch (error) {
+      console.error("Failed to subtract output record:", error);
+      toast({
+        title: t("减少失败"),
+        description: typeof error === 'object' && error !== null && 'message' in error
+          ? String(error.message)
+          : t("无法减少出力数据记录"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMergeRecord = async () => {
+    if (!selectedDate || !selectedShopId || !selectedCourierId || !quantity || parseInt(quantity) <= 0) {
+      toast({
+        title: t("表单不完整"),
+        description: t("请填写所有必要字段"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const formattedDate = dateToApiString(selectedDate);
+
+      await mergeShopOutput({
+        shop_id: selectedShopId,
+        courier_id: selectedCourierId,
+        output_date: formattedDate,
+        quantity: parseInt(quantity),
+        merge_note: mergeNote || undefined,
+      });
+
+      setQuantity("");
+      setNotes("");
+      setMergeNote("");
+      setRefreshKey(prev => prev + 1);
+
+      toast({
+        title: t("合单成功"),
+        description: t("出力数据已成功合单"),
+      });
+    } catch (error) {
+      console.error("Failed to merge output record:", error);
+      toast({
+        title: t("合单失败"),
+        description: typeof error === 'object' && error !== null && 'message' in error
+          ? String(error.message)
+          : t("无法合单出力数据记录"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     (<div className="min-h-screen bg-background">
       <DashboardHeader />
       <DashboardNav />
       <main className="container mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold tracking-tight mb-6">{t("出力数据")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight mb-6">{t("出力数据操作")}</h1>
 
         {/* 上半部分：录入表单和数据汇总左右排列 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* 录入出力数据 - 占 1/3 宽度 */}
+          {/* 出力数据操作 - 占 1/3 宽度 */}
           <div className="lg:col-span-1">
             <Card className="h-full">
               <CardHeader className="px-6 py-4 border-b">
-                <CardTitle className="text-xl">{t("录入出力数据")}</CardTitle>
+                <CardTitle className="text-xl">{t("出力数据操作")}</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-4">
@@ -300,8 +390,11 @@ export default function OutputDataPage() {
                         className="w-full"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">{t("数量")}</label>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <label className="flex items-center text-sm font-medium mb-2 text-blue-700">
+                        <span className="mr-2 text-lg">📊</span>
+                        {t("数量")}
+                      </label>
                       <Input
                         type="number"
                         placeholder={t("请输入数量")}
@@ -309,26 +402,30 @@ export default function OutputDataPage() {
                         onChange={(e) => setQuantity(e.target.value)}
                         onKeyDown={handleKeyDown}
                         min="1"
-                        className="w-full"
+                        className="w-full border-blue-300 focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">{t("备注")}</label>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <label className="flex items-center text-sm font-medium mb-2 text-green-700">
+                        <span className="mr-2 text-lg">📝</span>
+                        {t("备注")}
+                        <span className="ml-1 text-xs text-green-600">({t("可选")})</span>
+                      </label>
                       <Textarea
                         placeholder={t("请输入备注（可选）")}
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        className="w-full h-10 min-h-10 resize-none"
+                        className="w-full h-10 min-h-10 resize-none border-green-300 focus:border-green-500 focus:ring-green-500"
                       />
                       <div className="mt-1.5 flex gap-2">
-                        <div className="text-xs text-gray-500">{t("快速选择")}:</div>
+                        <div className="text-xs text-green-600">{t("快速选择")}:</div>
                         <button
                           type="button"
                           onClick={() => setNotes("再発送")}
-                          className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                          className="text-xs text-green-600 hover:text-green-800 hover:underline font-medium"
                         >
                           再発送
                         </button>
@@ -336,20 +433,80 @@ export default function OutputDataPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end mt-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <label className="flex items-center text-sm font-medium mb-2 text-orange-700">
+                        <span className="mr-2 text-lg">🔗</span>
+                        {t("合单备注")}
+                        <span className="ml-1 text-xs text-orange-600">({t("可选")})</span>
+                      </label>
+                      <Textarea
+                        placeholder={t("合单操作时请输入备注")}
+                        value={mergeNote}
+                        onChange={(e) => setMergeNote(e.target.value)}
+                        className="w-full h-10 min-h-10 resize-none border-orange-300 focus:border-orange-500 focus:ring-orange-500"
+                      />
+                      <div className="mt-1 text-xs text-orange-600">
+                        {t("仅在使用合单按钮时需要填写")}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mt-4">
+                    {/* 第一行：添加按钮独占 */}
                     <Button
                       onClick={handleAddRecord}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-blue-600 hover:bg-blue-700 w-full"
                       disabled={isLoading}
+                      size="default"
                     >
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("添加中...")}</>
                       ) : t("添加记录")}
                     </Button>
+
+                    {/* 第二行：减少和合单按钮 */}
+                    <div className="flex gap-2">
+                      {/* 减少按钮 - 占更多空间 */}
+                      <Button
+                        onClick={handleSubtractRecord}
+                        className="bg-red-600 hover:bg-red-700 flex-[2]"
+                        disabled={isLoading}
+                        size="default"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                          </>
+                        ) : (
+                          <>
+                            <Minus className="mr-1 h-4 w-4" />{t("减少记录")}
+                          </>
+                        )}
+                      </Button>
+
+                      {/* 合单按钮 - 占较少空间 */}
+                      <Button
+                        onClick={handleMergeRecord}
+                        className="bg-orange-600 hover:bg-orange-700 flex-[1]"
+                        disabled={isLoading}
+                        size="default"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                          </>
+                        ) : (
+                          <>
+                            <Merge className="mr-1 h-4 w-4" />{t("合单")}
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
 
-                  <div className="text-xs text-muted-foreground mt-2 text-right">{t("提示：按Enter键可快速提交表单")}</div>
+                  <div className="text-xs text-muted-foreground mt-2 text-right">{t("提示：按Enter键可快速提交添加表单")}</div>
                 </div>
               </CardContent>
             </Card>

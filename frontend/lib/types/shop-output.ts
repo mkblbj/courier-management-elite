@@ -10,6 +10,10 @@ export interface ShopOutput {
   shop_name?: string;
   courier_name?: string;
   category_name?: string;
+  operation_type?: 'add' | 'subtract' | 'merge';
+  original_quantity?: number;
+  merge_note?: string;
+  related_record_id?: number;
 }
 
 export interface ShopOutputFormData {
@@ -18,6 +22,10 @@ export interface ShopOutputFormData {
   output_date: string;
   quantity: number;
   notes?: string;
+  operation_type?: 'add' | 'subtract' | 'merge';
+  original_quantity?: number;
+  merge_note?: string;
+  related_record_id?: number;
 }
 
 export interface ShopOutputFilter {

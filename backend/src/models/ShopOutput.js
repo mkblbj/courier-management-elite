@@ -562,11 +562,12 @@ class ShopOutput {
     const results = await db.query(sql, params);
     const data = Array.isArray(results) && results.length > 0 ? results[0] : {};
     
-    // 计算净增长量
+    // 计算净增长量（修改：合单不参与净增长计算）
     const addTotal = parseInt(data.add_total) || 0;
     const subtractTotal = parseInt(data.subtract_total) || 0;
     const mergeTotal = parseInt(data.merge_total) || 0;
-    const netGrowth = addTotal - subtractTotal + mergeTotal;
+    // 净增长 = 新增 - 减少（合单不参与计算）
+    const netGrowth = addTotal - subtractTotal; // + mergeTotal; // 注释掉合单参与计算的部分
 
     return {
       add_total: addTotal,

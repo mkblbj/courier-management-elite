@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { getShopOutputs } from "@/lib/api/shop-output";
+import { getShopOutputs, getOperationStats } from "@/lib/api/shop-output";
 import { getShopCategories } from "@/lib/api/shop-category";
 import { getShops } from "@/lib/api/shop";
 import { ShopOutput } from "@/lib/types/shop-output";
@@ -62,6 +62,12 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [todayOutputs, setTodayOutputs] = useState<ShopOutput[]>([]);
+  const [operationStats, setOperationStats] = useState<{
+    add: { count: number; total_quantity: number };
+    subtract: { count: number; total_quantity: number };
+    merge: { count: number; total_quantity: number };
+    net_growth: number;
+  } | null>(null);
   const [categories, setCategories] = useState<ShopCategory[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -112,12 +118,17 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
         category_id: selectedCategory !== "all" ? Number(selectedCategory) : undefined
       });
       console.log("获取到的shop-outputs数据:", data);
-      // 检查数据中是否包含category_name
-      if (data.length > 0) {
-        console.log("第一条数据示例:", data[0]);
-        console.log("是否包含category_name:", data[0].hasOwnProperty("category_name"));
-      }
       setTodayOutputs(data);
+
+      // 获取操作统计数据
+      const stats = await getOperationStats({
+        date_from: dateToUse,
+        date_to: dateToUse,
+        ...(selectedCategory !== "all" && { shop_id: undefined }) // 如果有类别筛选，可以在这里处理
+      });
+      console.log("获取到的操作统计数据:", stats);
+      setOperationStats(stats);
+
     } catch (err) {
       console.error("Failed to fetch today's outputs:", err);
       setError(t("获取出力数据失败，请重试"));
@@ -146,7 +157,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     setTimeout(() => fetchTodayData(), 0);
   };
 
-  // 按店铺和快递类型分组汇总数据
+  // 按店铺和快递类型分组汇总数据（包含所有操作类型）
   const shopGroupedData = todayOutputs.reduce((acc, item) => {
     // 按店铺分组
     if (!acc[item.shop_id]) {
@@ -155,7 +166,8 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
         shop_name: item.shop_name || "未知店铺",
         category_name: getShopCategoryName(item.shop_id),
         couriers: [],
-        total_quantity: 0
+        total_quantity: 0,
+        net_quantity: 0 // 净增长（排除合单）
       };
     }
 
@@ -165,14 +177,39 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
       courier = {
         courier_id: item.courier_id,
         courier_name: item.courier_name || "未知快递",
-        quantity: 0
+        operations: [],
+        total_quantity: 0,
+        net_quantity: 0 // 净增长（排除合单）
       };
       acc[item.shop_id].couriers.push(courier);
     }
 
-    // 累加数量
-    courier.quantity += item.quantity;
+    // 找到或创建操作类型
+    let operation = courier.operations.find(op => op.operation_type === item.operation_type);
+    if (!operation) {
+      operation = {
+        operation_type: item.operation_type || 'add',
+        quantity: 0,
+        count: 0
+      };
+      courier.operations.push(operation);
+    }
+
+    // 累加操作数据
+    operation.quantity += item.quantity;
+    operation.count += 1;
+
+    // 累加快递类型总量
+    courier.total_quantity += item.quantity;
+    if (item.operation_type !== 'merge') {
+      courier.net_quantity += item.quantity;
+    }
+
+    // 累加店铺总量
     acc[item.shop_id].total_quantity += item.quantity;
+    if (item.operation_type !== 'merge') {
+      acc[item.shop_id].net_quantity += item.quantity;
+    }
 
     return acc;
   }, {} as Record<number, {
@@ -182,35 +219,43 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     couriers: Array<{
       courier_id: number;
       courier_name: string;
-      quantity: number;
+      operations: Array<{
+        operation_type: string;
+        quantity: number;
+        count: number;
+      }>;
+      total_quantity: number;
+      net_quantity: number;
     }>;
     total_quantity: number;
+    net_quantity: number;
   }>);
 
   // 转换为数组便于渲染
   const shopSummaryArray = Object.values(shopGroupedData);
 
-  // 计算总出力量
-  const totalQuantity = shopSummaryArray.reduce((sum, item) => sum + item.total_quantity, 0);
+  // 计算总出力量（使用净增长数据，如果没有则使用汇总数据）
+  const totalQuantity = operationStats ? operationStats.net_growth :
+    shopSummaryArray.reduce((sum, item) => sum + item.net_quantity, 0);
 
-  // 准备饼图数据
+  // 准备饼图数据（使用净增长）
   const pieData = shopSummaryArray.map(shop => ({
     name: shop.shop_name,
-    value: shop.total_quantity,
+    value: shop.net_quantity,
     category: shop.category_name
   }));
 
-  // 准备柱状图数据
+  // 准备柱状图数据（使用净增长）
   const barData = shopSummaryArray.map(shop => {
     const result: any = {
       name: shop.shop_name,
-      total: shop.total_quantity,
+      total: shop.net_quantity,
       category: shop.category_name
     };
 
-    // 为每个快递类型添加数据
+    // 为每个快递类型添加数据（使用净增长）
     shop.couriers.forEach(courier => {
-      result[courier.courier_name] = courier.quantity;
+      result[courier.courier_name] = courier.net_quantity;
     });
 
     return result;
@@ -222,6 +267,20 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
       shopSummaryArray.flatMap(shop => shop.couriers.map(courier => courier.courier_name))
     )
   );
+
+  // 获取操作类型的显示名称和颜色
+  const getOperationDisplayInfo = (operationType: string) => {
+    switch (operationType) {
+      case 'add':
+        return { name: t("新增"), color: 'text-green-700', bgColor: 'bg-green-100' };
+      case 'subtract':
+        return { name: t("减少"), color: 'text-red-700', bgColor: 'bg-red-100' };
+      case 'merge':
+        return { name: t("合单"), color: 'text-orange-700', bgColor: 'bg-orange-100' };
+      default:
+        return { name: operationType, color: 'text-gray-700', bgColor: 'bg-gray-100' };
+    }
+  };
 
   // 自定义工具提示
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -240,7 +299,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     return null;
   };
 
-  // 准备按快递类型分组的数据
+  // 准备按快递类型分组的数据（包含所有操作类型）
   const courierGroupedData = todayOutputs.reduce((acc, item) => {
     // 按快递类型分组
     if (!acc[item.courier_id]) {
@@ -248,7 +307,8 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
         courier_id: item.courier_id,
         courier_name: item.courier_name || "未知快递",
         shops: [],
-        total_quantity: 0
+        total_quantity: 0,
+        net_quantity: 0 // 净增长（排除合单）
       };
     }
 
@@ -259,14 +319,39 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
         shop_id: item.shop_id,
         shop_name: item.shop_name || "未知店铺",
         category_name: getShopCategoryName(item.shop_id),
-        quantity: 0
+        operations: [],
+        total_quantity: 0,
+        net_quantity: 0 // 净增长（排除合单）
       };
       acc[item.courier_id].shops.push(shop);
     }
 
-    // 累加数量
-    shop.quantity += item.quantity;
+    // 找到或创建操作类型
+    let operation = shop.operations.find(op => op.operation_type === item.operation_type);
+    if (!operation) {
+      operation = {
+        operation_type: item.operation_type || 'add',
+        quantity: 0,
+        count: 0
+      };
+      shop.operations.push(operation);
+    }
+
+    // 累加操作数据
+    operation.quantity += item.quantity;
+    operation.count += 1;
+
+    // 累加店铺总量
+    shop.total_quantity += item.quantity;
+    if (item.operation_type !== 'merge') {
+      shop.net_quantity += item.quantity;
+    }
+
+    // 累加快递类型总量
     acc[item.courier_id].total_quantity += item.quantity;
+    if (item.operation_type !== 'merge') {
+      acc[item.courier_id].net_quantity += item.quantity;
+    }
 
     return acc;
   }, {} as Record<number, {
@@ -276,24 +361,70 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
       shop_id: number;
       shop_name: string;
       category_name: string;
-      quantity: number;
+      operations: Array<{
+        operation_type: string;
+        quantity: number;
+        count: number;
+      }>;
+      total_quantity: number;
+      net_quantity: number;
     }>;
     total_quantity: number;
+    net_quantity: number;
   }>);
 
   // 转换为数组便于渲染
   const courierSummaryArray = Object.values(courierGroupedData);
 
   return (
-    (<Card className="shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div>
-          <CardTitle>{selectedDate ? formatDisplayDate(selectedDate) : '今日'}{t("数据汇总")}</CardTitle>
-          {!loading && todayOutputs.length > 0 && (
-            <CardDescription className="mt-1.5">
-              {t("共 {count} 家店铺，总出力量：{total}", { count: shopSummaryArray.length, total: totalQuantity })}
-            </CardDescription>
-          )}
+    <div className="space-y-4">
+      {/* 操作统计卡片 */}
+      {operationStats && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <Card className="p-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div>
+                <div className="text-sm font-medium text-green-700">{t("新增")}</div>
+                <div className="text-lg font-bold">{operationStats.add.total_quantity}</div>
+                <div className="text-xs text-muted-foreground">{operationStats.add.count} {t("次操作")}</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div>
+                <div className="text-sm font-medium text-red-700">{t("减少")}</div>
+                <div className="text-lg font-bold">{operationStats.subtract.total_quantity}</div>
+                <div className="text-xs text-muted-foreground">{operationStats.subtract.count} {t("次操作")}</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+              <div>
+                <div className="text-sm font-medium text-orange-700">{t("合单")}</div>
+                <div className="text-lg font-bold">{operationStats.merge.total_quantity}</div>
+                <div className="text-xs text-muted-foreground">{operationStats.merge.count} {t("次操作")}</div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* 原有的汇总内容 */}
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <h3 className="text-lg font-semibold">
+            {formatDisplayDate(dateToUse)} {t("数据汇总")}
+          </h3>
+          <div className="text-sm text-muted-foreground">
+            {t("总计")}: <span className="font-medium text-foreground">{totalQuantity}</span>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           {categories.length > 0 && (
@@ -322,220 +453,244 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
             <span className="sr-only">{t("刷新")}</span>
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="text-center py-8">{t("加载中...")}</div>
-        ) : error ? (
-          <div className="text-center py-8 text-red-500">{error}</div>
-        ) : todayOutputs.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            {selectedDate ? formatDisplayDate(selectedDate) : '今日'}{t("暂无数据")}</div>
-        ) : (
-          <div>
-            <Tabs defaultValue="table" className="mb-6">
-              <TabsList className="mb-4">
-                <TabsTrigger value="chart">{t("数据图表")}</TabsTrigger>
-                <TabsTrigger value="table">{t("详细数据")}</TabsTrigger>
-              </TabsList>
-              <TabsContent value="chart" className="space-y-4">
-                <div className="flex justify-end mb-2">
-                  <div className="flex rounded-md overflow-hidden">
-                    <Button
-                      variant={chartType === "pie" ? "default" : "outline"}
-                      size="sm"
-                      className="flex items-center gap-1 rounded-r-none"
-                      onClick={() => setChartType("pie")}
-                    >
-                      <PieChart className="h-4 w-4" />
-                      <span>{t("饼图")}</span>
-                    </Button>
-                    <Button
-                      variant={chartType === "bar" ? "default" : "outline"}
-                      size="sm"
-                      className="flex items-center gap-1 rounded-l-none"
-                      onClick={() => setChartType("bar")}
-                    >
-                      <BarChart2 className="h-4 w-4" />
-                      <span>{t("柱状图")}</span>
-                    </Button>
-                  </div>
-                </div>
-                <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    {chartType === "pie" ? (
-                      <RePieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          label={({ name, percent }) => percent > 0.05 ? name : null}
-                          outerRadius={100}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <ReTooltip content={<CustomTooltip />} />
-                        <Legend layout="horizontal" align="center" verticalAlign="bottom" />
-                      </RePieChart>
-                    ) : (
-                      <BarChart
-                        data={barData}
-                        layout="vertical"
-                        margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis
-                          type="category"
-                          dataKey="name"
-                          width={120}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend />
-                        {courierTypes.length > 0 ? (
-                          courierTypes.map((courierType, index) => (
-                            <Bar
-                              key={`bar-${courierType}`}
-                              dataKey={courierType}
-                              stackId="a"
-                              fill={COLORS[index % COLORS.length]}
-                              name={courierType}
-                            />
-                          ))
-                        ) : (
-                          <Bar dataKey="total" fill={COLORS[0]} name={t("总量")} />
-                        )}
-                      </BarChart>
-                    )}
-                  </ResponsiveContainer>
-                </div>
-              </TabsContent>
-              <TabsContent value="table">
-                <div className="mb-4">
-                  <div className="flex justify-start space-x-2">
-                    <Button
-                      variant={tableViewType === "byShop" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setTableViewType("byShop")}
-                    >
-                      {t("按店铺统计")}
-                    </Button>
-                    <Button
-                      variant={tableViewType === "byCourier" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setTableViewType("byCourier")}
-                    >
-                      {t("按快递类型统计")}
-                    </Button>
-                  </div>
-                </div>
+      </div>
 
-                {tableViewType === "byShop" ? (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t("店铺名称")}</TableHead>
-                          <TableHead>{t("类别")}</TableHead>
-                          <TableHead>{t("快递类型")}</TableHead>
-                          <TableHead className="text-right">{t("出力数量")}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {shopSummaryArray.map((shop, shopIndex) => (
-                          <React.Fragment key={shop.shop_id}>
-                            {/* 店铺汇总行 */}
-                            <TableRow className="bg-muted/30 font-medium">
-                              <TableCell>{shop.shop_name}</TableCell>
-                              <TableCell>{shop.category_name}</TableCell>
-                              <TableCell>{t("合计")}</TableCell>
-                              <TableCell className="text-right font-bold">
-                                {shop.total_quantity}
-                              </TableCell>
-                            </TableRow>
-                            {/* 快递类型明细行 */}
-                            {shop.couriers.map((courier, courierIndex) => (
-                              <TableRow key={`${shop.shop_id}-${courier.courier_id}`}>
-                                <TableCell></TableCell>
-                                <TableCell></TableCell>
-                                <TableCell>{courier.courier_name}</TableCell>
-                                <TableCell className="text-right">
-                                  {courier.quantity}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            {/* 分隔行，最后一个店铺不需要 */}
-                            {shopIndex < shopSummaryArray.length - 1 && (
-                              <TableRow>
-                                <TableCell colSpan={4} className="p-0">
-                                  <Separator />
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t("快递类型")}</TableHead>
-                          <TableHead>{t("店铺名称")}</TableHead>
-                          <TableHead>{t("类别")}</TableHead>
-                          <TableHead className="text-right">{t("出力数量")}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {courierSummaryArray.map((courier, courierIndex) => (
-                          <React.Fragment key={courier.courier_id}>
-                            {/* 快递类型汇总行 */}
-                            <TableRow className="bg-muted/30 font-medium">
-                              <TableCell>{courier.courier_name}</TableCell>
-                              <TableCell>{t("合计")}</TableCell>
-                              <TableCell></TableCell>
-                              <TableCell className="text-right font-bold">
-                                {courier.total_quantity}
-                              </TableCell>
-                            </TableRow>
-                            {/* 店铺明细行 */}
-                            {courier.shops.map((shop) => (
-                              <TableRow key={`${courier.courier_id}-${shop.shop_id}`}>
-                                <TableCell></TableCell>
-                                <TableCell>{shop.shop_name}</TableCell>
-                                <TableCell>{shop.category_name}</TableCell>
-                                <TableCell className="text-right">
-                                  {shop.quantity}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            {/* 分隔行，最后一个快递类型不需要 */}
-                            {courierIndex < courierSummaryArray.length - 1 && (
-                              <TableRow>
-                                <TableCell colSpan={4} className="p-0">
-                                  <Separator />
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+      <Card className="shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle>{selectedDate ? formatDisplayDate(selectedDate) : '今日'}{t("数据汇总")}</CardTitle>
+            {!loading && todayOutputs.length > 0 && (
+              <CardDescription className="mt-1.5">
+                {t("共 {count} 家店铺，总出力量：{total}", { count: shopSummaryArray.length, total: totalQuantity })}
+              </CardDescription>
+            )}
           </div>
-        )}
-      </CardContent>
-    </Card>)
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">{t("加载中...")}</div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">{error}</div>
+          ) : todayOutputs.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {selectedDate ? formatDisplayDate(selectedDate) : '今日'}{t("暂无数据")}</div>
+          ) : (
+            <div>
+              <Tabs defaultValue="table" className="mb-6">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="chart">{t("数据图表")}</TabsTrigger>
+                  <TabsTrigger value="table">{t("详细数据")}</TabsTrigger>
+                </TabsList>
+                <TabsContent value="chart" className="space-y-4">
+                  <div className="flex justify-end mb-2">
+                    <div className="flex rounded-md overflow-hidden">
+                      <Button
+                        variant={chartType === "pie" ? "default" : "outline"}
+                        size="sm"
+                        className="flex items-center gap-1 rounded-r-none"
+                        onClick={() => setChartType("pie")}
+                      >
+                        <PieChart className="h-4 w-4" />
+                        <span>{t("饼图")}</span>
+                      </Button>
+                      <Button
+                        variant={chartType === "bar" ? "default" : "outline"}
+                        size="sm"
+                        className="flex items-center gap-1 rounded-l-none"
+                        onClick={() => setChartType("bar")}
+                      >
+                        <BarChart2 className="h-4 w-4" />
+                        <span>{t("柱状图")}</span>
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      {chartType === "pie" ? (
+                        <RePieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={true}
+                            label={({ name, percent }) => percent > 0.05 ? name : null}
+                            outerRadius={100}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <ReTooltip content={<CustomTooltip />} />
+                          <Legend layout="horizontal" align="center" verticalAlign="bottom" />
+                        </RePieChart>
+                      ) : (
+                        <BarChart
+                          data={barData}
+                          layout="vertical"
+                          margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis
+                            type="category"
+                            dataKey="name"
+                            width={120}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend />
+                          {courierTypes.length > 0 ? (
+                            courierTypes.map((courierType, index) => (
+                              <Bar
+                                key={`bar-${courierType}`}
+                                dataKey={courierType}
+                                stackId="a"
+                                fill={COLORS[index % COLORS.length]}
+                                name={courierType}
+                              />
+                            ))
+                          ) : (
+                            <Bar dataKey="total" fill={COLORS[0]} name={t("总量")} />
+                          )}
+                        </BarChart>
+                      )}
+                    </ResponsiveContainer>
+                  </div>
+                </TabsContent>
+                <TabsContent value="table">
+                  <div className="mb-4">
+                    <div className="flex justify-start space-x-2">
+                      <Button
+                        variant={tableViewType === "byShop" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setTableViewType("byShop")}
+                      >
+                        {t("按店铺统计")}
+                      </Button>
+                      <Button
+                        variant={tableViewType === "byCourier" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setTableViewType("byCourier")}
+                      >
+                        {t("按快递类型统计")}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {tableViewType === "byShop" ? (
+                    <div className="space-y-4">
+                      {shopSummaryArray.map((shop) => (
+                        <Card key={shop.shop_id} className="overflow-hidden">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-2 h-8 bg-primary rounded-full"></div>
+                                <div>
+                                  <CardTitle className="text-lg">{shop.shop_name}</CardTitle>
+                                  <CardDescription className="text-sm">{shop.category_name}</CardDescription>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-bold text-primary">{shop.net_quantity}</div>
+                                <div className="text-xs text-muted-foreground">{t("净增长")}</div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <div className="space-y-3">
+                              {shop.couriers.map((courier) => (
+                                <div key={`${shop.shop_id}-${courier.courier_id}`} className="border rounded-lg p-3 bg-muted/20">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="font-medium text-sm">{courier.courier_name}</div>
+                                    <div className="text-right">
+                                      <div className="font-semibold">{courier.net_quantity}</div>
+                                      <div className="text-xs text-muted-foreground">{t("净增长")}</div>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {courier.operations.map((operation) => {
+                                      const operationInfo = getOperationDisplayInfo(operation.operation_type);
+                                      return (
+                                        <div key={`${shop.shop_id}-${courier.courier_id}-${operation.operation_type}`}
+                                          className="flex items-center space-x-2 text-sm">
+                                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${operationInfo.bgColor} ${operationInfo.color}`}>
+                                            {operationInfo.name}
+                                          </span>
+                                          <span className="font-medium">{operation.quantity}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {courierSummaryArray.map((courier) => (
+                        <Card key={courier.courier_id} className="overflow-hidden">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-2 h-8 bg-orange-500 rounded-full"></div>
+                                <div>
+                                  <CardTitle className="text-lg">{courier.courier_name}</CardTitle>
+                                  <CardDescription className="text-sm">{t("快递类型")}</CardDescription>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-bold text-orange-600">{courier.net_quantity}</div>
+                                <div className="text-xs text-muted-foreground">{t("净增长")}</div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <div className="space-y-3">
+                              {courier.shops.map((shop) => (
+                                <div key={`${courier.courier_id}-${shop.shop_id}`} className="border rounded-lg p-3 bg-muted/20">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <div className="font-medium text-sm">{shop.shop_name}</div>
+                                      <div className="text-xs text-muted-foreground">{shop.category_name}</div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="font-semibold">{shop.net_quantity}</div>
+                                      <div className="text-xs text-muted-foreground">{t("净增长")}</div>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {shop.operations.map((operation) => {
+                                      const operationInfo = getOperationDisplayInfo(operation.operation_type);
+                                      return (
+                                        <div key={`${courier.courier_id}-${shop.shop_id}-${operation.operation_type}`}
+                                          className="flex items-center space-x-2 text-sm">
+                                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${operationInfo.bgColor} ${operationInfo.color}`}>
+                                            {operationInfo.name}
+                                          </span>
+                                          <span className="font-medium">{operation.quantity}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 } 

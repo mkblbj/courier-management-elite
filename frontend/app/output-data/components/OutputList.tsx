@@ -406,6 +406,31 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
     return filters.length > 0 ? filters : null;
   };
 
+  // 获取操作类型的颜色和标签
+  const getOperationTypeDisplay = (operationType?: string) => {
+    switch (operationType) {
+      case 'subtract':
+        return {
+          color: 'bg-red-100 text-red-800 border-red-200',
+          label: t("减少"),
+          icon: '➖'
+        };
+      case 'merge':
+        return {
+          color: 'bg-orange-100 text-orange-800 border-orange-200',
+          label: t("合单"),
+          icon: '🔗'
+        };
+      case 'add':
+      default:
+        return {
+          color: 'bg-green-100 text-green-800 border-green-200',
+          label: t("新增"),
+          icon: '➕'
+        };
+    }
+  };
+
   // 按店铺类型分组的数据
   const groupedOutputs = useMemo(() => {
     if (!recentOutputs || recentOutputs.length === 0) return [];
@@ -599,10 +624,29 @@ export default function OutputList({ onEdit, onDelete, selectedDate: propSelecte
                             )}
                           </div>
                         ) : (
-                          "未知"
+                          <div className="text-muted-foreground text-sm">{t("无日期")}</div>
                         )}
                       </TableCell>
-                      <TableCell>{output.shop_name || "未知"}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <div className="font-medium">{output.shop_name || t("未知店铺")}</div>
+                          {/* 添加操作类型标识 */}
+                          <div className="flex items-center gap-1 mt-1">
+                            {(() => {
+                              const typeDisplay = getOperationTypeDisplay(output.operation_type);
+                              return (
+                                <Badge
+                                  className={`text-xs px-1.5 py-0.5 ${typeDisplay.color}`}
+                                  variant="outline"
+                                >
+                                  <span className="mr-1">{typeDisplay.icon}</span>
+                                  {typeDisplay.label}
+                                </Badge>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell>{output.courier_name || "未知"}</TableCell>
                       <TableCell className="text-right">
                         {editingQuantity[output.id] !== undefined ? (

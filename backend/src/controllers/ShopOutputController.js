@@ -46,8 +46,8 @@ const validateMergeOutput = [
     .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('出力日期格式不正确，应为YYYY-MM-DD'),
   body('quantity').notEmpty().withMessage('合单数量不能为空')
     .isInt({ min: 1 }).withMessage('合单数量必须是大于0的整数'),
-  body('merge_note').notEmpty().withMessage('合单备注不能为空')
-    .isLength({ min: 1, max: 500 }).withMessage('合单备注长度应在1-500字符之间'),
+  body('merge_note').optional()
+    .isLength({ max: 500 }).withMessage('合单备注长度不能超过500字符'),
   body('notes').optional()
 ];
 
@@ -400,7 +400,7 @@ class ShopOutputControllerClass {
         quantity: -quantity, // 负数表示减少
         operation_type: 'subtract',
         original_quantity: currentTotal,
-        notes: notes || `减少操作: 原库存${currentTotal}，减少${quantity}`
+        notes: notes || `減少: 元出力${currentTotal}，減少${quantity}`
       };
       
       const id = await ShopOutput.add(subtractData);
@@ -477,7 +477,7 @@ class ShopOutputControllerClass {
         quantity,
         operation_type: 'merge',
         merge_note,
-        notes: notes || `合单操作: ${merge_note}`
+        notes: notes || `合戸発送: ${merge_note}`
       };
       
       const id = await ShopOutput.add(mergeData);
