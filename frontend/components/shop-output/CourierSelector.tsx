@@ -109,7 +109,7 @@ export const CourierSelector: React.FC<CourierSelectorProps> = ({
   };
 
   return (
-    (<div className={cn("flex flex-col space-y-1", className)}>
+    <div className={cn("flex flex-col space-y-1", className)}>
       {label && <span className="text-sm font-medium">{label}</span>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -131,13 +131,13 @@ export const CourierSelector: React.FC<CourierSelectorProps> = ({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
+        <PopoverContent className="w-[300px] p-0" onWheel={(e) => e.stopPropagation()}>
           <Command>
             <CommandInput placeholder={t('shop:search_courier')} />
             <CommandEmpty>
               {loading ? t('shop:loading') : t('shop:no_courier_found')}
             </CommandEmpty>
-            <CommandList className="max-h-64 overflow-y-auto">
+            <CommandList className="max-h-64 overflow-y-scroll">
               {groupedCouriers.map((group) => (
                 <React.Fragment key={`category-${group.category.id}`}>
                   <CommandGroup heading={group.category.name}>
@@ -202,7 +202,7 @@ export const CourierSelector: React.FC<CourierSelectorProps> = ({
           </Command>
         </PopoverContent>
       </Popover>
-    </div>)
+    </div>
   );
 };
 
