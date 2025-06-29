@@ -56,3 +56,7 @@ out/
 
 # Private individual user cursor rules
 .cursor/
+
+# AI agent
+web-bundles/
+.bmad-core/
