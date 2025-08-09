@@ -6,6 +6,7 @@ const shopRoutes = require('./shopRoutes');
 const shopCategoryRoutes = require('./shopCategoryRoutes');
 const shopOutputRoutes = require('./shopOutputRoutes');
 const statsRoutes = require('./statsRoutes');
+const mercariRoutes = require('./mercariRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
 
 const router = express.Router();
@@ -42,6 +43,9 @@ router.use('/stats', statsRoutes);
 
 // 仪表盘API路由
 router.use('/dashboard', dashboardRoutes);
+
+// Mercari 工具API路由
+router.use('/mercari', mercariRoutes);
 
 // API文档路由 (可选)
 router.get('/docs', (req, res) => {

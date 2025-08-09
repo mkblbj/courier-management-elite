@@ -104,26 +104,34 @@ export function AnimatedMenu() {
                   gradient: gradients[2],
                   iconColor: iconColors[2],
             },
+            // Mercari 工具入口
+            {
+                  label: mounted ? 'Mercari' : '',
+                  href: "/mercari-tool",
+                  icon: <Package className="h-5 w-5" />,
+                  gradient: gradients[3],
+                  iconColor: iconColors[3],
+            },
             {
                   label: mounted ? t('stats') : '',
                   href: "/stats",
                   icon: <PieChart className="h-5 w-5" />,
-                  gradient: gradients[3],
-                  iconColor: iconColors[3],
+                  gradient: gradients[4],
+                  iconColor: iconColors[4],
             },
             {
                   label: mounted ? t('courier_types') : '',
                   href: "/courier-types",
                   icon: <Package className="h-5 w-5" />,
-                  gradient: gradients[4],
-                  iconColor: iconColors[4],
+                  gradient: gradients[5],
+                  iconColor: iconColors[5],
             },
             {
                   label: mounted ? t('settings') : '',
                   href: "/settings",
                   icon: <Settings className="h-5 w-5" />,
-                  gradient: gradients[5],
-                  iconColor: iconColors[5],
+                  gradient: gradients[0],
+                  iconColor: iconColors[0],
             },
       ]
 
