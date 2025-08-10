@@ -16,6 +16,7 @@ const shopCategoriesMigration = require('./migrations/create_shop_categories');
 const courierCategoriesMigration = require('./migrations/create_courier_categories');
 const addCategoryIdMigration = require('./migrations/add_category_id');
 const addOperationTypeMigration = require('./migrations/add_operation_type_to_shop_outputs');
+const addMercariFieldsMigration = require('./migrations/add_mercari_fields_to_shops');
 const unspecifiedCourierTypesMigration = require('./migrations/create_unspecified_courier_types');
 
 async function initializeDatabase() {
@@ -128,6 +129,10 @@ async function initializeDatabase() {
       // 4. 添加operation_type到shop_outputs
       console.log('执行添加operation_type到shop_outputs迁移...');
       await addOperationTypeMigration.migrate();
+
+      // 5. 为shops添加Mercari相关字段
+      console.log('执行为shops添加Mercari相关字段迁移...');
+      await addMercariFieldsMigration.migrate();
       
       console.log('所有迁移脚本执行完成');
     } catch (migrationError) {

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,6 +24,8 @@ const shopFormSchema = z.object({
   category_id: z.number().optional().or(z.string().optional().transform(val => val ? Number(val) : undefined)),
   remark: z.string().optional(),
   is_active: z.boolean().default(true),
+  // 可选：如果填写则将被加密存储
+  mercari_access_token: z.string().optional(),
 });
 
 type ShopFormValues = z.infer<typeof shopFormSchema>;
@@ -57,9 +59,24 @@ const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmit
         category_id: initialValues.category_id,
         remark: initialValues.remark || '',
         is_active: initialValues.is_active !== undefined ? Boolean(initialValues.is_active) : true,
+        mercari_access_token: '',
       });
     }
   }, [initialValues, form]);
+
+  // 仅在“メルカリ”类别时展示 PAT 字段
+  const selectedCategoryId = form.watch('category_id');
+  const isMercari = useMemo(() => {
+    const cat = categories.find(c => Number(c.id) === Number(selectedCategoryId));
+    return (cat?.name || '').trim() === 'メルカリ';
+  }, [selectedCategoryId, categories]);
+
+  // 切换到非メルカリ类别时，清空 PAT，避免误提交
+  useEffect(() => {
+    if (!isMercari) {
+      form.setValue('mercari_access_token', '');
+    }
+  }, [isMercari, form]);
 
   return (
     (<Form {...form}>
@@ -123,6 +140,22 @@ const ShopForm = ({ initialValues, categories = [], onSubmit, onCancel, isSubmit
             </FormItem>
           )}
         />
+
+        {isMercari && (
+          <FormField
+            control={form.control}
+            name="mercari_access_token"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mercari Personal Access Token (PAT)</FormLabel>
+                <FormControl>
+                  <Input {...field} type="password" placeholder={t("留空则不修改；输入后将加密保存") as string} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}

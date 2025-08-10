@@ -73,20 +73,21 @@ class Shop {
    * @returns {Promise<number>} 新创建的ID
    */
   async add(data) {
-    const sql = `INSERT INTO ${this.table} (name, category_id, is_active, sort_order, remark) VALUES (?, ?, ?, ?, ?)`;
-    
-    const isActive = data.is_active !== undefined ? data.is_active : true;
-    const sortOrder = data.sort_order !== undefined ? data.sort_order : 0;
-    const remark = data.remark || null;
-    const categoryId = data.category_id || null;
-
-    const result = await db.query(sql, [
+    const fields = ['name', 'category_id', 'is_active', 'sort_order', 'remark'];
+    const values = [
       data.name,
-      categoryId,
-      isActive ? 1 : 0,
-      sortOrder,
-      remark
-    ]);
+      data.category_id || null,
+      (data.is_active !== undefined ? data.is_active : true) ? 1 : 0,
+      data.sort_order !== undefined ? data.sort_order : 0,
+      data.remark || null,
+    ];
+    if (data.mercari_access_token) {
+      fields.push('mercari_access_token');
+      values.push(data.mercari_access_token);
+    }
+    const placeholders = fields.map(() => '?').join(', ');
+    const sql = `INSERT INTO ${this.table} (${fields.join(', ')}) VALUES (${placeholders})`;
+    const result = await db.query(sql, values);
 
     return result.insertId;
   }
@@ -125,6 +126,10 @@ class Shop {
     if (data.remark !== undefined) {
       setClauses.push("remark = ?");
       params.push(data.remark);
+    }
+    if (data.mercari_access_token !== undefined) {
+      setClauses.push("mercari_access_token = ?");
+      params.push(data.mercari_access_token);
     }
     
     // 如果没有需要更新的字段，直接返回成功

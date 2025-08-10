@@ -59,7 +59,9 @@ export default function MercariDashboardPage() {
                   )}
 
                   {!loading && !error && shops.length === 0 && (
-                        <div className="border bg-white p-6 rounded text-gray-500">暂无店铺/暂无数据</div>
+                        <div className="border bg-white p-6 rounded text-gray-500">
+                              メルカリ 店铺类别下暂无店铺/暂无数据
+                        </div>
                   )}
 
                   {!loading && !error && shops.length > 0 && (

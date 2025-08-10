@@ -1,4 +1,5 @@
 const Shop = require('../models/Shop');
+const { encrypt } = require('../utils/crypto');
 const { body, validationResult } = require('express-validator');
 
 /**
@@ -31,11 +32,14 @@ class ShopControllerClass {
       };
 
       const shops = await Shop.getAll(options);
+      const sanitized = Array.isArray(shops)
+        ? shops.map((s) => ({ ...s, mercari_access_token: undefined }))
+        : [];
       
       res.status(200).json({
         code: 0,
         message: '获取成功',
-        data: shops
+        data: sanitized
       });
     } catch (error) {
       console.error('获取店铺列表失败:', error);
@@ -61,10 +65,11 @@ class ShopControllerClass {
         });
       }
       
+      const sanitized = { ...shop, mercari_access_token: undefined };
       res.status(200).json({
         code: 0,
         message: '获取成功',
-        data: shop
+        data: sanitized
       });
     } catch (error) {
       console.error('获取店铺详情失败:', error);
@@ -101,8 +106,20 @@ class ShopControllerClass {
         });
       }
       
+      // 组装允许写入的字段
+      const payload = {
+        name: req.body.name,
+        category_id: req.body.category_id,
+        is_active: req.body.is_active,
+        sort_order: req.body.sort_order,
+        remark: req.body.remark,
+      };
+      if (typeof req.body.mercari_access_token === 'string' && req.body.mercari_access_token.trim() !== '') {
+        payload.mercari_access_token = encrypt(req.body.mercari_access_token.trim());
+      }
+
       // 创建店铺
-      const id = await Shop.add(req.body);
+      const id = await Shop.add(payload);
       
       if (!id) {
         return res.status(500).json({
@@ -114,10 +131,11 @@ class ShopControllerClass {
       // 获取新创建的店铺
       const newShop = await Shop.getById(id);
       
+      const sanitized = newShop ? { ...newShop, mercari_access_token: undefined } : null;
       res.status(201).json({
         code: 0,
         message: '添加成功',
-        data: newShop
+        data: sanitized
       });
     } catch (error) {
       console.error('创建店铺失败:', error);
@@ -167,8 +185,22 @@ class ShopControllerClass {
         }
       }
       
+      // 组装允许更新的字段
+      const payload = {};
+      if (req.body.name !== undefined) payload.name = req.body.name;
+      if (req.body.category_id !== undefined) payload.category_id = req.body.category_id;
+      if (req.body.is_active !== undefined) payload.is_active = req.body.is_active;
+      if (req.body.sort_order !== undefined) payload.sort_order = req.body.sort_order;
+      if (req.body.remark !== undefined) payload.remark = req.body.remark;
+      if (typeof req.body.mercari_access_token === 'string') {
+        if (req.body.mercari_access_token.trim() !== '') {
+          payload.mercari_access_token = encrypt(req.body.mercari_access_token.trim());
+        }
+        // 空字符串则不修改 token（忽略）
+      }
+
       // 更新店铺
-      const updated = await Shop.update(id, req.body);
+      const updated = await Shop.update(id, payload);
       
       if (!updated) {
         return res.status(500).json({
@@ -180,10 +212,11 @@ class ShopControllerClass {
       // 获取更新后的店铺
       const updatedShop = await Shop.getById(id);
       
+      const sanitized = updatedShop ? { ...updatedShop, mercari_access_token: undefined } : null;
       res.status(200).json({
         code: 0,
         message: '更新成功',
-        data: updatedShop
+        data: sanitized
       });
     } catch (error) {
       console.error('更新店铺失败:', error);
@@ -271,10 +304,11 @@ class ShopControllerClass {
       // 获取更新后的店铺
       const updatedShop = await Shop.getById(id);
       
+      const sanitized = updatedShop ? { ...updatedShop, mercari_access_token: undefined } : null;
       res.status(200).json({
         code: 0,
         message: updatedShop.is_active ? '店铺已启用' : '店铺已禁用',
-        data: updatedShop
+        data: sanitized
       });
     } catch (error) {
       console.error('切换店铺状态失败:', error);

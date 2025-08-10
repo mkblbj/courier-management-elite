@@ -1,3 +1,5 @@
+const { fetchShopsOverview } = require('../services/mercari.service');
+
 class MercariControllerClass {
   /**
    * GET /api/mercari/shops-overview (Mock)
@@ -5,18 +7,8 @@ class MercariControllerClass {
    */
   async getShopsOverview(req, res) {
     try {
-      const mockData = {
-        shops: [
-          { shopId: 'shop_1', shopName: 'Shop A', pendingCount: 5 },
-          { shopId: 'shop_2', shopName: 'Shop B', pendingCount: 0 },
-        ],
-      };
-
-      return res.status(200).json({
-        code: 0,
-        message: '获取成功',
-        data: mockData,
-      });
+      const data = await fetchShopsOverview();
+      return res.status(200).json({ code: 0, message: '获取成功', data });
     } catch (error) {
       console.error('获取 Mercari 店铺概览失败:', error);
       return res.status(500).json({
