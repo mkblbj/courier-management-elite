@@ -104,14 +104,14 @@ export function AnimatedMenu() {
                   gradient: gradients[2],
                   iconColor: iconColors[2],
             },
-            // Mercari 工具入口
-            {
-                  label: mounted ? 'Mercari' : '',
-                  href: "/mercari-tool",
-                  icon: <Package className="h-5 w-5" />,
-                  gradient: gradients[3],
-                  iconColor: iconColors[3],
-            },
+            // Mercari 工具入口 (暂时隐藏，功能不完善)
+            // {
+            //       label: mounted ? 'Mercari' : '',
+            //       href: "/mercari-tool",
+            //       icon: <Package className="h-5 w-5" />,
+            //       gradient: gradients[3],
+            //       iconColor: iconColors[3],
+            // },
             {
                   label: mounted ? t('stats') : '',
                   href: "/stats",

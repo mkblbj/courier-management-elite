@@ -404,6 +404,9 @@ export default function OutputDataPage() {
                         min="1"
                         className="w-full border-blue-300 focus:border-blue-500 focus:ring-blue-500"
                       />
+                      <div className="mt-1 text-xs text-orange-600">
+                        {t("合单提示")}
+                      </div>
                     </div>
                   </div>
 

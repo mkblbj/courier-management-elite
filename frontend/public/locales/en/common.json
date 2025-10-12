@@ -616,5 +616,10 @@
   "次操作": "Times",
   "仅在使用合单按钮时需要填写": "Only required when using merge order button",
   "出力数据操作": "Output Data Operation",
-  "提示：按Enter键可快速提交添加表单": "Tip: Press Enter to quickly submit the add form"
+  "提示：按Enter键可快速提交添加表单": "Tip: Press Enter to quickly submit the add form",
+  "合单时": "When merging orders",
+  "输入订单数": "Enter order count",
+  "实际出力量": "Actual output quantity",
+  "订单数": "Order count",
+  "合单提示": "💡 When merging orders: Enter order count, Actual output quantity = Order count - 1 (Example: Merge 3 orders → Output 2)"
 }

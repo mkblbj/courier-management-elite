@@ -470,14 +470,18 @@ class ShopOutputControllerClass {
       }
       
       // 创建合单记录
+      // 合单逻辑：输入订单数，出力量 = 订单数 - 1
+      // 例如：合3单，出力数应为2（因为3个订单合并成1个包裹，实际只处理1次物流）
+      const actualQuantity = quantity - 1;
+      
       const mergeData = {
         shop_id,
         courier_id,
         output_date,
-        quantity,
+        quantity: actualQuantity,
         operation_type: 'merge',
         merge_note,
-        notes: notes || `合戸発送: ${merge_note}`
+        notes: notes || `合戸発送: ${merge_note || ''} (${quantity}単→${actualQuantity}出力)`
       };
       
       const id = await ShopOutput.add(mergeData);
