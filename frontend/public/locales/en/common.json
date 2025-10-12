@@ -621,5 +621,5 @@
   "输入订单数": "Enter order count",
   "实际出力量": "Actual output quantity",
   "订单数": "Order count",
-  "合单提示": "💡 When merging orders: Enter order count, Actual output quantity = Order count - 1 (Example: Merge 3 orders → Output 2)"
+  "合单提示": "💡 When merging orders: Enter N orders, merge N packages into 1, reducing (N-1) packages (Example: Have 3 orders, merge 2 → 2 orders left)"
 }
