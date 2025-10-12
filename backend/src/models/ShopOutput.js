@@ -1,3 +1,4 @@
+// @ts-nocheck
 const db = require('../db');
 const { formatToISOString, parseDate, getToday } = require('../config/timezone');
 
@@ -562,12 +563,13 @@ class ShopOutput {
     const results = await db.query(sql, params);
     const data = Array.isArray(results) && results.length > 0 ? results[0] : {};
     
-    // 计算净增长量（修改：合单不参与净增长计算）
+    // 计算净增长量（合单参与净增长计算）
     const addTotal = parseInt(data.add_total) || 0;
     const subtractTotal = parseInt(data.subtract_total) || 0;
     const mergeTotal = parseInt(data.merge_total) || 0;
-    // 净增长 = 新增 - 减少（合单不参与计算）
-    const netGrowth = addTotal - subtractTotal; // + mergeTotal; // 注释掉合单参与计算的部分
+    // 净增长 = 新增 - 减少 + 合单（合单为负数，表示减少）
+    // 例如：新增3单(+3) + 合2单(-1) + 减少0单(0) = 2单
+    const netGrowth = addTotal - subtractTotal + mergeTotal;
 
     return {
       add_total: addTotal,

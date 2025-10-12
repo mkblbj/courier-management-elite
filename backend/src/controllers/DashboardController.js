@@ -101,10 +101,8 @@ class DashboardControllerClass {
             break;
         }
         
-        // 累加总数量（净增长）- 排除合单操作
-        if (operationType !== 'merge') {
-          totalQuantity += output.quantity;
-        }
+        // 累加总数量（净增长）- 包含合单操作（合单为负数）
+        totalQuantity += output.quantity;
         
         // 添加到店铺统计
         if (shopMap.has(output.shop_id)) {
@@ -132,10 +130,8 @@ class DashboardControllerClass {
           }
           
           const courierData = shopCouriers.get(courierId);
-          // 只累加非合单操作的数量（净增长）
-          if (operationType !== 'merge') {
-            courierData.quantity += output.quantity;
-          }
+          // 累加数量（包含合单操作，合单为负数）
+          courierData.quantity += output.quantity;
         }
         
         // 添加到快递类型统计
@@ -151,10 +147,8 @@ class DashboardControllerClass {
           }
           
           const stats = courierStats.get(courierKey);
-          // 只累加非合单操作的数量（净增长）
-          if (operationType !== 'merge') {
-            stats.total_quantity += output.quantity;
-          }
+          // 累加数量（包含合单操作，合单为负数）
+          stats.total_quantity += output.quantity;
           stats.shops.add(output.shop_id);
         }
       }

@@ -199,17 +199,13 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     operation.quantity += item.quantity;
     operation.count += 1;
 
-    // 累加快递类型总量
+    // 累加快递类型总量（合单参与计算，因为合单quantity为负数）
     courier.total_quantity += item.quantity;
-    if (item.operation_type !== 'merge') {
-      courier.net_quantity += item.quantity;
-    }
+    courier.net_quantity += item.quantity;
 
-    // 累加店铺总量
+    // 累加店铺总量（合单参与计算，因为合单quantity为负数）
     acc[item.shop_id].total_quantity += item.quantity;
-    if (item.operation_type !== 'merge') {
-      acc[item.shop_id].net_quantity += item.quantity;
-    }
+    acc[item.shop_id].net_quantity += item.quantity;
 
     return acc;
   }, {} as Record<number, {
@@ -341,17 +337,13 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     operation.quantity += item.quantity;
     operation.count += 1;
 
-    // 累加店铺总量
+    // 累加店铺总量（合单参与计算，因为合单quantity为负数）
     shop.total_quantity += item.quantity;
-    if (item.operation_type !== 'merge') {
-      shop.net_quantity += item.quantity;
-    }
+    shop.net_quantity += item.quantity;
 
-    // 累加快递类型总量
+    // 累加快递类型总量（合单参与计算，因为合单quantity为负数）
     acc[item.courier_id].total_quantity += item.quantity;
-    if (item.operation_type !== 'merge') {
-      acc[item.courier_id].net_quantity += item.quantity;
-    }
+    acc[item.courier_id].net_quantity += item.quantity;
 
     return acc;
   }, {} as Record<number, {
