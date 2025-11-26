@@ -754,6 +754,52 @@ class DashboardControllerClass {
   }
   
   /**
+   * Homepage widget 专用 API - 返回今日出力量和发货量
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async getHomepageStats(req, res) {
+    try {
+      const cacheKey = 'homepage_stats';
+      
+      // 尝试从缓存获取
+      const cachedData = dashboardCache.get(cacheKey);
+      if (cachedData) {
+        return res.status(200).json(cachedData);
+      }
+      
+      const today = new Date().toISOString().split('T')[0];
+      
+      // 获取今日出力量
+      const outputs = await ShopOutput.getOutputsByDate(today);
+      const outputQuantity = outputs.reduce((sum, output) => sum + output.quantity, 0);
+      
+      // 获取今日发货量
+      const ShippingRecord = require('../models/ShippingRecord');
+      const shippingStats = await ShippingRecord.getStatsTotal({ date: today });
+      const shippingQuantity = shippingStats?.total || 0;
+      
+      const data = {
+        output_quantity: outputQuantity,
+        shipping_quantity: shippingQuantity,
+        date: today
+      };
+      
+      // 缓存 30 秒
+      dashboardCache.set(cacheKey, data, 30);
+      
+      res.status(200).json(data);
+    } catch (error) {
+      console.error('获取 Homepage 统计数据失败:', error);
+      res.status(500).json({
+        output_quantity: 0,
+        shipping_quantity: 0,
+        error: error.message
+      });
+    }
+  }
+
+  /**
    * 清除仪表盘数据缓存
    * @param {Object} req 请求对象
    * @param {Object} res 响应对象

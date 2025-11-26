@@ -15,4 +15,7 @@ router.get('/shop-outputs/trend', DashboardController.getShopOutputTrend.bind(Da
 // 清除仪表盘数据缓存
 router.post('/cache/clear', DashboardController.clearCache.bind(DashboardController));
 
+// Homepage widget 专用 API
+router.get('/homepage', DashboardController.getHomepageStats.bind(DashboardController));
+
 module.exports = router; 
