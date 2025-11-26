@@ -782,7 +782,8 @@ class DashboardControllerClass {
       const data = {
         output_quantity: outputQuantity,
         shipping_quantity: shippingQuantity,
-        date: today
+        date: today,
+        updated_at: getCurrentTimeFormatted()
       };
       
       // 缓存 30 秒
