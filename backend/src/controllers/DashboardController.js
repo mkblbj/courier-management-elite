@@ -281,7 +281,7 @@ class DashboardControllerClass {
       res.status(500).json({
         code: 500,
         message: `获取今日出力概览失败 - ${getCurrentTimeFormatted()}`,
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       });
     }
   }
@@ -505,7 +505,7 @@ class DashboardControllerClass {
       res.status(500).json({
         code: 500,
         message: `获取明日出力预测失败 - ${getCurrentTimeFormatted()}`,
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       });
     }
   }
@@ -753,7 +753,7 @@ class DashboardControllerClass {
       res.status(500).json({
         code: 500,
         message: `获取店铺出力趋势数据失败 - ${getCurrentTimeFormatted()}`,
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       });
     }
   }
@@ -775,9 +775,18 @@ class DashboardControllerClass {
       
       const today = new Date().toISOString().split('T')[0];
       
+      // 计算明日日期
+      const tomorrowDate = new Date();
+      tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+      const tomorrow = tomorrowDate.toISOString().split('T')[0];
+      
       // 获取今日出力量
       const outputs = await ShopOutput.getOutputsByDate(today);
       const outputQuantity = outputs.reduce((sum, output) => sum + output.quantity, 0);
+      
+      // 获取明日预计出力量
+      const tomorrowOutputs = await ShopOutput.getOutputsByDate(tomorrow);
+      const tomorrowOutputQuantity = tomorrowOutputs.reduce((sum, output) => sum + output.quantity, 0);
       
       // 获取今日发货量
       const { instance: shippingRecordInstance } = require('../models/ShippingRecord');
@@ -786,6 +795,7 @@ class DashboardControllerClass {
       
       const data = {
         output_quantity: outputQuantity,
+        tomorrow_output_quantity: tomorrowOutputQuantity,
         shipping_quantity: shippingQuantity,
         date: today,
         updated_at: getCurrentTimeFormatted()
@@ -799,8 +809,9 @@ class DashboardControllerClass {
       console.error('获取 Homepage 统计数据失败:', error);
       res.status(500).json({
         output_quantity: 0,
+        tomorrow_output_quantity: 0,
         shipping_quantity: 0,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -822,7 +833,7 @@ class DashboardControllerClass {
       res.status(500).json({
         code: 500,
         message: `清除缓存失败 - ${getCurrentTimeFormatted()}`,
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
       });
     }
   }
