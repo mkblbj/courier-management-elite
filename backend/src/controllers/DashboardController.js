@@ -775,8 +775,8 @@ class DashboardControllerClass {
       const outputQuantity = outputs.reduce((sum, output) => sum + output.quantity, 0);
       
       // 获取今日发货量
-      const ShippingRecord = require('../models/ShippingRecord');
-      const shippingStats = await ShippingRecord.getStatsTotal({ date: today });
+      const { instance: shippingRecordInstance } = require('../models/ShippingRecord');
+      const shippingStats = await shippingRecordInstance.getStatsTotal({ date: today });
       const shippingQuantity = shippingStats?.total || 0;
       
       const data = {
