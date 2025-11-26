@@ -6,16 +6,21 @@ const NodeCache = require('node-cache');
 // 创建缓存实例，设置缓存时间为60秒（可根据需求调整）
 const dashboardCache = new NodeCache({ stdTTL: 60, checkperiod: 120 });
 
-// 获取格式化的当前时间
+// 获取格式化的当前时间（使用配置的时区）
+const { APP_TIMEZONE } = require('../config/timezone');
+
 function getCurrentTimeFormatted() {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  return now.toLocaleString('sv-SE', { 
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).replace('T', ' ');
 }
 
 class DashboardControllerClass {
