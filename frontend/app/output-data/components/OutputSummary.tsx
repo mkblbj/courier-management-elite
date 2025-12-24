@@ -167,7 +167,8 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
         category_name: getShopCategoryName(item.shop_id),
         couriers: [],
         total_quantity: 0,
-        net_quantity: 0 // 净增长（排除合单）
+        net_quantity: 0, // 净增长（排除合单）
+        resend_count: 0 // 再発送数量
       };
     }
 
@@ -207,6 +208,11 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     acc[item.shop_id].total_quantity += item.quantity;
     acc[item.shop_id].net_quantity += item.quantity;
 
+    // 统计再発送数量
+    if (item.notes && item.notes.includes('再発送')) {
+      acc[item.shop_id].resend_count += 1;
+    }
+
     return acc;
   }, {} as Record<number, {
     shop_id: number;
@@ -225,6 +231,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     }>;
     total_quantity: number;
     net_quantity: number;
+    resend_count: number;
   }>);
 
   // 转换为数组便于渲染
@@ -233,6 +240,11 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
   // 计算总出力量（使用净增长数据，如果没有则使用汇总数据）
   const totalQuantity = operationStats ? operationStats.net_growth :
     shopSummaryArray.reduce((sum, item) => sum + item.net_quantity, 0);
+
+  // 统计备注中包含 "再発送" 的记录数
+  const resendCount = todayOutputs.filter(item => 
+    item.notes && item.notes.includes('再発送')
+  ).length;
 
   // 准备饼图数据（使用净增长）
   const pieData = shopSummaryArray.map(shop => ({
@@ -304,7 +316,8 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
         courier_name: item.courier_name || "未知快递",
         shops: [],
         total_quantity: 0,
-        net_quantity: 0 // 净增长（排除合单）
+        net_quantity: 0, // 净增长（排除合单）
+        resend_count: 0 // 再発送数量
       };
     }
 
@@ -345,6 +358,11 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     acc[item.courier_id].total_quantity += item.quantity;
     acc[item.courier_id].net_quantity += item.quantity;
 
+    // 统计再発送数量
+    if (item.notes && item.notes.includes('再発送')) {
+      acc[item.courier_id].resend_count += 1;
+    }
+
     return acc;
   }, {} as Record<number, {
     courier_id: number;
@@ -363,6 +381,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     }>;
     total_quantity: number;
     net_quantity: number;
+    resend_count: number;
   }>);
 
   // 转换为数组便于渲染
@@ -372,7 +391,7 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
     <div className="space-y-4">
       {/* 操作统计卡片 */}
       {operationStats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <Card className="p-3">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -402,6 +421,17 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
                 <div className="text-sm font-medium text-orange-700">{t("合单")}</div>
                 <div className="text-lg font-bold">{operationStats.merge.total_quantity}</div>
                 <div className="text-xs text-muted-foreground">{operationStats.merge.count} {t("次操作")}</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+              <div>
+                <div className="text-sm font-medium text-purple-700">{t("再発送")}</div>
+                <div className="text-lg font-bold">{resendCount}</div>
+                <div className="text-xs text-muted-foreground">{t("件")}</div>
               </div>
             </div>
           </Card>
@@ -584,9 +614,17 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
                                   <CardDescription className="text-sm">{shop.category_name}</CardDescription>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-primary">{shop.net_quantity}</div>
-                                <div className="text-xs text-muted-foreground">{t("净增长")}</div>
+                              <div className="flex items-center gap-4">
+                                {shop.resend_count > 0 && (
+                                  <div className="text-right">
+                                    <div className="text-lg font-bold text-purple-600">{shop.resend_count}</div>
+                                    <div className="text-xs text-muted-foreground">{t("再発送")}</div>
+                                  </div>
+                                )}
+                                <div className="text-right">
+                                  <div className="text-2xl font-bold text-primary">{shop.net_quantity}</div>
+                                  <div className="text-xs text-muted-foreground">{t("净增长")}</div>
+                                </div>
                               </div>
                             </div>
                           </CardHeader>
@@ -635,9 +673,17 @@ export default function OutputSummary({ selectedDate }: OutputSummaryProps) {
                                   <CardDescription className="text-sm">{t("快递类型")}</CardDescription>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-orange-600">{courier.net_quantity}</div>
-                                <div className="text-xs text-muted-foreground">{t("净增长")}</div>
+                              <div className="flex items-center gap-4">
+                                {courier.resend_count > 0 && (
+                                  <div className="text-right">
+                                    <div className="text-lg font-bold text-purple-600">{courier.resend_count}</div>
+                                    <div className="text-xs text-muted-foreground">{t("再発送")}</div>
+                                  </div>
+                                )}
+                                <div className="text-right">
+                                  <div className="text-2xl font-bold text-orange-600">{courier.net_quantity}</div>
+                                  <div className="text-xs text-muted-foreground">{t("净增长")}</div>
+                                </div>
                               </div>
                             </div>
                           </CardHeader>
