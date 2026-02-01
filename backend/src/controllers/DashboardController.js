@@ -23,6 +23,29 @@ function getCurrentTimeFormatted() {
   }).replace('T', ' ');
 }
 
+// 获取当前时区的今日日期（YYYY-MM-DD格式）
+function getTodayDate() {
+  const now = new Date();
+  return now.toLocaleString('sv-SE', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).split(' ')[0];
+}
+
+// 获取当前时区的明日日期（YYYY-MM-DD格式）
+function getTomorrowDate() {
+  const now = new Date();
+  now.setDate(now.getDate() + 1);
+  return now.toLocaleString('sv-SE', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).split(' ')[0];
+}
+
 class DashboardControllerClass {
   /**
    * 获取今日出力概览
@@ -46,8 +69,8 @@ class DashboardControllerClass {
         });
       }
       
-      // 获取今日日期
-      const today = new Date().toISOString().split('T')[0];
+      // 获取今日日期（使用配置的时区）
+      const today = getTodayDate();
       
       // 获取今日出力数据
       const outputs = await ShopOutput.getOutputsByDate(today);
@@ -308,11 +331,9 @@ class DashboardControllerClass {
         });
       }
       
-      // 获取明日日期
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      // 获取明日日期（使用配置的时区）
+      const tomorrow = getTomorrowDate();
+      const tomorrowStr = tomorrow;
       
       // 直接获取明日的出力数据
       const outputs = await ShopOutput.getOutputsByDate(tomorrowStr);
@@ -545,18 +566,22 @@ class DashboardControllerClass {
         });
       }
       
-      // 计算日期范围
-      const today = new Date();
+      // 计算日期范围（使用配置的时区）
+      const todayStr = getTodayDate();
       const daysNum = parseInt(days) || 7;
-      const startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - daysNum + 1);
       
       // 生成日期数组
       const dateArray = [];
-      const currentDate = new Date(startDate);
-      while (currentDate <= today) {
-        dateArray.push(currentDate.toISOString().split('T')[0]);
-        currentDate.setDate(currentDate.getDate() + 1);
+      for (let i = daysNum - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleString('sv-SE', {
+          timeZone: APP_TIMEZONE,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).split(' ')[0];
+        dateArray.push(dateStr);
       }
       
       // 获取日期范围内的所有出力数据
@@ -773,12 +798,10 @@ class DashboardControllerClass {
         return res.status(200).json(cachedData);
       }
       
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayDate();
       
       // 计算明日日期
-      const tomorrowDate = new Date();
-      tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-      const tomorrow = tomorrowDate.toISOString().split('T')[0];
+      const tomorrow = getTomorrowDate();
       
       // 获取今日出力量
       const outputs = await ShopOutput.getOutputsByDate(today);
