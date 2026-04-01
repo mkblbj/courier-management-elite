@@ -1,6 +1,7 @@
 const ShopOutput = require('../models/ShopOutput');
 const Shop = require('../models/Shop');
 const Courier = require('../models/Courier');
+const { instance: shippingRecordInstance } = require('../models/ShippingRecord');
 const NodeCache = require('node-cache');
 
 // 创建缓存实例，设置缓存时间为60秒（可根据需求调整）
@@ -8,6 +9,17 @@ const dashboardCache = new NodeCache({ stdTTL: 60, checkperiod: 120 });
 
 // 获取格式化的当前时间（使用配置的时区）
 const { APP_TIMEZONE } = require('../config/timezone');
+
+function getDateByOffset(offset = 0) {
+  const now = new Date();
+  now.setDate(now.getDate() + offset);
+  return now.toLocaleString('sv-SE', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).split(' ')[0];
+}
 
 function getCurrentTimeFormatted() {
   const now = new Date();
@@ -25,25 +37,149 @@ function getCurrentTimeFormatted() {
 
 // 获取当前时区的今日日期（YYYY-MM-DD格式）
 function getTodayDate() {
-  const now = new Date();
-  return now.toLocaleString('sv-SE', {
-    timeZone: APP_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).split(' ')[0];
+  return getDateByOffset(0);
 }
 
 // 获取当前时区的明日日期（YYYY-MM-DD格式）
 function getTomorrowDate() {
-  const now = new Date();
-  now.setDate(now.getDate() + 1);
-  return now.toLocaleString('sv-SE', {
-    timeZone: APP_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).split(' ')[0];
+  return getDateByOffset(1);
+}
+
+// 获取当前时区的昨日日期（YYYY-MM-DD格式）
+function getYesterdayDate() {
+  return getDateByOffset(-1);
+}
+
+function buildShopOutputDetail(date, shops, outputs) {
+  const shopMap = new Map(
+    shops.map(shop => [
+      shop.id,
+      {
+        shop_id: shop.id,
+        shop_name: shop.name,
+        category_id: shop.category_id || null,
+        category_name: shop.category_name || '未分类',
+        has_data: false,
+        total_quantity: 0,
+        courier_map: new Map()
+      }
+    ])
+  );
+
+  let totalQuantity = 0;
+
+  for (const output of outputs) {
+    const quantity = Number(output.quantity) || 0;
+    totalQuantity += quantity;
+
+    if (!shopMap.has(output.shop_id)) {
+      shopMap.set(output.shop_id, {
+        shop_id: output.shop_id,
+        shop_name: output.shop_name || `店铺 ${output.shop_id}`,
+        category_id: null,
+        category_name: '未分类',
+        has_data: false,
+        total_quantity: 0,
+        courier_map: new Map()
+      });
+    }
+
+    const shopData = shopMap.get(output.shop_id);
+    shopData.has_data = true;
+    shopData.total_quantity += quantity;
+
+    if (!shopData.courier_map.has(output.courier_id)) {
+      shopData.courier_map.set(output.courier_id, {
+        courier_id: output.courier_id,
+        courier_name: output.courier_name || '未知快递',
+        quantity: 0
+      });
+    }
+
+    const courierData = shopData.courier_map.get(output.courier_id);
+    courierData.quantity += quantity;
+  }
+
+  const shopDetails = Array.from(shopMap.values())
+    .map(shop => ({
+      shop_id: shop.shop_id,
+      shop_name: shop.shop_name,
+      category_id: shop.category_id,
+      category_name: shop.category_name,
+      has_data: shop.has_data,
+      total_quantity: shop.total_quantity,
+      couriers: Array.from(shop.courier_map.values()).sort((a, b) => b.quantity - a.quantity)
+    }))
+    .sort((a, b) => {
+      if (a.has_data !== b.has_data) {
+        return a.has_data ? -1 : 1;
+      }
+      return b.total_quantity - a.total_quantity;
+    });
+
+  return {
+    date,
+    total_quantity: totalQuantity,
+    shops_count: shopDetails.length,
+    active_shops_count: shopDetails.filter(shop => shop.has_data).length,
+    shops: shopDetails
+  };
+}
+
+function buildShippingDetail(date, records) {
+  const courierMap = new Map();
+  let totalQuantity = 0;
+
+  const formattedRecords = records
+    .map(record => {
+      const quantity = Number(record.quantity) || 0;
+      totalQuantity += quantity;
+
+      if (!courierMap.has(record.courier_id)) {
+        courierMap.set(record.courier_id, {
+          courier_id: record.courier_id,
+          courier_name: record.courier_name || '未知快递',
+          total_quantity: 0,
+          record_count: 0,
+          records: []
+        });
+      }
+
+      const courierData = courierMap.get(record.courier_id);
+      courierData.total_quantity += quantity;
+      courierData.record_count += 1;
+
+      const formattedRecord = {
+        id: record.id,
+        courier_id: record.courier_id,
+        courier_name: record.courier_name || '未知快递',
+        quantity,
+        notes: record.notes || null,
+        date: record.date,
+        created_at: record.created_at,
+        updated_at: record.updated_at
+      };
+
+      courierData.records.push(formattedRecord);
+      return formattedRecord;
+    })
+    .sort((a, b) => b.quantity - a.quantity);
+
+  const couriers = Array.from(courierMap.values())
+    .map(courier => ({
+      ...courier,
+      records: courier.records.sort((a, b) => b.quantity - a.quantity)
+    }))
+    .sort((a, b) => b.total_quantity - a.total_quantity);
+
+  return {
+    date,
+    total_quantity: totalQuantity,
+    couriers_count: couriers.length,
+    record_count: formattedRecords.length,
+    couriers,
+    records: formattedRecords
+  };
 }
 
 class DashboardControllerClass {
@@ -799,29 +935,42 @@ class DashboardControllerClass {
       }
       
       const today = getTodayDate();
-      
-      // 计算明日日期
       const tomorrow = getTomorrowDate();
-      
-      // 获取今日出力量
-      const outputs = await ShopOutput.getOutputsByDate(today);
-      const outputQuantity = outputs.reduce((sum, output) => sum + output.quantity, 0);
-      
-      // 获取明日预计出力量
-      const tomorrowOutputs = await ShopOutput.getOutputsByDate(tomorrow);
-      const tomorrowOutputQuantity = tomorrowOutputs.reduce((sum, output) => sum + output.quantity, 0);
-      
-      // 获取今日发货量
-      const { instance: shippingRecordInstance } = require('../models/ShippingRecord');
-      const shippingStats = await shippingRecordInstance.getStatsTotal({ date: today });
-      const shippingQuantity = shippingStats?.total || 0;
+      const yesterday = getYesterdayDate();
+
+      const [
+        shops,
+        todayOutputs,
+        tomorrowOutputs,
+        yesterdayShippingRecords,
+        todayShippingRecords
+      ] = await Promise.all([
+        Shop.getAll({ is_active: true }),
+        ShopOutput.getAggregatedOutputsByDate(today),
+        ShopOutput.getAggregatedOutputsByDate(tomorrow),
+        shippingRecordInstance.getByDate(yesterday),
+        shippingRecordInstance.getByDate(today)
+      ]);
+
+      const todayOutputDetail = buildShopOutputDetail(today, shops, todayOutputs);
+      const tomorrowOutputDetail = buildShopOutputDetail(tomorrow, shops, tomorrowOutputs);
+      const yesterdayShippingDetail = buildShippingDetail(yesterday, yesterdayShippingRecords);
+      const todayShippingDetail = buildShippingDetail(today, todayShippingRecords);
       
       const data = {
-        output_quantity: outputQuantity,
-        tomorrow_output_quantity: tomorrowOutputQuantity,
-        shipping_quantity: shippingQuantity,
+        output_quantity: todayOutputDetail.total_quantity,
+        tomorrow_output_quantity: tomorrowOutputDetail.total_quantity,
+        shipping_quantity: todayShippingDetail.total_quantity,
+        yesterday_shipping_quantity: yesterdayShippingDetail.total_quantity,
         date: today,
-        updated_at: getCurrentTimeFormatted()
+        updated_at: getCurrentTimeFormatted(),
+        today_output: todayOutputDetail,
+        tomorrow_output: {
+          ...tomorrowOutputDetail,
+          total_predicted_quantity: tomorrowOutputDetail.total_quantity
+        },
+        yesterday_shipping: yesterdayShippingDetail,
+        today_shipping: todayShippingDetail
       };
       
       // 缓存 30 秒
@@ -829,11 +978,49 @@ class DashboardControllerClass {
       
       res.status(200).json(data);
     } catch (error) {
+      const today = getTodayDate();
+      const tomorrow = getTomorrowDate();
+      const yesterday = getYesterdayDate();
+
       console.error('获取 Homepage 统计数据失败:', error);
       res.status(500).json({
         output_quantity: 0,
         tomorrow_output_quantity: 0,
         shipping_quantity: 0,
+        yesterday_shipping_quantity: 0,
+        date: today,
+        updated_at: getCurrentTimeFormatted(),
+        today_output: {
+          date: today,
+          total_quantity: 0,
+          shops_count: 0,
+          active_shops_count: 0,
+          shops: []
+        },
+        tomorrow_output: {
+          date: tomorrow,
+          total_quantity: 0,
+          total_predicted_quantity: 0,
+          shops_count: 0,
+          active_shops_count: 0,
+          shops: []
+        },
+        yesterday_shipping: {
+          date: yesterday,
+          total_quantity: 0,
+          couriers_count: 0,
+          record_count: 0,
+          couriers: [],
+          records: []
+        },
+        today_shipping: {
+          date: today,
+          total_quantity: 0,
+          couriers_count: 0,
+          record_count: 0,
+          couriers: [],
+          records: []
+        },
         error: error instanceof Error ? error.message : String(error)
       });
     }
