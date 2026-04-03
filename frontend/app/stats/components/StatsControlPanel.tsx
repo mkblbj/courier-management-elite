@@ -234,7 +234,7 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                         return (
                               <div className="w-full max-w-sm">
                                     <MonthYearPicker
-                                          mode="month"
+                                          mode="year"
                                           value={monthRange}
                                           onChange={onMonthRangeChange || (() => { })}
                                     />

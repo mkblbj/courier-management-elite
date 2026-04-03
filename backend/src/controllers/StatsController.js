@@ -133,6 +133,9 @@ class StatsController {
       const date = req.query.date || null;
       const dateFrom = req.query.date_from || null;
       const dateTo = req.query.date_to || null;
+      const groupBy = ['day', 'week', 'month', 'year'].includes(req.query.group_by)
+        ? req.query.group_by
+        : 'day';
       const week = req.query.week ? parseInt(req.query.week) : null;
       const month = req.query.month ? parseInt(req.query.month) : null;
       const quarter = req.query.quarter ? parseInt(req.query.quarter) : null;
@@ -192,7 +195,8 @@ class StatsController {
       const options = {
         date,
         date_from: finalDateFrom,
-        date_to: finalDateTo
+        date_to: finalDateTo,
+        group_by: groupBy
       };
       
       try {
@@ -244,6 +248,9 @@ class StatsController {
       const dateFrom = req.query.date_from || null;
       const dateTo = req.query.date_to || null;
       const chartType = req.query.type || 'line'; // 默认折线图，可选值: line, pie
+      const groupBy = ['day', 'week', 'month', 'year'].includes(req.query.group_by)
+        ? req.query.group_by
+        : 'day';
       const week = req.query.week ? parseInt(req.query.week) : null;
       const month = req.query.month ? parseInt(req.query.month) : null;
       const quarter = req.query.quarter ? parseInt(req.query.quarter) : null;
@@ -302,7 +309,8 @@ class StatsController {
       
       const options = {
         date_from: finalDateFrom,
-        date_to: finalDateTo
+        date_to: finalDateTo,
+        group_by: groupBy
       };
       
       try {
@@ -1025,11 +1033,11 @@ class StatsController {
       
       // 创建一个自定义SQL查询来按日期统计出力数据
       const db = require('../db');
-      
+
       // 根据分组方式构建不同的SQL
       let dateGroupExpression;
       let dateOrderExpression;
-      
+
       switch (groupBy) {
         case 'week':
           dateGroupExpression = `DATE_FORMAT(so.output_date, '%Y-%u')`;
@@ -1043,181 +1051,243 @@ class StatsController {
           dateGroupExpression = `DATE_FORMAT(so.output_date, '%Y')`;
           dateOrderExpression = `DATE_FORMAT(so.output_date, '%Y')`;
           break;
-        default: // day
-          dateGroupExpression = `so.output_date`;
-          dateOrderExpression = `so.output_date`;
+        default:
+          dateGroupExpression = `DATE_FORMAT(so.output_date, '%Y-%m-%d')`;
+          dateOrderExpression = `DATE_FORMAT(so.output_date, '%Y-%m-%d')`;
       }
-      
-      let sql = `
-        SELECT 
-          ${dateGroupExpression} as date, 
-          SUM(so.quantity) as total_quantity,
-          COUNT(DISTINCT so.shop_id) as shops_count,
-          COUNT(DISTINCT so.courier_id) as couriers_count,
-          AVG(so.quantity) as avg_quantity
-        FROM 
-          shop_outputs so
-      `;
-      
-      // 如果需要按类别筛选，需要JOIN shops表
-      if (categoryId) {
-        sql += ` JOIN shops s ON so.shop_id = s.id`;
-      }
-      
-      sql += ` WHERE (so.operation_type IS NULL OR so.operation_type != 'merge')`;
-      
-      const params = [];
-      
-      if (shopId) {
-        sql += ` AND so.shop_id = ?`;
-        params.push(shopId);
-      }
-      
-      if (courierId) {
-        sql += ` AND so.courier_id = ?`;
-        params.push(courierId);
-      }
-      
-      if (categoryId) {
-        sql += ` AND s.category_id = ?`;
-        params.push(categoryId);
-      }
-      
-      if (dateFrom) {
-        sql += ` AND so.output_date >= ?`;
-        params.push(dateFrom);
-      }
-      
-      if (dateTo) {
-        sql += ` AND so.output_date <= ?`;
-        params.push(dateTo);
-      }
-      
-      sql += `
-        GROUP BY 
-          ${dateGroupExpression}
-        ORDER BY 
-          ${dateOrderExpression} ASC
-      `;
-      
-      const results = await db.query(sql, params);
-      
-      // 处理结果，计算环比和同比变化
-      const processedResults = [];
+
+      const shiftDateString = (dateString, { days = 0, months = 0, years = 0 } = {}) => {
+        if (!dateString) {
+          return null;
+        }
+
+        const [year, month, day] = dateString.split('-').map(Number);
+        const shiftedDate = new Date(year, month - 1, day);
+
+        if (days !== 0) {
+          shiftedDate.setDate(shiftedDate.getDate() + days);
+        }
+
+        if (months !== 0 || years !== 0) {
+          const targetYear = shiftedDate.getFullYear() + years;
+          const targetMonthIndex = shiftedDate.getMonth() + months;
+          const maxDay = new Date(targetYear, targetMonthIndex + 1, 0).getDate();
+          const safeDay = Math.min(shiftedDate.getDate(), maxDay);
+          shiftedDate.setFullYear(targetYear, targetMonthIndex, safeDay);
+        }
+
+        return dateUtils.formatDateString(shiftedDate);
+      };
+
+      const getShiftedRange = (from, to, comparisonType) => {
+        if (!from || !to) {
+          return null;
+        }
+
+        if (comparisonType === 'yoy') {
+          return {
+            dateFrom: shiftDateString(from, { years: -1 }),
+            dateTo: shiftDateString(to, { years: -1 })
+          };
+        }
+
+        switch (groupBy) {
+          case 'week':
+            return {
+              dateFrom: shiftDateString(from, { days: -7 }),
+              dateTo: shiftDateString(to, { days: -7 })
+            };
+          case 'month':
+            return {
+              dateFrom: shiftDateString(from, { months: -1 }),
+              dateTo: shiftDateString(to, { months: -1 })
+            };
+          case 'year':
+            return {
+              dateFrom: shiftDateString(from, { years: -1 }),
+              dateTo: shiftDateString(to, { years: -1 })
+            };
+          case 'day':
+          default:
+            return {
+              dateFrom: shiftDateString(from, { days: -1 }),
+              dateTo: shiftDateString(to, { days: -1 })
+            };
+        }
+      };
+
+      const getWeekKeyFromDateString = (dateString) => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        const currentYear = date.getFullYear();
+        const yearStart = new Date(currentYear, 0, 1);
+        const mondayOffset = (yearStart.getDay() + 6) % 7;
+        const firstMonday = new Date(currentYear, 0, 1 - mondayOffset);
+        const diffDays = Math.floor((date.getTime() - firstMonday.getTime()) / (1000 * 60 * 60 * 24));
+        const week = Math.max(0, Math.floor(diffDays / 7));
+
+        return `${currentYear}-${String(week).padStart(2, '0')}`;
+      };
+
+      const getComparisonKey = (dateKey, comparisonType) => {
+        if (!dateKey) {
+          return null;
+        }
+
+        switch (groupBy) {
+          case 'week': {
+            const [year, week] = String(dateKey).split('-').map(Number);
+            const weekRange = dateUtils.getWeekDateRange(year, week);
+
+            if (!weekRange.start) {
+              return null;
+            }
+
+            const shiftedStart = comparisonType === 'yoy'
+              ? shiftDateString(weekRange.start, { years: -1 })
+              : shiftDateString(weekRange.start, { days: -7 });
+
+            return shiftedStart ? getWeekKeyFromDateString(shiftedStart) : null;
+          }
+          case 'month': {
+            const shiftedMonth = comparisonType === 'yoy'
+              ? shiftDateString(`${dateKey}-01`, { years: -1 })
+              : shiftDateString(`${dateKey}-01`, { months: -1 });
+
+            return shiftedMonth ? shiftedMonth.slice(0, 7) : null;
+          }
+          case 'year':
+            return `${parseInt(dateKey, 10) - 1}`;
+          case 'day':
+          default:
+            return comparisonType === 'yoy'
+              ? shiftDateString(dateKey, { years: -1 })
+              : shiftDateString(dateKey, { days: -1 });
+        }
+      };
+
+      const buildGroupedStatsQuery = (rangeFrom, rangeTo, includeMetrics = true) => {
+        let sql = `
+          SELECT 
+            ${dateGroupExpression} as date,
+            SUM(so.quantity) as total_quantity
+            ${includeMetrics ? `,
+            COUNT(DISTINCT so.shop_id) as shops_count,
+            COUNT(DISTINCT so.courier_id) as couriers_count,
+            AVG(so.quantity) as avg_quantity` : ''}
+          FROM 
+            shop_outputs so
+        `;
+
+        if (categoryId) {
+          sql += ` JOIN shops s ON so.shop_id = s.id`;
+        }
+
+        sql += ` WHERE (so.operation_type IS NULL OR so.operation_type != 'merge')`;
+
+        const params = [];
+
+        if (shopId) {
+          sql += ` AND so.shop_id = ?`;
+          params.push(shopId);
+        }
+
+        if (courierId) {
+          sql += ` AND so.courier_id = ?`;
+          params.push(courierId);
+        }
+
+        if (categoryId) {
+          sql += ` AND s.category_id = ?`;
+          params.push(categoryId);
+        }
+
+        if (rangeFrom) {
+          sql += ` AND so.output_date >= ?`;
+          params.push(rangeFrom);
+        }
+
+        if (rangeTo) {
+          sql += ` AND so.output_date <= ?`;
+          params.push(rangeTo);
+        }
+
+        sql += `
+          GROUP BY 
+            ${dateGroupExpression}
+          ORDER BY 
+            ${dateOrderExpression} ASC
+        `;
+
+        return { sql, params };
+      };
+
+      const currentQuery = buildGroupedStatsQuery(dateFrom, dateTo, true);
+      const results = await db.query(currentQuery.sql, currentQuery.params);
       const resultsArray = Array.isArray(results) ? results : [];
-      
-      for (let i = 0; i < resultsArray.length; i++) {
-        const current = resultsArray[i];
+
+      const momRange = getShiftedRange(dateFrom, dateTo, 'mom');
+      const yoyRange = getShiftedRange(dateFrom, dateTo, 'yoy');
+
+      const momQuery = momRange ? buildGroupedStatsQuery(momRange.dateFrom, momRange.dateTo, false) : null;
+      const yoyQuery = yoyRange ? buildGroupedStatsQuery(yoyRange.dateFrom, yoyRange.dateTo, false) : null;
+
+      const momResults = momQuery ? await db.query(momQuery.sql, momQuery.params) : [];
+      const yoyResults = yoyQuery ? await db.query(yoyQuery.sql, yoyQuery.params) : [];
+
+      const buildQuantityMap = (rows) => {
+        const dataMap = new Map();
+
+        (Array.isArray(rows) ? rows : []).forEach((row) => {
+          dataMap.set(String(row.date), parseInt(row.total_quantity, 10) || 0);
+        });
+
+        return dataMap;
+      };
+
+      const momDataMap = buildQuantityMap(momResults);
+      const yoyDataMap = buildQuantityMap(yoyResults);
+
+      const processedResults = resultsArray.map((current) => {
+        const currentKey = String(current?.date || '');
+        const currentQuantity = parseInt(current?.total_quantity, 10) || 0;
+        const momKey = getComparisonKey(currentKey, 'mom');
+        const yoyKey = getComparisonKey(currentKey, 'yoy');
+        const momPreviousQuantity = momKey ? (momDataMap.get(momKey) || 0) : 0;
+        const yoyPreviousQuantity = yoyKey ? (yoyDataMap.get(yoyKey) || 0) : 0;
+
         const item = {
-          date: current?.date || '',
-          total_quantity: parseInt(current?.total_quantity) || 0,
-          shops_count: parseInt(current?.shops_count) || 0,
-          couriers_count: parseInt(current?.couriers_count) || 0,
+          date: currentKey,
+          total_quantity: currentQuantity,
+          shops_count: parseInt(current?.shops_count, 10) || 0,
+          couriers_count: parseInt(current?.couriers_count, 10) || 0,
           avg_quantity: parseFloat(current?.avg_quantity) || 0,
           mom_change_rate: 0,
           mom_change_type: 'unchanged',
           yoy_change_rate: 0,
           yoy_change_type: 'unchanged'
         };
-        
-        // 计算环比（与前一期相比）
-        if (i > 0) {
-          const previous = results[i - 1];
-          const previousQuantity = parseInt(previous.total_quantity) || 0;
-          const currentQuantity = parseInt(current.total_quantity) || 0;
-          
-          if (previousQuantity > 0) {
-            const momChangeRate = ((currentQuantity - previousQuantity) / previousQuantity) * 100;
-            item.mom_change_rate = parseFloat(momChangeRate.toFixed(2));
-            
-            if (momChangeRate > 0) {
-              item.mom_change_type = 'increase';
-            } else if (momChangeRate < 0) {
-              item.mom_change_type = 'decrease';
-            } else {
-              item.mom_change_type = 'unchanged';
-            }
-          } else if (currentQuantity > 0) {
-            item.mom_change_rate = 100;
-            item.mom_change_type = 'increase';
-          }
+
+        if (momPreviousQuantity > 0) {
+          const momChangeRate = ((currentQuantity - momPreviousQuantity) / momPreviousQuantity) * 100;
+          item.mom_change_rate = parseFloat(momChangeRate.toFixed(2));
+          item.mom_change_type = momChangeRate > 0 ? 'increase' : momChangeRate < 0 ? 'decrease' : 'unchanged';
+        } else if (currentQuantity > 0) {
+          item.mom_change_rate = 100;
+          item.mom_change_type = 'increase';
         }
-        
-        // 计算同比（与去年同期相比）
-        try {
-          let yoyDate;
-          if (groupBy === 'day') {
-            const currentDate = new Date(current.date);
-            yoyDate = new Date(currentDate.getFullYear() - 1, currentDate.getMonth(), currentDate.getDate());
-          } else if (groupBy === 'week') {
-            const [year, week] = current.date.split('-');
-            yoyDate = `${parseInt(year) - 1}-${week}`;
-          } else if (groupBy === 'month') {
-            const [year, month] = current.date.split('-');
-            yoyDate = `${parseInt(year) - 1}-${month}`;
-          } else if (groupBy === 'year') {
-            yoyDate = `${parseInt(current.date) - 1}`;
-          }
-          
-          if (yoyDate) {
-            // 查询去年同期数据
-            let yoySql = `
-              SELECT SUM(so.quantity) as total_quantity
-              FROM shop_outputs so
-            `;
-            
-            if (categoryId) {
-              yoySql += ` JOIN shops s ON so.shop_id = s.id`;
-            }
-            
-            yoySql += ` WHERE ${dateGroupExpression} = ?`;
-            
-            const yoyParams = [yoyDate];
-            
-            if (shopId) {
-              yoySql += ` AND so.shop_id = ?`;
-              yoyParams.push(shopId.toString());
-            }
-            
-            if (courierId) {
-              yoySql += ` AND so.courier_id = ?`;
-              yoyParams.push(courierId.toString());
-            }
-            
-            if (categoryId) {
-              yoySql += ` AND s.category_id = ?`;
-              yoyParams.push(categoryId.toString());
-            }
-            
-            const yoyResults = await db.query(yoySql, yoyParams);
-            
-            if (Array.isArray(yoyResults) && yoyResults.length > 0) {
-              const yoyQuantity = parseInt(yoyResults[0].total_quantity) || 0;
-              const currentQuantity = parseInt(current.total_quantity) || 0;
-              
-              if (yoyQuantity > 0) {
-                const yoyChangeRate = ((currentQuantity - yoyQuantity) / yoyQuantity) * 100;
-                item.yoy_change_rate = parseFloat(yoyChangeRate.toFixed(2));
-                
-                if (yoyChangeRate > 0) {
-                  item.yoy_change_type = 'increase';
-                } else if (yoyChangeRate < 0) {
-                  item.yoy_change_type = 'decrease';
-                } else {
-                  item.yoy_change_type = 'unchanged';
-                }
-              } else if (currentQuantity > 0) {
-                item.yoy_change_rate = 100;
-                item.yoy_change_type = 'increase';
-              }
-            }
-          }
-        } catch (error) {
-          console.warn('计算同比数据失败:', error);
+
+        if (yoyPreviousQuantity > 0) {
+          const yoyChangeRate = ((currentQuantity - yoyPreviousQuantity) / yoyPreviousQuantity) * 100;
+          item.yoy_change_rate = parseFloat(yoyChangeRate.toFixed(2));
+          item.yoy_change_type = yoyChangeRate > 0 ? 'increase' : yoyChangeRate < 0 ? 'decrease' : 'unchanged';
+        } else if (currentQuantity > 0) {
+          item.yoy_change_rate = 100;
+          item.yoy_change_type = 'increase';
         }
-        
-        processedResults.push(item);
-      }
+
+        return item;
+      });
       
       // 计算总量用于百分比计算
       const totalQuantity = processedResults.reduce((sum, item) => sum + item.total_quantity, 0);

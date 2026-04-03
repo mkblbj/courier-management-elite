@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useToast } from "@/components/ui/use-toast"
-import { format, subDays } from "date-fns"
+import { format } from "date-fns"
 import { shippingApi } from "@/services/shipping-api"
 import type { DateRange } from "react-day-picker"
+import { getGroupedDateSortValue, type StatisticsGroupBy } from "@/lib/stats-grouping"
 
 export interface StatisticsData {
   summary: {
@@ -26,6 +27,7 @@ export interface StatisticsData {
       courierId: string | number
       courierName: string
       total: number
+      recordCount?: number
     }[]
   }[]
 }
@@ -47,6 +49,7 @@ export function useStatisticsData() {
 
   // 默认快递类型筛选：全部
   const [courierTypeFilter, setCourierTypeFilter] = useState<string[]>([])
+  const [groupBy, setGroupBy] = useState<StatisticsGroupBy>("day")
 
   // 添加视图模式状态 - "flat"平铺视图
   const [viewMode, setViewMode] = useState<"flat">("flat")
@@ -90,6 +93,7 @@ export function useStatisticsData() {
       const params: any = {
         date_from: format(timeRange.from, "yyyy-MM-dd"),
         date_to: format(timeRange.to, "yyyy-MM-dd"),
+        group_by: groupBy,
       }
 
       // 如果选择了特定快递类型
@@ -133,19 +137,21 @@ export function useStatisticsData() {
           }
 
           const dateData = dateMap.get(item.date)
+          const detailRecordCount = Number(item.record_count) || 1
           dateData.total += Number(item.total) || 0
-          dateData.recordCount += 1
+          dateData.recordCount += detailRecordCount
           dateData.details.push({
             courierId: item.courier_id,
             courierName: item.courier_name,
             total: Number(item.total) || 0,
+            recordCount: detailRecordCount,
           })
         })
       }
 
       // 转换为数组并排序
       formattedData.byDate = Array.from(dateMap.values()).sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        (a, b) => getGroupedDateSortValue(a.date, groupBy) - getGroupedDateSortValue(b.date, groupBy),
       )
 
       setData(formattedData)
@@ -172,7 +178,7 @@ export function useStatisticsData() {
   // 当筛选条件变化时重新加载数据
   useEffect(() => {
     fetchStatisticsData()
-  }, [timeRange, courierTypeFilter])
+  }, [timeRange, courierTypeFilter, groupBy])
 
   return {
     data,
@@ -180,10 +186,12 @@ export function useStatisticsData() {
     error,
     timeRange,
     courierTypeFilter,
+    groupBy,
     viewMode,
     expandedItems,
     setTimeRange,
     setCourierTypeFilter,
+    setGroupBy,
     setViewMode,
     toggleItemExpanded,
     toggleAllExpanded,

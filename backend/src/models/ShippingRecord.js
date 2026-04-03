@@ -113,6 +113,46 @@ class ShippingRecord {
   }
 
   /**
+   * 规范化日期分组参数
+   * @param {string} groupBy 日期分组方式
+   * @returns {'day' | 'week' | 'month' | 'year'}
+   */
+  normalizeGroupBy(groupBy) {
+    return ['day', 'week', 'month', 'year'].includes(groupBy) ? groupBy : 'day';
+  }
+
+  /**
+   * 获取日期分组 SQL 表达式
+   * @param {string} groupBy 日期分组方式
+   * @param {string} column 日期列名
+   * @returns {string}
+   */
+  getDateGroupExpression(groupBy = 'day', column = 'sr.date') {
+    const normalizedGroupBy = this.normalizeGroupBy(groupBy);
+
+    switch (normalizedGroupBy) {
+      case 'week':
+        return `DATE_FORMAT(${column}, '%Y-%u')`;
+      case 'month':
+        return `DATE_FORMAT(${column}, '%Y-%m')`;
+      case 'year':
+        return `DATE_FORMAT(${column}, '%Y')`;
+      default:
+        return `DATE(${column})`;
+    }
+  }
+
+  /**
+   * 获取日期排序 SQL 表达式
+   * @param {string} groupBy 日期分组方式
+   * @param {string} column 日期列名
+   * @returns {string}
+   */
+  getDateOrderExpression(groupBy = 'day', column = 'sr.date') {
+    return this.getDateGroupExpression(groupBy, column);
+  }
+
+  /**
    * 获取记录总数（用于分页）
    * @param {Object} options 查询选项
    * @returns {Promise<number>} 记录总数
@@ -308,7 +348,11 @@ class ShippingRecord {
    * @returns {Promise<Array>} 统计数据数组
    */
   async getStatsByDate(options = {}) {
-    let sql = `SELECT DATE(sr.date) as date, 
+    const groupBy = this.normalizeGroupBy(options.group_by);
+    const dateGroupExpression = this.getDateGroupExpression(groupBy, 'sr.date');
+    const dateOrderExpression = this.getDateOrderExpression(groupBy, 'sr.date');
+
+    let sql = `SELECT ${dateGroupExpression} as date, 
                SUM(sr.quantity) as total, 
                COUNT(sr.id) as record_count 
                FROM ${this.table} sr`;
@@ -344,10 +388,10 @@ class ShippingRecord {
     }
 
     // 按日期分组
-    sql += " GROUP BY DATE(sr.date)";
+    sql += ` GROUP BY ${dateGroupExpression}`;
 
     // 按日期排序
-    sql += " ORDER BY date ASC";
+    sql += ` ORDER BY ${dateOrderExpression} ASC`;
 
     const results = await db.query(sql, params);
     return results;
@@ -359,10 +403,15 @@ class ShippingRecord {
    * @returns {Promise<Array>} 统计数据数组
    */
   async getStatsByDateAndCourier(options = {}) {
-    let sql = `SELECT DATE(sr.date) as date, 
+    const groupBy = this.normalizeGroupBy(options.group_by);
+    const dateGroupExpression = this.getDateGroupExpression(groupBy, 'sr.date');
+    const dateOrderExpression = this.getDateOrderExpression(groupBy, 'sr.date');
+
+    let sql = `SELECT ${dateGroupExpression} as date, 
                sr.courier_id, 
                c.name as courier_name,
-               SUM(sr.quantity) as total 
+               SUM(sr.quantity) as total,
+               COUNT(sr.id) as record_count
                FROM ${this.table} sr
                LEFT JOIN couriers c ON sr.courier_id = c.id`;
 
@@ -397,10 +446,10 @@ class ShippingRecord {
     }
 
     // 按日期和快递类型分组
-    sql += " GROUP BY DATE(sr.date), sr.courier_id";
+    sql += ` GROUP BY ${dateGroupExpression}, sr.courier_id`;
 
     // 按日期和总数排序
-    sql += " ORDER BY date ASC, total DESC";
+    sql += ` ORDER BY ${dateOrderExpression} ASC, total DESC`;
 
     const results = await db.query(sql, params);
     return results;

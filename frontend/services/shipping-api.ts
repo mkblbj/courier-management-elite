@@ -181,6 +181,7 @@ export interface ShippingFilterParams extends PaginationParams {
   endDate?: string
   courier_id?: number | string
   courier_ids?: string
+  group_by?: "day" | "week" | "month" | "year"
   min_quantity?: number
   max_quantity?: number
   notes_search?: string

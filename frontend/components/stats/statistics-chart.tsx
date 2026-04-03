@@ -21,17 +21,23 @@ import { useTranslation } from "react-i18next";
 import type { StatisticsData } from "@/hooks/use-statistics-data"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { formatDisplayDate } from "@/lib/date-utils" // 添加时区格式化工具
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  formatGroupedDateLabel,
+  getGroupedDateSecondaryLabel,
+  getWeekdayKey,
+  type StatisticsGroupBy,
+} from "@/lib/stats-grouping"
 
 interface StatisticsChartProps {
   data: StatisticsData | null
   isLoading: boolean
   error: string | null
+  groupBy: StatisticsGroupBy
 }
 
-export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps) {
-  const { t } = useTranslation();
+export function StatisticsChart({ data, isLoading, error, groupBy }: StatisticsChartProps) {
+  const { t, i18n } = useTranslation();
   const [chartType, setChartType] = useState<"bar" | "pie">("bar");
 
   // 过滤掉名字中包含"未指定"的快递类型
@@ -64,12 +70,14 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
 
   // 准备柱状图数据
   const barData = filteredByDate.map((item) => {
-    const dateObj = new Date(item.date);
+    const weekdayKey = groupBy === "day" ? getWeekdayKey(item.date) : null
     const result: any = {
-      // 使用时区日期格式化替代format
-      date: formatDisplayDate(dateObj, "MM-dd"),
-      weekday: formatDisplayDate(dateObj, "EEEE").toLowerCase(),
-      fullDate: dateObj, // 存储完整日期对象以便后续使用
+      date: item.date,
+      tickLabel: formatGroupedDateLabel(item.date, groupBy, { compact: true, locale: i18n.language }),
+      secondaryLabel: groupBy === "day"
+        ? (weekdayKey ? t(`weekday.short.${weekdayKey}`, { ns: "common" }) : "")
+        : getGroupedDateSecondaryLabel(item.date, groupBy),
+      tooltipLabel: formatGroupedDateLabel(item.date, groupBy, { locale: i18n.language }),
     }
 
     // 为每个快递类型添加数据
@@ -116,12 +124,11 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
   // 自定义工具提示内容
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      // 找到与当前标签匹配的数据项
-      const dataItem = barData.find(item => item.date === payload[0].payload.date);
+      const dataItem = payload[0].payload;
 
       return (
         <div className="bg-background dark:bg-gray-800 p-4 border rounded shadow-lg">
-          <p className="font-medium text-gray-700">{`${label} (${dataItem ? dataItem.weekday : ''})`}</p>
+          <p className="font-medium text-gray-700">{dataItem?.tooltipLabel || label}</p>
           <div className="mt-2">
             {payload.map((entry: any, index: number) => (
               <p key={`item-${index}`} style={{ color: entry.color }}>
@@ -155,6 +162,7 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
 
   const CustomXAxisTick = (props: any) => {
     const { x, y, payload } = props;
+    const tickItem = barData.find(item => item.date === payload.value);
     return (
       <g transform={`translate(${x},${y})`}>
         <text
@@ -165,21 +173,20 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
           fill="#666"
           fontSize={12}
         >
-          {payload.value}
+          {tickItem?.tickLabel || payload.value}
         </text>
-        <text
-          x={0}
-          y={16}
-          dy={12}
-          textAnchor="middle"
-          fill="#999"
-          fontSize={10}
-        >
-          {/* 使用对应的星期几 */}
-          {barData.find(item => item.date === payload.value)?.weekday
-            ? t(`weekday.short.${barData.find(item => item.date === payload.value)?.weekday}`)
-            : ''}
-        </text>
+        {tickItem?.secondaryLabel && (
+          <text
+            x={0}
+            y={16}
+            dy={12}
+            textAnchor="middle"
+            fill="#999"
+            fontSize={10}
+          >
+            {tickItem.secondaryLabel}
+          </text>
+        )}
       </g>
     );
   };
@@ -274,7 +281,7 @@ export function StatisticsChart({ data, isLoading, error }: StatisticsChartProps
             margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" tick={<CustomXAxisTick />} height={60} />
+            <XAxis dataKey="date" tick={<CustomXAxisTick />} height={70} />
             <YAxis />
             <Tooltip content={<CustomTooltip />} />
             <Legend />

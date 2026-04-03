@@ -6,28 +6,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { ApiError } from "@/components/api-error"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { formatDisplayDate } from "@/lib/date-utils"
 import type { StatisticsData } from "@/hooks/use-statistics-data"
 import React from "react"
-import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronRight, ChevronUp, ChevronDown as CollapseIcon, ChevronsUp as ExpandIcon, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { formatGroupedDateLabel, getWeekdayKey, type StatisticsGroupBy } from "@/lib/stats-grouping"
 
 interface StatisticsTableProps {
   data: StatisticsData | null
   isLoading: boolean
   error: string | null
   onRetry: () => void
+  groupBy: StatisticsGroupBy
 }
 
 export function StatisticsTable({
   data,
   isLoading,
   error,
-  onRetry
+  onRetry,
+  groupBy
 }: StatisticsTableProps) {
   const {
-    t: t
+    t: t,
+    i18n,
   } = useTranslation();
 
   const [showDetails, setShowDetails] = useState(false)
@@ -63,6 +63,7 @@ export function StatisticsTable({
   // 重新计算总计（基于过滤后的数据）
   const filteredTotal = filteredByCourier.reduce((sum, item) => sum + item.total, 0)
   const filteredRecordCount = filteredByCourier.reduce((sum, item) => sum + item.recordCount, 0)
+  const periodCount = filteredByDate.length
 
   return (
     (<div className="space-y-6">
@@ -80,8 +81,10 @@ export function StatisticsTable({
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm font-medium text-muted-foreground">{t("统计天数")}</p>
-              <p className="text-3xl font-bold mt-1">{data.summary.daysCount}</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                {groupBy === "day" ? t("统计天数") : t("统计周期数", { ns: "stats" })}
+              </p>
+              <p className="text-3xl font-bold mt-1">{groupBy === "day" ? data.summary.daysCount : periodCount}</p>
             </div>
           </CardContent>
         </Card>
@@ -159,10 +162,12 @@ export function StatisticsTable({
                 <React.Fragment key={dateItem.date}>
                   <TableRow key={`row-${dateItem.date}`}>
                     <TableCell className="font-medium">
-                      {formatDisplayDate(new Date(dateItem.date), "yyyy-MM-dd")}
-                      <div className="text-xs text-gray-500">
-                        {t(`weekday.full.${formatDisplayDate(new Date(dateItem.date), 'EEEE').toLowerCase()}`)}
-                      </div>
+                      {formatGroupedDateLabel(dateItem.date, groupBy, { locale: i18n.language })}
+                      {groupBy === "day" && getWeekdayKey(dateItem.date) && (
+                        <div className="text-xs text-gray-500">
+                          {t(`weekday.full.${getWeekdayKey(dateItem.date)}`, { ns: "common" })}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">{dateItem.total}</TableCell>
                     <TableCell className="text-right">
@@ -181,7 +186,7 @@ export function StatisticsTable({
                         <TableCell className="text-right text-sm">
                           {dateItem.total > 0 ? `${((detail.total / dateItem.total) * 100).toFixed(2)}%` : "0%"}
                         </TableCell>
-                        <TableCell className="text-right text-sm">1</TableCell>
+                        <TableCell className="text-right text-sm">{detail.recordCount || 0}</TableCell>
                       </TableRow>
                     ))}
                 </React.Fragment>

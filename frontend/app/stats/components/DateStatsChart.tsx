@@ -125,19 +125,19 @@ const DateStatsChart: React.FC<DateStatsChartProps> = ({
                         if (groupBy === 'week') {
                               const [year, week] = item.date.split('-');
                               if (currentLang === 'en' || currentLang === 'English') {
-                                    formattedDate = `W${week}`;
+                                    formattedDate = `W${week} ${year}`;
                               } else if (currentLang === 'ja' || currentLang === '日本語') {
-                                    formattedDate = `第${week}週`;
+                                    formattedDate = `${year}年第${week}週`;
                               } else {
-                                    formattedDate = `第${week}周`;
+                                    formattedDate = `${year}年第${week}周`;
                               }
                         } else if (groupBy === 'month') {
                               const [year, month] = item.date.split('-');
                               if (currentLang === 'en' || currentLang === 'English') {
                                     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                    formattedDate = monthNames[parseInt(month) - 1];
+                                    formattedDate = `${monthNames[parseInt(month) - 1]} ${year}`;
                               } else {
-                                    formattedDate = `${month}月`;
+                                    formattedDate = `${year}年${month}月`;
                               }
                         } else if (groupBy === 'year') {
                               if (currentLang === 'en' || currentLang === 'English') {

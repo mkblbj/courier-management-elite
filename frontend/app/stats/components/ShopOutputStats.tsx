@@ -57,12 +57,12 @@ const ShopOutputStats = () => {
       }
 
       const [monthRange, setMonthRange] = useState<MonthYearRange>({
-            from: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 },
-            to: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 }
+            from: { year: new Date().getFullYear() },
+            to: { year: new Date().getFullYear() }
       });
 
       const [yearRange, setYearRange] = useState<MonthYearRange>({
-            from: { year: new Date().getFullYear() },
+            from: { year: new Date().getFullYear() - 4 },
             to: { year: new Date().getFullYear() }
       });
 
@@ -560,10 +560,26 @@ const ShopOutputStats = () => {
       const handleGroupByChange = useCallback((newGroupBy: 'day' | 'week' | 'month' | 'year') => {
             setGroupBy(newGroupBy);
             setError(null);
-            // 清除日期相关的缓存
-            statsCache.clearByPattern('date');
-            statsCache.clearByPattern('stats_date');
-      }, []);
+            // groupBy 会影响整个日期维度缓存，直接整体清理更稳妥
+            statsCache.clear();
+            clearStatsCache();
+
+            const currentYear = new Date().getFullYear();
+
+            if (newGroupBy === 'month' && (!monthRange.from || monthRange.from.month || !monthRange.to || monthRange.to.month)) {
+                  setMonthRange({
+                        from: { year: currentYear },
+                        to: { year: currentYear }
+                  });
+            }
+
+            if (newGroupBy === 'year' && (!yearRange.from || !yearRange.to)) {
+                  setYearRange({
+                        from: { year: currentYear - 4 },
+                        to: { year: currentYear }
+                  });
+            }
+      }, [monthRange, yearRange]);
 
       const handleDateRangeChange = useCallback((range: DateRange) => {
             setDateRange(range);
@@ -996,15 +1012,7 @@ const ShopOutputStats = () => {
                         onYearRangeChange={handleYearRangeChange}
                         onRefresh={handleRefresh}
                         groupBy={groupBy}
-                        onGroupByChange={(newGroupBy) => {
-                              console.log('GroupBy 变化:', newGroupBy);
-                              setGroupBy(newGroupBy);
-                              setError(null);
-                              // 清除所有缓存，因为groupBy参数会影响缓存键
-                              statsCache.clear();
-                              clearStatsCache();
-                              // 注意：不需要手动调用fetchData，因为groupBy变化会触发fetchData重新创建和执行
-                        }}
+                        onGroupByChange={handleGroupByChange}
                         // 导出相关的筛选参数
                         shopId={filters.shop_ids && filters.shop_ids.length > 0 ? parseInt(filters.shop_ids[0]) : undefined}
                         categoryId={filters.category_ids && filters.category_ids.length > 0 ? parseInt(filters.category_ids[0]) : undefined}

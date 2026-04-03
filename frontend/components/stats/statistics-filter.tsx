@@ -4,16 +4,19 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { CourierTypeSelector } from "@/components/courier-type-selector"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { RefreshCw, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { DateRange } from "react-day-picker"
-import { subDays } from "date-fns"
+import type { StatisticsGroupBy } from "@/lib/stats-grouping"
 
 interface StatisticsFilterProps {
   timeRange: DateRange
   courierTypeFilter: string[]
+  groupBy: StatisticsGroupBy
   onTimeRangeChange: (range: DateRange) => void
   onCourierTypeFilterChange: (types: string[]) => void
+  onGroupByChange: (groupBy: StatisticsGroupBy) => void
   onRefresh: () => void
   onReset?: () => void
   isLoading: boolean
@@ -22,13 +25,15 @@ interface StatisticsFilterProps {
 export function StatisticsFilter({
   timeRange,
   courierTypeFilter,
+  groupBy,
   onTimeRangeChange,
   onCourierTypeFilterChange,
+  onGroupByChange,
   onRefresh,
   onReset,
   isLoading,
 }: StatisticsFilterProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("stats");
 
   // 处理快递类型选择变化
   const handleCourierTypeChange = (value: string | number | undefined) => {
@@ -63,6 +68,19 @@ export function StatisticsFilter({
 
   return (
     (<div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground">{t("分组方式")}</span>
+        <ToggleGroup
+          type="single"
+          value={groupBy}
+          onValueChange={(value) => value && onGroupByChange(value as StatisticsGroupBy)}
+        >
+          <ToggleGroupItem value="day" className="text-xs">{t("按日")}</ToggleGroupItem>
+          <ToggleGroupItem value="week" className="text-xs">{t("按周")}</ToggleGroupItem>
+          <ToggleGroupItem value="month" className="text-xs">{t("按月")}</ToggleGroupItem>
+          <ToggleGroupItem value="year" className="text-xs">{t("按年")}</ToggleGroupItem>
+        </ToggleGroup>
+      </div>
       <DateRangePicker value={timeRange} onChange={onTimeRangeChange} />
       <CourierTypeSelector
         value={courierTypeFilter.length > 0 ? courierTypeFilter[0] : undefined}

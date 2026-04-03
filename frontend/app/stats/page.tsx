@@ -14,7 +14,6 @@ import { ExportDataDialog } from "@/components/stats/export-data-dialog"
 import { useStatisticsData } from "@/hooks/use-statistics-data"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
-import { subDays } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import ShopOutputStats from "./components/ShopOutputStats"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -46,9 +45,11 @@ function StatsPageContent() {
     error,
     timeRange,
     courierTypeFilter,
+    groupBy,
     refetch,
     setTimeRange,
-    setCourierTypeFilter
+    setCourierTypeFilter,
+    setGroupBy
   } = useStatisticsData()
 
   useEffect(() => {
@@ -61,19 +62,7 @@ function StatsPageContent() {
 
   // 重置函数 - 将所有筛选条件重置为默认值
   const handleReset = () => {
-    // 重置为当月
-    const today = new Date()
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-    setTimeRange({
-      from: firstDayOfMonth,
-      to: today,
-    })
-
-    // 重置快递类型筛选
-    setCourierTypeFilter([])
-
-    // 重新加载数据
-    refetch()
+    setGroupBy("day")
   }
 
   return (
@@ -148,8 +137,10 @@ function StatsPageContent() {
                     <StatisticsFilter
                       timeRange={timeRange}
                       courierTypeFilter={courierTypeFilter}
+                      groupBy={groupBy}
                       onTimeRangeChange={setTimeRange}
                       onCourierTypeFilterChange={setCourierTypeFilter}
+                      onGroupByChange={setGroupBy}
                       onRefresh={refetch}
                       onReset={handleReset}
                       isLoading={isLoading}
@@ -182,6 +173,7 @@ function StatsPageContent() {
                       isLoading={isLoading}
                       error={error}
                       onRetry={refetch}
+                      groupBy={groupBy}
                     />
                   </TabsContent>
 
@@ -190,6 +182,7 @@ function StatsPageContent() {
                       data={data}
                       isLoading={isLoading}
                       error={error}
+                      groupBy={groupBy}
                     />
                   </TabsContent>
                 </Tabs>
