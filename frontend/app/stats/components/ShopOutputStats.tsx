@@ -13,6 +13,8 @@ import { CategoryStatsItem, ShopStatsItem, CourierStatsItem, DateStatsItem, Shop
 import { useTranslation } from 'react-i18next';
 import ShopStatsTable from './ShopStatsTable';
 import ShopStatsChart from './ShopStatsChart';
+import ShopTimeStatsTable from './ShopTimeStatsTable';
+import ShopTimeStatsChart from './ShopTimeStatsChart';
 import CourierStatsTable from './CourierStatsTable';
 import CourierStatsChart from './CourierStatsChart';
 import PerformanceMonitor from './PerformanceMonitor';
@@ -843,6 +845,128 @@ const ShopOutputStats = () => {
                                                 groupByCategory={true}
                                                 enableVirtualization={currentData.shopData.length > 50}
                                                 maxHeight={600}
+                                          />
+                                    </CardContent>
+                              </Card>
+                        </div>
+                  );
+            } else if (selectedDimension === 'shop-time') {
+                  const totalQuantity = currentData.shopTimeData.reduce((sum, item) => sum + item.total_quantity, 0);
+                  const shopCount = new Set(currentData.shopTimeData.map(item => item.shop_id)).size;
+                  const periodCount = new Set(currentData.shopTimeData.map(item => item.period)).size;
+                  const shopTimeGroupBy = groupBy === 'week' ? 'month' : groupBy;
+
+                  return (
+                        <div className="space-y-6">
+                              {error && (
+                                    <Alert variant="destructive">
+                                          <AlertCircle className="h-4 w-4" />
+                                          <AlertDescription className="flex items-center justify-between">
+                                                <span>{error.message}</span>
+                                                <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={handleRetry}
+                                                      className="ml-4"
+                                                >
+                                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                                      {t('重试')}
+                                                </Button>
+                                          </AlertDescription>
+                                    </Alert>
+                              )}
+
+                              {!isLoading && currentData.shopTimeData.length > 0 && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                          <Card>
+                                                <CardHeader className="pb-2">
+                                                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                                                            {t('店铺总数')}
+                                                      </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                      <div className="text-2xl font-bold">{shopCount}</div>
+                                                </CardContent>
+                                          </Card>
+                                          <Card>
+                                                <CardHeader className="pb-2">
+                                                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                                                            {t('时间段数')}
+                                                      </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                      <div className="text-2xl font-bold">{periodCount}</div>
+                                                </CardContent>
+                                          </Card>
+                                          <Card>
+                                                <CardHeader className="pb-2">
+                                                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                                                            {t('总出力量')}
+                                                      </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                      <div className="text-2xl font-bold">{totalQuantity.toLocaleString()}</div>
+                                                </CardContent>
+                                          </Card>
+                                    </div>
+                              )}
+
+                              {isLoading && (
+                                    <Card>
+                                          <CardContent className="flex items-center justify-center py-8">
+                                                <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                                                <span>{t('正在加载数据...')}</span>
+                                          </CardContent>
+                                    </Card>
+                              )}
+
+                              {!isLoading && !error && currentData.shopTimeData.length === 0 && (
+                                    <Card>
+                                          <CardContent className="flex flex-col items-center justify-center py-8">
+                                                <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                                                <h3 className="text-lg font-medium mb-2">{t('暂无数据')}</h3>
+                                                <p className="text-muted-foreground text-center mb-4">
+                                                      {t('当前时间范围内没有找到店铺时间统计数据，请尝试调整筛选条件')}
+                                                </p>
+                                                <Button onClick={handleRefresh} variant="outline">
+                                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                                      {t('重新加载')}
+                                                </Button>
+                                          </CardContent>
+                                    </Card>
+                              )}
+
+                              <Card>
+                                    <CardHeader>
+                                          <CardTitle className="flex items-center justify-between">
+                                                {t('数据图表')}
+                                                <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={handleRefresh}
+                                                      disabled={isLoading}
+                                                >
+                                                      <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                                                      {t('刷新')}
+                                                </Button>
+                                          </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                          <ShopTimeStatsChart
+                                                data={currentData.shopTimeData}
+                                                groupBy={shopTimeGroupBy}
+                                          />
+                                    </CardContent>
+                              </Card>
+
+                              <Card>
+                                    <CardHeader>
+                                          <CardTitle>{t('详细数据')}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                          <ShopTimeStatsTable
+                                                data={currentData.shopTimeData}
+                                                groupBy={shopTimeGroupBy}
                                           />
                                     </CardContent>
                               </Card>
