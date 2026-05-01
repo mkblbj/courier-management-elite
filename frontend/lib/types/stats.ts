@@ -130,6 +130,19 @@ export interface DateStatsItem {
 }
 
 /**
+ * 店铺时间统计数据类型
+ */
+export interface ShopTimeStatsItem {
+  period: string;
+  group_by: 'day' | 'month' | 'year';
+  shop_id: number;
+  shop_name: string;
+  category_id: number | null;
+  category_name: string;
+  total_quantity: number;
+}
+
+/**
  * 按日期统计响应数据
  */
 export interface DateStatsResponse {

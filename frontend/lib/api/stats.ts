@@ -5,6 +5,7 @@ import {
   ShopStatsItem, 
   CourierStatsItem, 
   DateStatsItem,
+  ShopTimeStatsItem,
   StatsQueryParams,
   ShopStatsResponse
 } from '@/lib/types/stats';
@@ -362,6 +363,17 @@ export const getCourierStats = async (
  */
 export const getDateStats = async (params: StatsQueryParams): Promise<DateStatsItem[]> => {
   return fetchWithCache<DateStatsItem[]>('/dates', params);
+};
+
+/**
+ * 获取按店铺/时间统计的出力数据
+ * @param params 查询参数
+ * @returns 按店铺和时间统计的数据
+ */
+export const getShopTimeStats = async (
+  params: StatsQueryParams & { group_by: 'day' | 'month' | 'year' }
+): Promise<ShopTimeStatsItem[]> => {
+  return fetchWithCache<ShopTimeStatsItem[]>('/shop-time-series', params);
 };
 
 /**
