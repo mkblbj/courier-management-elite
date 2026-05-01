@@ -8,8 +8,8 @@ import StatsDataDisplay from './StatsDataDisplay';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
-import { getCategoryStats, getShopStats, getCourierStats, getDateStats, getCourierTypes, getShopCategories, getShops, prefetchStatsData, clearStatsCache } from '@/lib/api/stats';
-import { CategoryStatsItem, ShopStatsItem, CourierStatsItem, DateStatsItem, CourierType, ShopCategory, Shop } from '@/lib/types/stats';
+import { getCategoryStats, getShopStats, getCourierStats, getDateStats, getShopTimeStats, getCourierTypes, getShopCategories, getShops, prefetchStatsData, clearStatsCache } from '@/lib/api/stats';
+import { CategoryStatsItem, ShopStatsItem, CourierStatsItem, DateStatsItem, ShopTimeStatsItem, CourierType, ShopCategory, Shop } from '@/lib/types/stats';
 import { useTranslation } from 'react-i18next';
 import ShopStatsTable from './ShopStatsTable';
 import ShopStatsChart from './ShopStatsChart';
@@ -71,6 +71,7 @@ const ShopOutputStats = () => {
       const shopDataRef = useRef<ShopStatsItem[]>([]);
       const courierDataRef = useRef<CourierStatsItem[]>([]);
       const dateDataRef = useRef<DateStatsItem[]>([]);
+      const shopTimeDataRef = useRef<ShopTimeStatsItem[]>([]);
 
       // 使用状态来触发重新渲染
       const [dataVersion, setDataVersion] = useState(0);
@@ -193,6 +194,7 @@ const ShopOutputStats = () => {
                   shopDataRef.current = [];
                   courierDataRef.current = [];
                   dateDataRef.current = [];
+                  shopTimeDataRef.current = [];
             };
       }, []);
 
@@ -279,7 +281,7 @@ const ShopOutputStats = () => {
 
       // 根据 groupBy 获取合适的时间参数
       const getTimeParams = useCallback(() => {
-            if (selectedDimension !== 'date') {
+            if (selectedDimension !== 'date' && selectedDimension !== 'shop-time') {
                   // 非日期维度始终使用日期范围
                   return {
                         date_from: dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
@@ -340,8 +342,8 @@ const ShopOutputStats = () => {
                         ...timeParams,
                   };
 
-                  // 对于日期维度，需要包含groupBy参数到缓存键中
-                  const cacheParams = selectedDimension === 'date'
+                  // 对于日期和店铺/时间维度，需要包含groupBy参数到缓存键中
+                  const cacheParams = selectedDimension === 'date' || selectedDimension === 'shop-time'
                         ? { ...params, ...filters, group_by: groupBy }
                         : { ...params, ...filters };
 
@@ -361,6 +363,8 @@ const ShopOutputStats = () => {
                                     courierDataRef.current = cachedData as CourierStatsItem[];
                               } else if (selectedDimension === 'date') {
                                     dateDataRef.current = cachedData as DateStatsItem[];
+                              } else if (selectedDimension === 'shop-time') {
+                                    shopTimeDataRef.current = cachedData as ShopTimeStatsItem[];
                               }
 
                               setDataVersion(prev => prev + 1); // 触发重新渲染
@@ -432,6 +436,35 @@ const ShopOutputStats = () => {
 
                         statsCache.set(cacheKey, data);
                         dataSize = JSON.stringify(data).length;
+                  } else if (selectedDimension === 'shop-time') {
+                        if (filters.shop_ids && filters.shop_ids.length > 0) {
+                              const shopId = parseInt(filters.shop_ids[0]);
+                              if (!isNaN(shopId) && shopId !== -1) {
+                                    params.shop_id = shopId;
+                              }
+                        }
+
+                        if (filters.courier_ids && filters.courier_ids.length > 0) {
+                              const courierId = parseInt(filters.courier_ids[0]);
+                              if (!isNaN(courierId) && courierId !== -1) {
+                                    params.courier_id = courierId;
+                              }
+                        }
+
+                        if (filters.category_ids && filters.category_ids.length > 0) {
+                              const categoryId = parseInt(filters.category_ids[0]);
+                              if (!isNaN(categoryId) && categoryId !== -1) {
+                                    params.category_id = categoryId;
+                              }
+                        }
+
+                        const shopTimeGroupBy = groupBy === 'week' ? 'month' : groupBy;
+                        params.group_by = shopTimeGroupBy;
+
+                        data = await getShopTimeStats(params as any);
+                        shopTimeDataRef.current = Array.isArray(data) ? data : [];
+                        statsCache.set(cacheKey, shopTimeDataRef.current);
+                        dataSize = JSON.stringify(shopTimeDataRef.current).length;
                   } else if (selectedDimension === 'courier') {
                         // 处理快递类型统计的筛选参数
                         if (filters.shop_ids && filters.shop_ids.length > 0) {
@@ -609,6 +642,7 @@ const ShopOutputStats = () => {
             shopDataRef.current = [];
             courierDataRef.current = [];
             dateDataRef.current = [];
+            shopTimeDataRef.current = [];
             setDataVersion(prev => prev + 1);
             fetchData(false);
       }, [fetchData]);
@@ -665,7 +699,8 @@ const ShopOutputStats = () => {
                   categoryData: categoryDataRef.current,
                   shopData: shopDataRef.current,
                   courierData: courierDataRef.current,
-                  dateData: dateDataRef.current
+                  dateData: dateDataRef.current,
+                  shopTimeData: shopTimeDataRef.current
             };
       }, [dataVersion]); // 只有当 dataVersion 变化时才重新计算
 
