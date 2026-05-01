@@ -93,7 +93,9 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
             let fromDate: string | undefined;
             let toDate: string | undefined;
 
-            if (selectedDimension === 'date' && groupBy === 'month' && monthRange) {
+            const usesGroupedTimeRange = selectedDimension === 'date' || selectedDimension === 'shop-time';
+
+            if (usesGroupedTimeRange && groupBy === 'month' && monthRange) {
                   if (monthRange.from) {
                         fromDate = `${monthRange.from.year}-${String(monthRange.from.month || 1).padStart(2, '0')}-01`;
                   }
@@ -101,7 +103,7 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                         const lastDay = new Date(monthRange.to.year, monthRange.to.month || 12, 0).getDate();
                         toDate = `${monthRange.to.year}-${String(monthRange.to.month || 12).padStart(2, '0')}-${lastDay}`;
                   }
-            } else if (selectedDimension === 'date' && groupBy === 'year' && yearRange) {
+            } else if (usesGroupedTimeRange && groupBy === 'year' && yearRange) {
                   if (yearRange.from) {
                         fromDate = `${yearRange.from.year}-01-01`;
                   }
@@ -196,6 +198,8 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                         return <BarChart className="h-4 w-4 mr-1" />;
                   case 'shop':
                         return <PieChart className="h-4 w-4 mr-1" />;
+                  case 'shop-time':
+                        return <LineChart className="h-4 w-4 mr-1" />;
                   case 'courier':
                         return <LineChart className="h-4 w-4 mr-1" />;
                   case 'date':
@@ -207,8 +211,9 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
 
       // 根据分组方式渲染合适的时间筛选器
       const renderTimeFilter = () => {
-            // 只有在日期维度时才显示时间筛选器
-            if (selectedDimension !== 'date') {
+            const usesGroupedTimeRange = selectedDimension === 'date' || selectedDimension === 'shop-time';
+
+            if (!usesGroupedTimeRange) {
                   return (
                         <div className="w-full max-w-sm">
                               <DateRangePicker
@@ -234,7 +239,7 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                         return (
                               <div className="w-full max-w-sm">
                                     <MonthYearPicker
-                                          mode="year"
+                                          mode={selectedDimension === 'shop-time' ? 'month' : 'year'}
                                           value={monthRange}
                                           onChange={onMonthRangeChange || (() => { })}
                                     />
@@ -309,7 +314,7 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
 
       // 检查是否需要显示筛选条件
       const shouldShowFilters = () => {
-            return (selectedDimension === 'category' || selectedDimension === 'shop' || selectedDimension === 'courier') && onFilterChange;
+            return (selectedDimension === 'category' || selectedDimension === 'shop' || selectedDimension === 'shop-time' || selectedDimension === 'courier') && onFilterChange;
       };
 
       return (
@@ -332,6 +337,10 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                                                 {getDimensionIcon('shop')}
                                                 {t('按店铺')}
                                           </ToggleGroupItem>
+                                          <ToggleGroupItem value="shop-time" aria-label={t('按店铺/时间')} className="flex items-center">
+                                                {getDimensionIcon('shop-time')}
+                                                {t('按店铺/时间')}
+                                          </ToggleGroupItem>
                                           <ToggleGroupItem value="courier" aria-label={t('按快递类型')} className="flex items-center">
                                                 {getDimensionIcon('courier')}
                                                 {t('按快递类型')}
@@ -339,17 +348,19 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                                     </ToggleGroup>
                               </div>
 
-                              {/* 第二行：分组方式（仅在日期维度时显示） */}
-                              {selectedDimension === 'date' && onGroupByChange && (
+                              {/* 第二行：分组方式 */}
+                              {(selectedDimension === 'date' || selectedDimension === 'shop-time') && onGroupByChange && (
                                     <div className="space-y-3">
-                                          <div className="text-sm font-medium">{t('分组方式')}</div>
+                                          <div className="text-sm font-medium">{selectedDimension === 'shop-time' ? t('时间粒度') : t('分组方式')}</div>
                                           <ToggleGroup type="single" value={groupBy} onValueChange={(value) => value && onGroupByChange(value as 'day' | 'week' | 'month' | 'year')}>
                                                 <ToggleGroupItem value="day" aria-label={t('按日')} className="text-xs">
                                                       {t('按日')}
                                                 </ToggleGroupItem>
-                                                <ToggleGroupItem value="week" aria-label={t('按周')} className="text-xs">
-                                                      {t('按周')}
-                                                </ToggleGroupItem>
+                                                {selectedDimension === 'date' && (
+                                                      <ToggleGroupItem value="week" aria-label={t('按周')} className="text-xs">
+                                                            {t('按周')}
+                                                      </ToggleGroupItem>
+                                                )}
                                                 <ToggleGroupItem value="month" aria-label={t('按月')} className="text-xs">
                                                       {t('按月')}
                                                 </ToggleGroupItem>
@@ -411,8 +422,8 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                                                 ) : (
                                                       <>
                                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                                  {/* 快递类型筛选器 - 对于按类别和按店铺维度显示 */}
-                                                                  {(selectedDimension === 'category' || selectedDimension === 'shop') && (
+                                                                  {/* 快递类型筛选器 - 对于按类别、按店铺和按店铺/时间维度显示 */}
+                                                                  {(selectedDimension === 'category' || selectedDimension === 'shop' || selectedDimension === 'shop-time') && (
                                                                         <div className="space-y-2">
                                                                               <label className="text-sm font-medium">{t('快递类型')}</label>
                                                                               <MultiSelect
@@ -425,8 +436,8 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                                                                         </div>
                                                                   )}
 
-                                                                  {/* 店铺类别筛选器 - 对于按店铺或按快递类型维度显示 */}
-                                                                  {(selectedDimension === 'shop' || selectedDimension === 'courier') && (
+                                                                  {/* 店铺类别筛选器 - 对于按店铺、按店铺/时间或按快递类型维度显示 */}
+                                                                  {(selectedDimension === 'shop' || selectedDimension === 'shop-time' || selectedDimension === 'courier') && (
                                                                         <div className="space-y-2">
                                                                               <label className="text-sm font-medium">{t('店铺类别')}</label>
                                                                               <MultiSelect
@@ -439,8 +450,8 @@ const StatsControlPanel: React.FC<StatsControlPanelProps> = ({
                                                                         </div>
                                                                   )}
 
-                                                                  {/* 店铺筛选器 - 对于按快递类型维度显示 */}
-                                                                  {selectedDimension === 'courier' && (
+                                                                  {/* 店铺筛选器 - 对于按店铺/时间或按快递类型维度显示 */}
+                                                                  {(selectedDimension === 'shop-time' || selectedDimension === 'courier') && (
                                                                         <div className="space-y-2">
                                                                               <label className="text-sm font-medium">{t('店铺')}</label>
                                                                               <MultiSelect

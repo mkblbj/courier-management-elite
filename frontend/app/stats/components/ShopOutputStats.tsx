@@ -19,7 +19,7 @@ import PerformanceMonitor from './PerformanceMonitor';
 import DateDetailModal from './DateDetailModal';
 import CacheMonitor from './CacheMonitor';
 
-export type StatsDimension = 'category' | 'shop' | 'courier' | 'date';
+export type StatsDimension = 'category' | 'shop' | 'shop-time' | 'courier' | 'date';
 
 // 性能指标接口
 interface PerformanceMetrics {
@@ -555,6 +555,15 @@ const ShopOutputStats = () => {
             setError(null);
             // 清除相关缓存
             statsCache.clearByPattern(dimension);
+
+            if (dimension === 'shop-time') {
+                  const currentYear = new Date().getFullYear();
+                  setGroupBy('month');
+                  setMonthRange({
+                        from: { year: currentYear, month: 1 },
+                        to: { year: currentYear, month: 12 }
+                  });
+            }
       }, []);
 
       const handleGroupByChange = useCallback((newGroupBy: 'day' | 'week' | 'month' | 'year') => {
