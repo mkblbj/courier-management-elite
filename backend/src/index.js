@@ -48,18 +48,21 @@ app.use((req, res, next) => {
 // 错误处理中间件
 app.use(errorHandler);
 
-// 启动服务器
-startServer();
+if (require.main === module) {
+  // 启动服务器
+  startServer();
 
-// 处理未捕获的异常
-process.on('uncaughtException', err => {
-  console.error('未捕获的异常:', err);
-  process.exit(1);
-});
+  // 处理未捕获的异常
+  process.on('uncaughtException', err => {
+    console.error('未捕获的异常:', err);
+    process.exit(1);
+  });
 
-// 处理未处理的Promise拒绝
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('未处理的Promise拒绝:', reason);
-});
+  // 处理未处理的Promise拒绝
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('未处理的Promise拒绝:', reason);
+  });
+}
 
-module.exports = app; 
+module.exports = app;
+module.exports.startServer = startServer;

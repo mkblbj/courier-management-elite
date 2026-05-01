@@ -2,7 +2,6 @@ const request = require('supertest');
 const app = require('../../index');
 const Courier = require('../../models/Courier');
 
-// 模拟Courier模型
 jest.mock('../../models/Courier');
 
 describe('快递类型API端点', () => {
@@ -10,118 +9,65 @@ describe('快递类型API端点', () => {
     jest.clearAllMocks();
   });
 
-  // 测试获取层级结构API
-  test('GET /api/couriers/hierarchy 应返回层级结构', async () => {
-    const mockHierarchy = [
-      {
-        id: 1,
-        name: '母类型1',
-        parent_id: null,
-        children: [
-          { id: 3, name: '子类型1', parent_id: 1 },
-          { id: 4, name: '子类型2', parent_id: 1 }
-        ],
-        totalCount: 10
-      },
-      {
-        id: 2,
-        name: '母类型2',
-        parent_id: null,
-        children: [
-          { id: 5, name: '子类型3', parent_id: 2 }
-        ],
-        totalCount: 5
-      }
+  test('GET /api/couriers 应返回快递类型列表并支持筛选参数', async () => {
+    const mockCouriers = [
+      { id: 1, name: '测试快递', code: 'TEST', category_id: 2, is_active: true }
     ];
 
-    Courier.getTypeHierarchy = jest.fn().mockResolvedValue(mockHierarchy);
+    Courier.getAll = jest.fn().mockResolvedValue(mockCouriers);
 
     const response = await request(app)
-      .get('/api/couriers/hierarchy')
+      .get('/api/couriers?status=active&sort=name&order=DESC&search=TEST&category_id=2')
       .expect('Content-Type', /json/)
       .expect(200);
 
     expect(response.body.code).toBe(0);
-    expect(response.body.data).toEqual(mockHierarchy);
-    expect(Courier.getTypeHierarchy).toHaveBeenCalled();
+    expect(response.body.message).toBe('获取成功');
+    expect(response.body.data).toEqual(mockCouriers);
+    expect(Courier.getAll).toHaveBeenCalledWith({
+      is_active: true,
+      sort_by: 'name',
+      sort_order: 'DESC',
+      search: 'TEST',
+      category_id: 2
+    });
   });
 
-  // 测试获取子类型API
-  test('GET /api/couriers/:parentId/children 应返回子类型列表', async () => {
-    const mockParentType = { id: 1, name: '母类型1', parent_id: null };
-    const mockChildTypes = [
-      { id: 3, name: '子类型1', parent_id: 1 },
-      { id: 4, name: '子类型2', parent_id: 1 }
+  test('GET /api/couriers/category/:categoryId 应返回指定类别的快递类型', async () => {
+    const mockCouriers = [
+      { id: 1, name: '类别快递A', code: 'A', category_id: 3 },
+      { id: 2, name: '类别快递B', code: 'B', category_id: 3 }
     ];
-    const mockTotalCount = 10;
 
-    Courier.getById = jest.fn().mockResolvedValue(mockParentType);
-    Courier.getChildren = jest.fn().mockResolvedValue(mockChildTypes);
-    Courier.getChildrenSum = jest.fn().mockResolvedValue(mockTotalCount);
+    Courier.getByCategoryId = jest.fn().mockResolvedValue(mockCouriers);
 
     const response = await request(app)
-      .get('/api/couriers/1/children')
+      .get('/api/couriers/category/3')
       .expect('Content-Type', /json/)
       .expect(200);
 
     expect(response.body.code).toBe(0);
-    expect(response.body.data.parentType).toEqual(mockParentType);
-    expect(response.body.data.childTypes).toEqual(mockChildTypes);
-    expect(response.body.data.totalCount).toBe(mockTotalCount);
-    expect(Courier.getById).toHaveBeenCalledWith(1);
-    expect(Courier.getChildren).toHaveBeenCalledWith(1);
-    expect(Courier.getChildrenSum).toHaveBeenCalledWith(1);
+    expect(response.body.message).toBe('获取成功');
+    expect(response.body.data).toEqual(mockCouriers);
+    expect(Courier.getByCategoryId).toHaveBeenCalledWith(3);
   });
 
-  // 测试获取非母类型的子类型应返回错误
-  test('GET /api/couriers/:parentId/children 当父ID不是母类型时应返回错误', async () => {
-    const mockChildType = { id: 3, name: '子类型1', parent_id: 1 };
-
-    Courier.getById = jest.fn().mockResolvedValue(mockChildType);
-
-    const response = await request(app)
-      .get('/api/couriers/3/children')
-      .expect('Content-Type', /json/)
-      .expect(400);
-
-    expect(response.body.code).toBe(400);
-    expect(response.body.message).toBe('指定的类型不是母类型');
-  });
-
-  // 测试获取不存在的母类型的子类型应返回404
-  test('GET /api/couriers/:parentId/children 当父ID不存在时应返回404', async () => {
-    Courier.getById = jest.fn().mockResolvedValue(null);
-
-    const response = await request(app)
-      .get('/api/couriers/999/children')
-      .expect('Content-Type', /json/)
-      .expect(404);
-
-    expect(response.body.code).toBe(404);
-    expect(response.body.message).toBe('母类型不存在');
-  });
-
-  // 测试创建子类型
-  test('POST /api/couriers 应支持创建子类型', async () => {
+  test('POST /api/couriers 应支持创建带类别的快递类型', async () => {
     const newType = {
-      name: '新子类型',
+      name: '新快递类型',
       code: 'NEW',
-      parent_id: 1
+      category_id: 1
     };
-
-    const mockParentType = { id: 1, name: '母类型1', parent_id: null };
-    const mockInsertId = 6;
-    const mockCreatedType = { 
-      id: mockInsertId, 
-      ...newType, 
-      created_at: '2023-05-15T08:30:00Z' 
+    const mockCreatedType = {
+      id: 6,
+      ...newType,
+      is_active: true,
+      created_at: '2023-05-15T08:30:00Z'
     };
 
     Courier.getAll = jest.fn().mockResolvedValue([]);
-    Courier.getById = jest.fn()
-      .mockResolvedValueOnce(mockParentType)  // 检查父类型存在
-      .mockResolvedValueOnce(mockCreatedType); // 返回创建的类型
-    Courier.add = jest.fn().mockResolvedValue(mockInsertId);
+    Courier.add = jest.fn().mockResolvedValue(6);
+    Courier.getById = jest.fn().mockResolvedValue(mockCreatedType);
 
     const response = await request(app)
       .post('/api/couriers')
@@ -130,35 +76,41 @@ describe('快递类型API端点', () => {
       .expect(201);
 
     expect(response.body.code).toBe(0);
-    // 只检查响应中是否包含数据对象，不检查具体ID值
-    expect(response.body.data).toBeTruthy();
-    // 验证parent_id是否存在，而不关心具体值
-    expect(response.body.data).toHaveProperty('parent_id');
+    expect(response.body.message).toBe('添加成功');
+    expect(response.body.data).toEqual(mockCreatedType);
     expect(Courier.add).toHaveBeenCalledWith(expect.objectContaining({
-      name: '新子类型',
+      name: '新快递类型',
       code: 'NEW',
-      parent_id: 1
+      category_id: 1
     }));
   });
 
-  // 测试删除有子类型的母类型应返回错误
-  test('DELETE /api/couriers/:id 当删除有子类型的母类型时应返回错误', async () => {
-    const mockParentType = { id: 1, name: '母类型1', parent_id: null };
-    
-    // 模拟获取类型成功，但删除失败，抛出特定错误
-    Courier.getById = jest.fn().mockResolvedValue(mockParentType);
-    
-    // 模拟hasChildren方法返回true，表示有子类型
-    Courier.hasChildren = jest.fn().mockResolvedValue(true);
-    
-    // delete方法将检查hasChildren，所以不需要直接抛出错误
+  test('DELETE /api/couriers/:id 应删除存在的快递类型', async () => {
+    const mockCourier = { id: 1, name: '测试快递', category_id: 1 };
+
+    Courier.getById = jest.fn().mockResolvedValue(mockCourier);
+    Courier.delete = jest.fn().mockResolvedValue(true);
+
     const response = await request(app)
       .delete('/api/couriers/1')
       .expect('Content-Type', /json/)
-      .expect(400);
+      .expect(200);
 
-    expect(response.body.code).toBe(400);
-    expect(response.body.message).toBe('不能删除有子类型的母类型');
-    expect(Courier.hasChildren).toHaveBeenCalledWith(1);
+    expect(response.body.code).toBe(0);
+    expect(response.body.message).toBe('删除成功');
+    expect(Courier.getById).toHaveBeenCalledWith(1);
+    expect(Courier.delete).toHaveBeenCalledWith(1);
   });
-}); 
+
+  test('DELETE /api/couriers/:id 当快递类型不存在时应返回404', async () => {
+    Courier.getById = jest.fn().mockResolvedValue(null);
+
+    const response = await request(app)
+      .delete('/api/couriers/999')
+      .expect('Content-Type', /json/)
+      .expect(404);
+
+    expect(response.body.code).toBe(404);
+    expect(response.body.message).toBe('快递类型不存在');
+  });
+});

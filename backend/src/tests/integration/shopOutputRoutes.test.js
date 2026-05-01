@@ -171,7 +171,7 @@ describe('出力数据API端点', () => {
       shop_id: 1,
       courier_id: 1,
       output_date: '2024-12-19',
-      quantity: 50,
+      quantity: -49,
       operation_type: 'merge',
       merge_note: '合并两个订单',
       shop_name: '测试店铺',
@@ -198,7 +198,7 @@ describe('出力数据API端点', () => {
       shop_id: 1,
       courier_id: 1,
       output_date: '2024-12-19',
-      quantity: 50,
+      quantity: -49,
       operation_type: 'merge',
       merge_note: '合并两个订单'
     }));
@@ -320,9 +320,9 @@ describe('出力数据API端点', () => {
     expect(response.body.errors).toBeDefined();
   });
 
-  // 测试合单操作缺少备注
-  test('POST /api/shop-outputs/merge 缺少合单备注应返回验证错误', async () => {
-    const invalidMergeData = {
+  // 测试合单操作备注可选
+  test('POST /api/shop-outputs/merge 缺少合单备注应创建合单记录', async () => {
+    const mergeData = {
       shop_id: 1,
       courier_id: 1,
       output_date: '2024-12-19',
@@ -330,15 +330,41 @@ describe('出力数据API端点', () => {
       // 缺少 merge_note
     };
 
+    const mockCreatedRecord = {
+      id: 4,
+      shop_id: 1,
+      courier_id: 1,
+      output_date: '2024-12-19',
+      quantity: -49,
+      operation_type: 'merge',
+      merge_note: null,
+      shop_name: '测试店铺',
+      courier_name: '测试快递',
+      created_at: '2024-12-19T11:30:00Z'
+    };
+
+    Shop.getById = jest.fn().mockResolvedValue(mockShop);
+    Courier.getById = jest.fn().mockResolvedValue(mockCourier);
+    ShopOutput.add = jest.fn().mockResolvedValue(4);
+    ShopOutput.getById = jest.fn().mockResolvedValue(mockCreatedRecord);
+
     const response = await request(app)
       .post('/api/shop-outputs/merge')
-      .send(invalidMergeData)
+      .send(mergeData)
       .expect('Content-Type', /json/)
-      .expect(400);
+      .expect(201);
 
-    expect(response.body.code).toBe(400);
-    expect(response.body.message).toBe('请求数据验证失败');
-    expect(response.body.errors).toBeDefined();
+    expect(response.body.code).toBe(0);
+    expect(response.body.message).toBe('合单操作成功');
+    expect(response.body.data).toEqual(mockCreatedRecord);
+    expect(ShopOutput.add).toHaveBeenCalledWith(expect.objectContaining({
+      shop_id: 1,
+      courier_id: 1,
+      output_date: '2024-12-19',
+      quantity: -49,
+      operation_type: 'merge',
+      merge_note: undefined
+    }));
   });
 
   // 测试店铺不存在的情况
@@ -385,4 +411,4 @@ describe('出力数据API端点', () => {
     expect(response.body.code).toBe(400);
     expect(response.body.message).toBe('快递类型不存在');
   });
-}); 
+});
