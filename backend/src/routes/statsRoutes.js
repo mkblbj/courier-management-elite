@@ -12,6 +12,9 @@ router.get('/shop-outputs/couriers', StatsController.getShopOutputsByCourier.bin
 // 按日期统计
 router.get('/shop-outputs/dates', StatsController.getShopOutputsByDate.bind(StatsController));
 
+// 按店铺和时间统计
+router.get('/shop-outputs/shop-time-series', StatsController.getShopOutputsByShopTimeSeries.bind(StatsController));
+
 // 获取总计数据
 router.get('/shop-outputs/total', StatsController.getShopOutputsTotal.bind(StatsController));
 

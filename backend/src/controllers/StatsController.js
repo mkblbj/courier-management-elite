@@ -1015,6 +1015,118 @@ class StatsController {
   }
 
   /**
+   * 获取店铺出力数据按店铺和时间统计
+   * @param {Object} req 请求对象
+   * @param {Object} res 响应对象
+   */
+  async getShopOutputsByShopTimeSeries(req, res) {
+    try {
+      const groupBy = req.query.group_by || 'month';
+      const allowedGroupBy = ['day', 'month', 'year'];
+
+      if (!allowedGroupBy.includes(groupBy)) {
+        return res.status(400).json({
+          code: 400,
+          message: 'group_by 只支持 day、month、year'
+        });
+      }
+
+      const dateFrom = req.query.date_from || null;
+      const dateTo = req.query.date_to || null;
+      const shopId = req.query.shop_id || null;
+      const courierId = req.query.courier_id || null;
+      const categoryId = req.query.category_id || null;
+
+      const db = require('../db');
+
+      const dateGroupExpressionMap = {
+        day: "DATE_FORMAT(so.output_date, '%Y-%m-%d')",
+        month: "DATE_FORMAT(so.output_date, '%Y-%m')",
+        year: "DATE_FORMAT(so.output_date, '%Y')"
+      };
+
+      const dateGroupExpression = dateGroupExpressionMap[groupBy];
+
+      let sql = `
+        SELECT
+          ${dateGroupExpression} as period,
+          '${groupBy}' as group_by,
+          s.id as shop_id,
+          s.name as shop_name,
+          s.category_id,
+          sc.name as category_name,
+          SUM(so.quantity) as total_quantity
+        FROM
+          shop_outputs so
+        JOIN
+          shops s ON so.shop_id = s.id
+        LEFT JOIN
+          shop_categories sc ON s.category_id = sc.id
+        WHERE
+          (so.operation_type IS NULL OR so.operation_type != 'merge')
+      `;
+
+      const params = [];
+
+      if (shopId) {
+        sql += ` AND so.shop_id = ?`;
+        params.push(shopId);
+      }
+
+      if (courierId) {
+        sql += ` AND so.courier_id = ?`;
+        params.push(courierId);
+      }
+
+      if (categoryId) {
+        sql += ` AND s.category_id = ?`;
+        params.push(categoryId);
+      }
+
+      if (dateFrom) {
+        sql += ` AND so.output_date >= ?`;
+        params.push(dateFrom);
+      }
+
+      if (dateTo) {
+        sql += ` AND so.output_date <= ?`;
+        params.push(dateTo);
+      }
+
+      sql += `
+        GROUP BY
+          ${dateGroupExpression}, s.id, s.name, s.category_id, sc.name
+        ORDER BY
+          period ASC, s.name ASC
+      `;
+
+      const results = await db.query(sql, params);
+      const data = Array.isArray(results) ? results.map(row => ({
+        period: row.period,
+        group_by: row.group_by || groupBy,
+        shop_id: Number(row.shop_id),
+        shop_name: row.shop_name,
+        category_id: row.category_id === null || row.category_id === undefined ? null : Number(row.category_id),
+        category_name: row.category_name || '未分类',
+        total_quantity: Number(row.total_quantity) || 0
+      })) : [];
+
+      res.json({
+        code: 0,
+        message: '获取按店铺/时间统计数据成功',
+        data
+      });
+    } catch (error) {
+      console.error('获取按店铺/时间统计数据失败:', error);
+      res.status(500).json({
+        code: 500,
+        message: '获取按店铺/时间统计数据失败',
+        error: error.message
+      });
+    }
+  }
+
+  /**
    * 获取店铺出力数据按日期统计
    * @param {Object} req 请求对象
    * @param {Object} res 响应对象
