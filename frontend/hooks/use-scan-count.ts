@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "@/components/ui/use-toast"
 import { parseBarcode, type BarcodeParseError, type BarcodeRuleType } from "@/lib/barcode-parser"
 import { beepDuplicate, beepError, beepSuccess } from "@/lib/audio-feedback"
+import { createScanBatchId } from "@/lib/scan-batch-id"
 import { scanCountApi, ScanCountDuplicateError, type ScanCountRecord, type ScanCountStats } from "@/services/scan-count-api"
 
 type ScanStatus = "idle" | "active"
@@ -55,7 +56,7 @@ export function useScanCount() {
     try {
       await refreshTodayData()
       setSelectedCourier(courier)
-      setBatchId(crypto.randomUUID())
+      setBatchId(createScanBatchId())
       setCurrentBatch([])
       setStatus("active")
     } catch (error) {
