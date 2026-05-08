@@ -9,8 +9,10 @@ import { ScanInputArea } from "./components/ScanInputArea"
 import { ScanCountStats } from "./components/ScanCountStats"
 import { ScanItemList } from "./components/ScanItemList"
 import { BatchSummaryDialog } from "./components/BatchSummaryDialog"
+import { useTranslation } from "react-i18next"
 
 export default function ScanCountPage() {
+  const { t } = useTranslation("common")
   const { courierTypes } = useCourierTypes()
   const scanCount = useScanCount()
   const [selectedCourierId, setSelectedCourierId] = useState<string>("")
@@ -45,8 +47,8 @@ export default function ScanCountPage() {
       <DashboardHeader />
       <main className="container mx-auto space-y-6 px-4 py-6">
         <div>
-          <h1 className="text-2xl font-bold">出荷计数</h1>
-          <p className="text-sm text-muted-foreground">选择快递类型后使用扫码枪扫描运单号，系统会自动计数并防止当天重复。</p>
+          <h1 className="text-2xl font-bold">{t("scan_count")}</h1>
+          <p className="text-sm text-muted-foreground">{t("scan_count_description")}</p>
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">

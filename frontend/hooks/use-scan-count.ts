@@ -2,8 +2,9 @@
 
 import { useCallback, useMemo, useState } from "react"
 import { format } from "date-fns"
+import { useTranslation } from "react-i18next"
 import { toast } from "@/components/ui/use-toast"
-import { parseBarcode, getBarcodeErrorMessage, type BarcodeRuleType } from "@/lib/barcode-parser"
+import { parseBarcode, type BarcodeParseError, type BarcodeRuleType } from "@/lib/barcode-parser"
 import { beepDuplicate, beepError, beepSuccess } from "@/lib/audio-feedback"
 import { scanCountApi, ScanCountDuplicateError, type ScanCountRecord, type ScanCountStats } from "@/services/scan-count-api"
 
@@ -16,6 +17,7 @@ type CourierForScan = {
 }
 
 export function useScanCount() {
+  const { t } = useTranslation("common")
   const today = format(new Date(), "yyyy-MM-dd")
   const [status, setStatus] = useState<ScanStatus>("idle")
   const [selectedCourier, setSelectedCourier] = useState<CourierForScan | null>(null)
@@ -57,41 +59,54 @@ export function useScanCount() {
       setCurrentBatch([])
       setStatus("active")
     } catch (error) {
-      const message = error instanceof Error ? error.message : "启动出荷计数失败"
+      const message = error instanceof Error ? error.message : t("scan_count_start_failed")
       setLastError(message)
       beepError()
-      toast({ title: "启动失败", description: message, variant: "destructive" })
+      toast({ title: t("startup_failed"), description: message, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
-  }, [refreshTodayData])
+  }, [refreshTodayData, t])
 
   const stop = useCallback(() => {
     setStatus("idle")
   }, [])
 
+  const getTranslatedBarcodeErrorMessage = useCallback((reason: BarcodeParseError) => {
+    switch (reason) {
+      case "looksLikeNonShipping":
+        return t("looks_like_non_shipping_barcode")
+      case "empty":
+        return t("empty_barcode")
+      case "tooShort":
+        return t("barcode_too_short")
+      default:
+        return t("invalid_barcode")
+    }
+  }, [t])
+
   const submitScan = useCallback(async (rawInput: string) => {
     if (status !== "active" || !selectedCourier || !batchId) {
       beepError()
-      toast({ title: "请先选择快递类型并开始计数", variant: "destructive" })
+      toast({ title: t("select_courier_and_start"), variant: "destructive" })
       return
     }
 
     const parseResult = parseBarcode(rawInput, selectedCourier.barcode_rule_type || "generic")
 
     if (!parseResult.ok) {
-      const message = getBarcodeErrorMessage(parseResult.reason)
+      const message = getTranslatedBarcodeErrorMessage(parseResult.reason)
       setLastError(message)
       beepError()
-      toast({ title: "扫码错误", description: message, variant: "destructive" })
+      toast({ title: t("scan_error"), description: message, variant: "destructive" })
       return
     }
 
     if (todaySeenSet.has(parseResult.trackingNumber)) {
-      const message = "该运单号今天已扫描"
+      const message = t("duplicate_tracking_number")
       setLastError(message)
       beepDuplicate()
-      toast({ title: "重复扫描", description: message, variant: "destructive" })
+      toast({ title: t("duplicate_scan"), description: message, variant: "destructive" })
       return
     }
 
@@ -131,7 +146,9 @@ export function useScanCount() {
 
       beepSuccess()
     } catch (error) {
-      const message = error instanceof Error ? error.message : "保存扫码记录失败"
+      const message = error instanceof ScanCountDuplicateError
+        ? t("duplicate_tracking_number")
+        : error instanceof Error ? error.message : t("save_scan_failed")
       setLastError(message)
 
       if (error instanceof ScanCountDuplicateError) {
@@ -141,11 +158,11 @@ export function useScanCount() {
         beepError()
       }
 
-      toast({ title: "扫码失败", description: message, variant: "destructive" })
+      toast({ title: t("scan_failed"), description: message, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
-  }, [batchId, refreshTodayData, selectedCourier, status, today, todaySeenSet])
+  }, [batchId, getTranslatedBarcodeErrorMessage, refreshTodayData, selectedCourier, status, t, today, todaySeenSet])
 
   const removeItem = useCallback(async (id: number) => {
     await scanCountApi.delete(id)

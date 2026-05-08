@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { CourierType } from "@/services/api"
+import { useTranslation } from "react-i18next"
 
 type ScanCountPanelProps = {
   courierTypes: CourierType[]
@@ -24,17 +25,18 @@ export function ScanCountPanel({
   onStart,
   onStop,
 }: ScanCountPanelProps) {
+  const { t } = useTranslation("common")
   const isActive = status === "active"
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>出荷计数</CardTitle>
+        <CardTitle>{t("scan_count")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Select value={selectedCourierId} onValueChange={onSelectCourier} disabled={isActive}>
           <SelectTrigger>
-            <SelectValue placeholder="请选择快递类型" />
+            <SelectValue placeholder={t("select_courier_placeholder")} />
           </SelectTrigger>
           <SelectContent>
             {courierTypes.map((courier) => (
@@ -47,10 +49,10 @@ export function ScanCountPanel({
 
         <div className="flex gap-2">
           <Button onClick={onStart} disabled={!selectedCourierId || isActive || isLoading} className="flex-1">
-            开始计数
+            {t("start_counting")}
           </Button>
           <Button onClick={onStop} disabled={!isActive} variant="outline" className="flex-1">
-            停止计数
+            {t("stop_counting")}
           </Button>
         </div>
       </CardContent>

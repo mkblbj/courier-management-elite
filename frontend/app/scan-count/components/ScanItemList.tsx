@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { ScanCountRecord } from "@/services/scan-count-api"
+import { useTranslation } from "react-i18next"
 
 type ScanItemListProps = {
   records: ScanCountRecord[]
@@ -12,30 +13,32 @@ type ScanItemListProps = {
 }
 
 export function ScanItemList({ records, onDelete, onUndoLast }: ScanItemListProps) {
+  const { t } = useTranslation("common")
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>本轮扫描记录</CardTitle>
+        <CardTitle>{t("current_batch_records")}</CardTitle>
         <Button variant="outline" size="sm" disabled={records.length === 0} onClick={onUndoLast}>
-          撤销最后一条
+          {t("undo_last_scan")}
         </Button>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>运单号</TableHead>
-              <TableHead>原始输入</TableHead>
-              <TableHead>快递类型</TableHead>
-              <TableHead>扫描时间</TableHead>
-              <TableHead className="text-right">操作</TableHead>
+              <TableHead>{t("tracking_number")}</TableHead>
+              <TableHead>{t("raw_input")}</TableHead>
+              <TableHead>{t("courier_type")}</TableHead>
+              <TableHead>{t("scanned_at")}</TableHead>
+              <TableHead className="text-right">{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {records.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  暂无扫描记录
+                  {t("no_scan_records")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -47,7 +50,7 @@ export function ScanItemList({ records, onDelete, onUndoLast }: ScanItemListProp
                   <TableCell>{record.created_at ? new Date(record.created_at).toLocaleTimeString() : "-"}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" onClick={() => onDelete(record.id)}>
-                      删除
+                      {t("delete")}
                     </Button>
                   </TableCell>
                 </TableRow>

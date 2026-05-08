@@ -2,7 +2,7 @@
 
 import type * as React from "react"
 import { motion } from "framer-motion"
-import { BarChart, FileInput, Package, PieChart, Settings, BarChart2 } from "lucide-react"
+import { BarChart, FileInput, Package, PieChart, Settings, BarChart2, ScanLine } from "lucide-react"
 import { useTheme } from "next-themes"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -96,6 +96,13 @@ export function AnimatedMenu() {
                   icon: <FileInput className="h-5 w-5" />,
                   gradient: gradients[1],
                   iconColor: iconColors[1],
+            },
+            {
+                  label: mounted ? t('scan_count') : '',
+                  href: "/scan-count",
+                  icon: <ScanLine className="h-5 w-5" />,
+                  gradient: gradients[2],
+                  iconColor: iconColors[2],
             },
             {
                   label: mounted ? t('shop:output_data') : '',

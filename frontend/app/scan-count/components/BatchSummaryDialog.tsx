@@ -1,6 +1,7 @@
 "use client"
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { useTranslation } from "react-i18next"
 
 type BatchSummaryDialogProps = {
   open: boolean
@@ -11,13 +12,16 @@ type BatchSummaryDialogProps = {
 }
 
 export function BatchSummaryDialog({ open, count, courierName, onOpenChange, onUndoBatch }: BatchSummaryDialogProps) {
+  const { t } = useTranslation("common")
+  const displayCourierName = courierName || t("current_courier_type")
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>本轮计数完成</AlertDialogTitle>
+          <AlertDialogTitle>{t("batch_summary_title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {courierName || "当前快递类型"} 本轮共扫描 {count} 件。记录已保存到出荷计数。
+            {t("batch_summary_description", { courierName: displayCourierName, count })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -27,9 +31,9 @@ export function BatchSummaryDialog({ open, count, courierName, onOpenChange, onU
               onOpenChange(false)
             }}
           >
-            撤销本轮
+            {t("undo_batch")}
           </AlertDialogCancel>
-          <AlertDialogAction>确认</AlertDialogAction>
+          <AlertDialogAction>{t("confirm")}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
