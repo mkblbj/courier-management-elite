@@ -2,6 +2,7 @@ const express = require('express');
 const courierRoutes = require('./courierRoutes');
 const courierCategoryRoutes = require('./courierCategoryRoutes');
 const shippingRoutes = require('./shippingRoutes');
+const shippingTrackingNumberRoutes = require('./shippingTrackingNumberRoutes');
 const shopRoutes = require('./shopRoutes');
 const shopCategoryRoutes = require('./shopCategoryRoutes');
 const shopOutputRoutes = require('./shopOutputRoutes');
@@ -28,6 +29,9 @@ router.use('/courier-categories', courierCategoryRoutes);
 
 // 发货记录API路由
 router.use('/shipping', shippingRoutes);
+
+// 出荷计数扫码API路由
+router.use('/scan-counts', shippingTrackingNumberRoutes);
 
 // 店铺类别API路由
 router.use('/shop-categories', shopCategoryRoutes);
@@ -92,6 +96,19 @@ router.get('/docs', (req, res) => {
           { method: 'PUT', path: '/:id', description: '更新发货记录' },
           { method: 'DELETE', path: '/:id', description: '删除发货记录' },
           { method: 'POST', path: '/batch', description: '批量添加发货记录' }
+        ]
+      },
+      {
+        name: '出荷计数扫码API',
+        description: '扫码枪运单号记录、统计、删除和批次撤销',
+        basePath: '/api/scan-counts',
+        endpoints: [
+          { method: 'GET', path: '/', description: '获取扫码记录列表' },
+          { method: 'GET', path: '/stats', description: '获取指定日期扫码统计' },
+          { method: 'POST', path: '/', description: '创建扫码记录' },
+          { method: 'PUT', path: '/:id', description: '更新扫码记录' },
+          { method: 'DELETE', path: '/:id', description: '删除单条扫码记录' },
+          { method: 'DELETE', path: '/batch/:batchId', description: '撤销整个批次' }
         ]
       },
       {

@@ -1,8 +1,16 @@
 const db = require('../../db');
 const ShippingTrackingNumber = require('../../models/ShippingTrackingNumber');
+const {
+  ShippingTrackingNumberController
+} = require('../../controllers/ShippingTrackingNumberController');
+const Courier = require('../../models/Courier');
 
 jest.mock('../../db', () => ({
   query: jest.fn()
+}));
+
+jest.mock('../../models/Courier', () => ({
+  getById: jest.fn()
 }));
 
 describe('ShippingTrackingNumber model', () => {
@@ -69,5 +77,44 @@ describe('ShippingTrackingNumber model', () => {
         { courier_id: 2, courier_name: '佐川急便', total: 6 }
       ]
     });
+  });
+});
+
+const createResponse = () => {
+  const res = {};
+  res.status = jest.fn().mockReturnValue(res);
+  res.json = jest.fn().mockReturnValue(res);
+  return res;
+};
+
+describe('ShippingTrackingNumberController', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('create returns 201 for a new tracking number', async () => {
+    Courier.getById.mockResolvedValue({ id: 1, name: 'ゆうパケット', is_active: 1 });
+    db.query
+      .mockResolvedValueOnce({ insertId: 10 })
+      .mockResolvedValueOnce([{ id: 10, tracking_number: '680175257204' }]);
+
+    const req = {
+      body: {
+        tracking_number: '680175257204',
+        raw_input: 'A680175257204A',
+        courier_id: 1,
+        scan_date: '2026-05-08',
+        batch_id: 'batch-1'
+      }
+    };
+    const res = createResponse();
+
+    await ShippingTrackingNumberController.create(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: true,
+      message: '扫描记录已保存'
+    }));
   });
 });
