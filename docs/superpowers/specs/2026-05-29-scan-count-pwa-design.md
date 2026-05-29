@@ -2,19 +2,19 @@
 
 ## 目标
 
-将现有 `/scan-count` 出荷计数页面做成可安装的移动端 PWA。手机用户从桌面图标进入后，直接打开轻量的出荷计数工具，不需要先进入完整的出荷出力系统。
+保留现有 `/scan-count` 网页页面和桌面端操作习惯，新增 `/scan-count/mobile` 作为可安装的移动端 PWA。手机用户从桌面图标进入后，直接打开轻量的出荷计数工具，不需要先进入完整的出荷出力系统。
 
 ## 背景
 
-当前仓库已经有独立的 `/scan-count` 页面、扫码计数 API、今日记录、重复扫描保护、条码规则和音频反馈。这个设计不重写计数业务，只把该页面独立成适合移动端安装使用的应用入口。
+当前仓库已经有独立的 `/scan-count` 页面、扫码计数 API、今日记录、重复扫描保护、条码规则和音频反馈。这个设计不重写计数业务，也不改变现有 `/scan-count` 网页入口，只新增一个适合移动端安装使用的 PWA 入口。
 
 ## 范围
 
 包含：
 
 - 为出荷计数提供独立 PWA 安装入口。
-- 安装后默认打开 `/scan-count`。
-- 在 `/scan-count` 内隐藏主系统顶部导航，使用轻量应用头部。
+- 新增 `/scan-count/mobile` 路由，安装后默认打开该路由。
+- `/scan-count/mobile` 隐藏主系统顶部导航，使用轻量应用头部。
 - 增加 PWA manifest、应用图标、移动端主题色和 service worker 注册。
 - 保持扫码保存、今日记录和统计数据走现有后端 API。
 - 增加 PWA 相关基础验证。
@@ -24,22 +24,26 @@
 - 不新建单独仓库或单独部署服务。
 - 不重写后端扫码 API。
 - 不做离线扫码保存队列。
+- 不改变现有 `/scan-count` 网页页面的主系统导航和桌面端使用习惯。
 - 不改变其他页面的主系统导航。
 
 ## 推荐方案
 
-在现有 Next.js 前端内，为 `/scan-count` 增加专用 PWA 壳层。
+在现有 Next.js 前端内，新增 `/scan-count/mobile` 路由作为专用 PWA 壳层。现有 `/scan-count` 保持原样，两个入口复用同一套扫码业务组件和 hook。
 
 原因：
 
 - 复用现有 API、国际化、样式和扫码组件，改动范围小。
 - 手机安装后能像独立工具一样启动。
+- 桌面端用户继续使用 `/scan-count`，不会被迫切换到移动端外壳。
 - 不需要维护第二套构建和部署。
 - 后续如果出荷计数继续变复杂，也可以再拆成单独应用。
 
 ## 页面体验
 
-`/scan-count` 页面进入后显示专用轻量头部，不显示 `DashboardHeader` 和主系统菜单。
+`/scan-count` 保持当前网页体验，继续显示 `DashboardHeader` 和主系统菜单。
+
+`/scan-count/mobile` 显示专用轻量头部，不显示 `DashboardHeader` 和主系统菜单。
 
 轻量头部包含：
 
@@ -67,23 +71,23 @@
 
 - `name`: `出荷计数`
 - `short_name`: `出荷计数`
-- `start_url`: `/scan-count`
-- `scope`: `/scan-count`
+- `start_url`: `/scan-count/mobile`
+- `scope`: `/scan-count/mobile`
 - `display`: `standalone`
 - `theme_color`: 与出荷计数页面主色一致
 - `background_color`: 页面背景色
 - `icons`: 192、512、maskable 图标
 
-实现上优先在 `/scan-count` 路由 metadata 中挂载专用 manifest 链接，避免把主系统默认安装入口也改成出荷计数。如果 Next.js 当前版本对嵌套 manifest 支持不足，则使用 `public/scan-count/manifest.webmanifest` 加路由 metadata 的 `manifest` 字段。
+实现上在 `/scan-count/mobile` 路由 metadata 中挂载专用 manifest 链接，避免把主系统默认安装入口也改成出荷计数。如果 Next.js 当前版本对嵌套 manifest 支持不足，则使用 `public/scan-count/manifest.webmanifest` 加移动端路由 metadata 的 `manifest` 字段。
 
 ## Service Worker
 
-新增 `public/scan-count-sw.js`，只在 `/scan-count` 页面注册，scope 为 `/scan-count/`。
+新增 `public/scan-count-sw.js`，只在 `/scan-count/mobile` 页面注册，scope 为 `/scan-count/mobile/`。
 
 缓存策略：
 
 - 应用壳和静态资源使用 cache-first 加版本号缓存。
-- `/scan-count` 导航请求可使用 network-first，网络失败时回退到已缓存页面。
+- `/scan-count/mobile` 导航请求可使用 network-first，网络失败时回退到已缓存页面。
 - API 请求全部 network-only，不缓存 `POST /api/scan-counts`、删除、批次删除和统计结果。
 - 激活新版本时清理旧缓存。
 
@@ -93,9 +97,13 @@
 
 新增：
 
-- `frontend/app/scan-count/layout.tsx`
+- `frontend/app/scan-count/mobile/layout.tsx`
   - 设置出荷计数专用 metadata。
   - 提供独立页面外壳。
+- `frontend/app/scan-count/mobile/page.tsx`
+  - 移动端 PWA 页面入口。
+- `frontend/app/scan-count/components/ScanCountWorkspace.tsx`
+  - 承载当前 `/scan-count/page.tsx` 中的核心扫码页面逻辑，供网页入口和移动 PWA 入口复用。
 - `frontend/app/scan-count/components/ScanCountAppHeader.tsx`
   - 轻量头部、日期和网络状态。
 - `frontend/app/scan-count/components/ScanCountPwaRegistrar.tsx`
@@ -111,8 +119,8 @@
 修改：
 
 - `frontend/app/scan-count/page.tsx`
-  - 移除 `DashboardHeader`。
-  - 使用独立 PWA 页面布局。
+  - 保留 `DashboardHeader`。
+  - 改为渲染共享的 `ScanCountWorkspace`，确保桌面网页入口行为不变。
 - `frontend/next.config.mjs`
   - 为 service worker 增加正确的 `Content-Type` 和 `Cache-Control` 头。
 
@@ -121,12 +129,14 @@
 扫码业务数据流不变：
 
 1. 用户打开 `/scan-count`。
-2. 页面加载快递类型。
-3. 用户选择快递并开始计数。
-4. 扫码输入由现有 parser 解析。
-5. `useScanCount` 调用 `scanCountApi.create` 保存。
-6. 后端继续负责当天重复判断。
-7. 页面刷新当前批次、今日记录和统计。
+2. 或用户从主屏幕打开 `/scan-count/mobile`。
+3. 两个入口都渲染共享的扫码工作区。
+4. 页面加载快递类型。
+5. 用户选择快递并开始计数。
+6. 扫码输入由现有 parser 解析。
+7. `useScanCount` 调用 `scanCountApi.create` 保存。
+8. 后端继续负责当天重复判断。
+9. 页面刷新当前批次、今日记录和统计。
 
 PWA 只影响应用启动、安装和静态资源缓存，不改变扫码数据保存规则。
 
@@ -153,16 +163,18 @@ PWA 只影响应用启动、安装和静态资源缓存，不改变扫码数据�
 - Chrome DevTools Application 面板能看到 manifest 和 service worker。
 - Android Chrome 可以添加到主屏幕。
 - iOS Safari 可以添加到主屏幕，并以独立窗口打开。
-- 从桌面图标打开后默认进入 `/scan-count`。
+- 从桌面图标打开后默认进入 `/scan-count/mobile`。
 - 独立窗口内不显示主系统顶部菜单。
+- 普通浏览器打开 `/scan-count` 时仍显示现有主系统顶部菜单。
 - 扫码保存、重复扫码提示、今日记录和删除仍然正常。
 - 断网后刷新页面有明确反馈，扫码保存不会显示成功。
 
 ## 验收标准
 
 - 手机能把出荷计数安装到主屏幕。
-- 主屏幕打开后直接进入 `/scan-count`。
-- 出荷计数页面不显示主系统顶部导航。
+- 主屏幕打开后直接进入 `/scan-count/mobile`。
+- `/scan-count/mobile` 不显示主系统顶部导航。
+- `/scan-count` 继续保留现有网页页面和主系统顶部导航。
 - 现有扫码计数功能不退化。
 - API 数据不被 service worker 缓存。
 - 构建和现有测试通过。
