@@ -62,4 +62,10 @@ assert.deepEqual(parseBarcode("A680404812824A", clipPostRule), {
   trackingNumber: "680404812824",
 })
 
+assert.deepEqual(parseBarcode("D440327667824D", "sagawa"), {
+  ok: true,
+  rawInput: "D440327667824D",
+  trackingNumber: "440327667824",
+})
+
 console.log("courier-barcode-rule tests passed")

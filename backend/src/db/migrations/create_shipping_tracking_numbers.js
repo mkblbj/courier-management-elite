@@ -43,7 +43,7 @@ async function migrate() {
         ALTER TABLE couriers
         ADD COLUMN barcode_rule_type ENUM('postal', 'sagawa', 'generic')
         NOT NULL DEFAULT 'generic'
-        COMMENT '扫码条码规则：postal=邮政NW-7去首尾字母，sagawa=佐川保留原值，generic=通用字母数字'
+        COMMENT '扫码条码规则：postal=邮政NW-7去首尾字母，sagawa=佐川NW-7去首尾字母，generic=通用字母数字'
         AFTER category_id
       `);
       console.log('couriers.barcode_rule_type 字段添加成功');

@@ -15,7 +15,7 @@
 - Data persistence: tracking numbers are stored in a new table only. They do not increment `shipping_records.quantity`.
 - Duplicate scope: duplicate detection is daily. The same tracking number is rejected if it has already been scanned on the same `scan_date`, even in another batch.
 - Postal NW-7/Codabar handling: for Japan Post style labels, strip leading and trailing `A/B/C/D` guard characters before saving.
-- Sagawa handling: prefer Codabar/NW-7 when present, but do not strip leading/trailing letters. If the scanned value has no letters, keep it as scanned.
+- Sagawa handling: prefer Codabar/NW-7 when present, strip paired leading/trailing guard letters before saving. If the scanned value has no letters, keep it as scanned.
 - Non-waybill warning: strings like `99-70-15` from the upper-left area of the postal label must be rejected with a clear rescan warning.
 - Courier choice: only active courier types are selectable; `未指定` courier types are excluded.
 
@@ -176,7 +176,7 @@ async function migrate() {
         ALTER TABLE couriers
         ADD COLUMN barcode_rule_type ENUM('postal', 'sagawa', 'generic')
         NOT NULL DEFAULT 'generic'
-        COMMENT '扫码条码规则：postal=邮政NW-7去首尾字母，sagawa=佐川保留原值，generic=通用字母数字'
+        COMMENT '扫码条码规则：postal=邮政NW-7去首尾字母，sagawa=佐川NW-7去首尾字母，generic=通用字母数字'
         AFTER category_id
       `);
       console.log('couriers.barcode_rule_type 字段添加成功');

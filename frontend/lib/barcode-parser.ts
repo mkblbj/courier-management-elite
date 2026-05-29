@@ -49,11 +49,17 @@ export function parseBarcode(input: string, ruleType: BarcodeRuleType): BarcodeP
   }
 
   if (ruleType === "sagawa") {
-    if (!SAGAWA_PATTERN.test(rawInput) && !/^\d{10,13}$/.test(rawInput)) {
+    const match = rawInput.match(SAGAWA_PATTERN)
+    if (!match && !/^\d{10,13}$/.test(rawInput)) {
       return { ok: false, rawInput, reason: "badFormat" }
     }
 
-    return { ok: true, rawInput, trackingNumber: rawInput }
+    const leading = match?.[1]
+    const digits = match?.[2]
+    const trailing = match?.[3]
+    const hasGuardPair = leading && trailing && GUARD_LETTER_PATTERN.test(leading) && GUARD_LETTER_PATTERN.test(trailing)
+
+    return { ok: true, rawInput, trackingNumber: hasGuardPair && digits ? digits : rawInput }
   }
 
   if (!GENERIC_PATTERN.test(rawInput)) {
