@@ -9,6 +9,8 @@ import { ScanInputArea } from "./components/ScanInputArea"
 import { ScanCountStats } from "./components/ScanCountStats"
 import { ScanItemList } from "./components/ScanItemList"
 import { BatchSummaryDialog } from "./components/BatchSummaryDialog"
+import { TodayScanRecords } from "./components/TodayScanRecords"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTranslation } from "react-i18next"
 
 export default function ScanCountPage() {
@@ -45,55 +47,80 @@ export default function ScanCountPage() {
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader />
-      <main className="container mx-auto space-y-6 px-4 py-6">
+      <main className="container mx-auto space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6">
         <div>
-          <h1 className="text-2xl font-bold">{t("scan_count")}</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">{t("scan_count")}</h1>
           <p className="text-sm text-muted-foreground">{t("scan_count_description")}</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-          <div className="space-y-6 xl:col-span-1">
-            <ScanCountPanel
+        <Tabs defaultValue="scan" className="space-y-4">
+          <TabsList className="grid h-12 w-full grid-cols-2 sm:w-[360px]">
+            <TabsTrigger value="scan" className="h-10 text-base sm:text-sm">
+              {t("scan_tab")}
+            </TabsTrigger>
+            <TabsTrigger value="today" className="h-10 text-base sm:text-sm">
+              {t("today_records_tab")}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="scan" className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-4 xl:gap-6">
+              <div className="space-y-4 xl:col-span-1">
+                <ScanCountPanel
+                  courierTypes={activeCourierTypes}
+                  selectedCourierId={selectedCourierId}
+                  status={scanCount.status}
+                  isLoading={scanCount.isLoading}
+                  onSelectCourier={setSelectedCourierId}
+                  onStart={() => selectedCourier && scanCount.start(selectedCourier)}
+                  onStop={() => {
+                    scanCount.stop()
+                    setSummaryOpen(true)
+                  }}
+                />
+              </div>
+
+              <div className="space-y-4 xl:col-span-3 xl:space-y-6">
+                <ScanCountStats
+                  currentBatchCount={scanCount.currentBatch.length}
+                  todayCourierTotal={scanCount.todaySelectedCourierTotal}
+                  todayTotal={scanCount.stats.total}
+                />
+
+                <ScanInputArea
+                  isActive={scanCount.status === "active"}
+                  lastError={scanCount.lastError}
+                  onSubmitScan={scanCount.submitScan}
+                />
+
+                <ScanItemList
+                  records={scanCount.currentBatch}
+                  onDelete={scanCount.removeItem}
+                  onUndoLast={scanCount.undoLast}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="today">
+            <TodayScanRecords
+              records={scanCount.todayRecords}
               courierTypes={activeCourierTypes}
-              selectedCourierId={selectedCourierId}
-              status={scanCount.status}
               isLoading={scanCount.isLoading}
-              onSelectCourier={setSelectedCourierId}
-              onStart={() => selectedCourier && scanCount.start(selectedCourier)}
-              onStop={() => {
-                scanCount.stop()
-                setSummaryOpen(true)
-              }}
+              onRefresh={scanCount.refreshTodayData}
+              onDelete={scanCount.deleteTodayRecord}
             />
-          </div>
-
-          <div className="space-y-6 xl:col-span-3">
-            <ScanCountStats
-              currentBatchCount={scanCount.currentBatch.length}
-              todayCourierTotal={scanCount.todaySelectedCourierTotal}
-              todayTotal={scanCount.stats.total}
-            />
-
-            <ScanInputArea
-              isActive={scanCount.status === "active"}
-              lastError={scanCount.lastError}
-              onSubmitScan={scanCount.submitScan}
-            />
-
-            <ScanItemList
-              records={scanCount.currentBatch}
-              onDelete={scanCount.removeItem}
-              onUndoLast={scanCount.undoLast}
-            />
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
 
         <BatchSummaryDialog
           open={summaryOpen}
           count={scanCount.currentBatch.length}
           courierName={selectedCourier?.name}
           onOpenChange={setSummaryOpen}
-          onUndoBatch={scanCount.deleteBatch}
+          onUndoBatch={async () => {
+            await scanCount.deleteBatch()
+          }}
         />
       </main>
     </div>

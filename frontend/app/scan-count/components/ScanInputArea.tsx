@@ -63,8 +63,8 @@ export function ScanInputArea({ isActive, lastError, onSubmitScan }: ScanInputAr
           aria-label={t("scan_input_active")}
         />
 
-        <div className="rounded-lg border p-4 text-center">
-          <div className={cn("text-2xl font-bold", isActive ? "text-green-700" : "text-muted-foreground")}>
+        <div className="rounded-lg border p-4 text-center sm:p-6">
+          <div className={cn("text-2xl font-bold sm:text-3xl", isActive ? "text-green-700" : "text-muted-foreground")}>
             {isActive ? t("scan_input_active") : t("scan_input_inactive")}
           </div>
           <div className="mt-2 text-sm text-muted-foreground">
@@ -76,19 +76,28 @@ export function ScanInputArea({ isActive, lastError, onSubmitScan }: ScanInputAr
           {lastError && <div className="mt-2 text-sm font-medium text-red-600">{lastError}</div>}
         </div>
 
-        <div className="flex gap-2">
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
           <Input
             value={manualInput}
             onChange={(event) => setManualInput(event.target.value)}
             placeholder={t("manual_tracking_number")}
             disabled={!isActive}
+            inputMode="text"
+            autoCapitalize="characters"
+            className="h-12 text-base"
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 submitValue(manualInput)
               }
             }}
           />
-          <Button type="button" variant="outline" disabled={!isActive || !manualInput.trim()} onClick={() => submitValue(manualInput)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 w-full sm:w-auto"
+            disabled={!isActive || !manualInput.trim()}
+            onClick={() => submitValue(manualInput)}
+          >
             {t("manual_submit")}
           </Button>
         </div>

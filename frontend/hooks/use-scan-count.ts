@@ -5,7 +5,8 @@ import { format } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { toast } from "@/components/ui/use-toast"
 import { parseBarcode, type BarcodeParseError, type BarcodeRuleType } from "@/lib/barcode-parser"
-import { beepDuplicate, beepError, beepSuccess } from "@/lib/audio-feedback"
+import { resolveCourierBarcodeRuleType } from "@/lib/courier-barcode-rule"
+import { beepDuplicate, beepError, beepSuccess, unlockAudioFeedback } from "@/lib/audio-feedback"
 import { createScanBatchId } from "@/lib/scan-batch-id"
 import { scanCountApi, ScanCountDuplicateError, type ScanCountRecord, type ScanCountStats } from "@/services/scan-count-api"
 
@@ -14,6 +15,7 @@ type ScanStatus = "idle" | "active"
 type CourierForScan = {
   id: number | string
   name: string
+  code?: string
   barcode_rule_type?: BarcodeRuleType
 }
 
@@ -54,6 +56,7 @@ export function useScanCount() {
     setLastError(null)
 
     try {
+      await unlockAudioFeedback()
       await refreshTodayData()
       setSelectedCourier(courier)
       setBatchId(createScanBatchId())
@@ -93,9 +96,9 @@ export function useScanCount() {
       return
     }
 
-    const parseResult = parseBarcode(rawInput, selectedCourier.barcode_rule_type || "generic")
+    const parseResult = parseBarcode(rawInput, resolveCourierBarcodeRuleType(selectedCourier))
 
-    if (!parseResult.ok) {
+    if (parseResult.ok === false) {
       const message = getTranslatedBarcodeErrorMessage(parseResult.reason)
       setLastError(message)
       beepError()
@@ -171,6 +174,13 @@ export function useScanCount() {
     await refreshTodayData()
   }, [refreshTodayData])
 
+  const deleteTodayRecord = useCallback(async (id: number) => {
+    await scanCountApi.delete(id)
+    setCurrentBatch((prev) => prev.filter((item) => item.id !== id))
+    setTodayRecords((prev) => prev.filter((item) => item.id !== id))
+    await refreshTodayData()
+  }, [refreshTodayData])
+
   const undoLast = useCallback(async () => {
     const last = currentBatch[0]
     if (!last) return
@@ -197,6 +207,7 @@ export function useScanCount() {
     selectedCourier,
     batchId,
     currentBatch,
+    todayRecords,
     stats,
     todaySelectedCourierTotal,
     isLoading,
@@ -206,6 +217,7 @@ export function useScanCount() {
     stop,
     submitScan,
     removeItem,
+    deleteTodayRecord,
     undoLast,
     updateItem,
     deleteBatch,

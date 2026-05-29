@@ -35,7 +35,7 @@ export function ScanCountPanel({
       </CardHeader>
       <CardContent className="space-y-4">
         <Select value={selectedCourierId} onValueChange={onSelectCourier} disabled={isActive}>
-          <SelectTrigger>
+          <SelectTrigger className="h-12 text-base">
             <SelectValue placeholder={t("select_courier_placeholder")} />
           </SelectTrigger>
           <SelectContent>
@@ -47,11 +47,11 @@ export function ScanCountPanel({
           </SelectContent>
         </Select>
 
-        <div className="flex gap-2">
-          <Button onClick={onStart} disabled={!selectedCourierId || isActive || isLoading} className="flex-1">
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={onStart} disabled={!selectedCourierId || isActive || isLoading} className="h-12 text-base">
             {t("start_counting")}
           </Button>
-          <Button onClick={onStop} disabled={!isActive} variant="outline" className="flex-1">
+          <Button onClick={onStop} disabled={!isActive} variant="outline" className="h-12 text-base">
             {t("stop_counting")}
           </Button>
         </div>

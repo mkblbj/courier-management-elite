@@ -58,9 +58,12 @@ async function migrate() {
         AND (
           name LIKE '%ゆうパケット%'
           OR name LIKE '%ゆうパック%'
+          OR name LIKE '%クリップポスト%'
+          OR name LIKE '%クリックポスト%'
           OR name LIKE '%郵便%'
           OR name LIKE '%邮政%'
           OR code LIKE 'up%'
+          OR code LIKE 'cp%'
         )
     `);
 
