@@ -48,6 +48,36 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: '/scan-count-sw.js',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/javascript; charset=utf-8'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate'
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/scan-count/mobile/'
+          }
+        ],
+      },
+      {
+        source: '/scan-count/manifest.webmanifest',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/manifest+json; charset=utf-8'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'no-cache'
+          }
+        ],
+      },
+      {
         source: '/:path*',
         headers: [
           // 注意：这是一个非常宽松的CSP配置，仅用于开发和测试
