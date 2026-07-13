@@ -940,30 +940,35 @@ class DashboardControllerClass {
 
       const [
         shops,
+        yesterdayOutputs,
         todayOutputs,
         tomorrowOutputs,
         yesterdayShippingRecords,
         todayShippingRecords
       ] = await Promise.all([
         Shop.getAll({ is_active: true }),
+        ShopOutput.getAggregatedOutputsByDate(yesterday),
         ShopOutput.getAggregatedOutputsByDate(today),
         ShopOutput.getAggregatedOutputsByDate(tomorrow),
         shippingRecordInstance.getByDate(yesterday),
         shippingRecordInstance.getByDate(today)
       ]);
 
+      const yesterdayOutputDetail = buildShopOutputDetail(yesterday, shops, yesterdayOutputs);
       const todayOutputDetail = buildShopOutputDetail(today, shops, todayOutputs);
       const tomorrowOutputDetail = buildShopOutputDetail(tomorrow, shops, tomorrowOutputs);
       const yesterdayShippingDetail = buildShippingDetail(yesterday, yesterdayShippingRecords);
       const todayShippingDetail = buildShippingDetail(today, todayShippingRecords);
       
       const data = {
+        yesterday_output_quantity: yesterdayOutputDetail.total_quantity,
         output_quantity: todayOutputDetail.total_quantity,
         tomorrow_output_quantity: tomorrowOutputDetail.total_quantity,
         shipping_quantity: todayShippingDetail.total_quantity,
         yesterday_shipping_quantity: yesterdayShippingDetail.total_quantity,
         date: today,
         updated_at: getCurrentTimeFormatted(),
+        yesterday_output: yesterdayOutputDetail,
         today_output: todayOutputDetail,
         tomorrow_output: {
           ...tomorrowOutputDetail,
@@ -984,12 +989,20 @@ class DashboardControllerClass {
 
       console.error('获取 Homepage 统计数据失败:', error);
       res.status(500).json({
+        yesterday_output_quantity: 0,
         output_quantity: 0,
         tomorrow_output_quantity: 0,
         shipping_quantity: 0,
         yesterday_shipping_quantity: 0,
         date: today,
         updated_at: getCurrentTimeFormatted(),
+        yesterday_output: {
+          date: yesterday,
+          total_quantity: 0,
+          shops_count: 0,
+          active_shops_count: 0,
+          shops: []
+        },
         today_output: {
           date: today,
           total_quantity: 0,
@@ -1051,4 +1064,4 @@ class DashboardControllerClass {
 
 const DashboardController = new DashboardControllerClass();
 
-module.exports = DashboardController; 
+module.exports = DashboardController;
